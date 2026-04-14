@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Women's Collection | Wefton Copper</title>
+    <style>
+        /* Core Brand Variables */
+        :root {
+            --bg-dark: #0f1115;
+            --bg-darker: #08090a;
+            --copper-light: #d68f64;
+            --copper-main: #b85e26;
+            --text-light: #e0e4e8;
+            --text-muted: #8b929a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation (Matches Main Page) */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 17, 21, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: var(--copper-light);
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--copper-main);
+        }
+
+        /* Dropdown Styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            height: 100%;
+        }
+
+        .dropdown-content {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background-color: rgba(15, 17, 21, 0.95);
+            backdrop-filter: blur(10px);
+            min-width: 150px;
+            box-shadow: 0px 8px 20px 0px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 4px;
+            z-index: 101;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            padding: 10px 0;
+            margin-top: 15px;
+        }
+
+        .dropdown::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            height: 20px;
+        }
+
+        .dropdown:hover .dropdown-content {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .dropdown-content a {
+            padding: 12px 20px;
+            display: block;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .dropdown-content a:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--copper-light);
+        }
+
+        /* Page Header */
+        .page-header {
+            padding: 150px 20px 60px;
+            text-align: center;
+            background-color: var(--bg-darker);
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+        }
+
+        .page-header h1 {
+            font-size: 3.5rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: var(--copper-light);
+            margin-bottom: 15px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Men's Product Grid */
+        .collection-section {
+            padding: 80px 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        /* The Hover "Pop" Effect Container */
+        .product-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            
+            /* Crucial for the pop effect */
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .product-card:hover {
+            /* Scales the entire card up by 15% */
+            transform: scale(1.15); 
+            z-index: 10; /* Brings it to the very front */
+            background: rgba(15, 17, 21, 1);
+            border-color: var(--copper-main);
+            /* Adds a deep shadow and subtle copper glow */
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8), 0 0 20px rgba(184, 94, 38, 0.15);
+        }
+
+        .product-image-container {
+            width: 100%;
+            height: 400px; /* Taller for the dedicated product page */
+            overflow: hidden;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            background-color: var(--bg-darker);
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s ease;
+        }
+
+        .product-card h3 {
+            color: var(--text-light);
+            font-size: 1.2rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .product-card p.price {
+            color: var(--copper-light);
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        footer {
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            background-color: var(--bg-darker);
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">WEFTON COPPER</div>
+        <div class="nav-links">
+            <a href="index.html#product-sequence-section">Home</a>
+            
+            <div class="dropdown">
+                <a href="index.html#products">Products</a>
+                <div class="dropdown-content">
+                    <a href="men.html" style="color: var(--copper-main);">Men</a>
+                    <a href="women.html">Women</a>
+                </div>
+            </div>
+            
+            <a href="index.html#design">Design</a>
+            <a href="index.html#vision">Vision</a>
+            <a href="index.html#about">About Us</a>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1>Men's Collection</h1>
+        <p>Engineered for precision. Crafted from lightweight Micro-French Terry.</p>
+    </header>
+
+    <section class="collection-section">
+        <div class="product-grid">
+            
+            <div class="product-card">
+                <div class="product-image-container">
+                    <img src="men_product_01.jpg" alt="Wefton Copper Men's T-Shirt">
+                </div>
+                <h3>Onyx Black T-Shirt</h3>
+                <p class="price">$120</p>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image-container">
+                    <img src="men_product_02.jpg" alt="Wefton Copper Men's T-Shirt">
+                </div>
+                <h3>Slate Grey T-Shirt</h3>
+                <p class="price">$120</p>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image-container">
+                    <img src="men_product_03.jpg" alt="Wefton Copper Men's T-Shirt">
+                </div>
+                <h3>Pearl White T-Shirt</h3>
+                <p class="price">$120</p>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image-container">
+                    <img src="men_product_04.jpg" alt="Wefton Copper Men's T-Shirt">
+                </div>
+                <h3>Earth Brown T-Shirt</h3>
+                <p class="price">$120</p>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image-container">
+                    <img src="men_product_05.jpg" alt="Wefton Copper Men's T-Shirt">
+                </div>
+                <h3>Deep Navy T-Shirt</h3>
+                <p class="price">$120</p>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image-container">
+                    <img src="men_product_06.jpg" alt="Wefton Copper Men's T-Shirt">
+                </div>
+                <h3>Forest Green T-Shirt</h3>
+                <p class="price">$120</p>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image-container">
+                    <img src="men_product_07.jpg" alt="Wefton Copper Men's T-Shirt">
+                </div>
+                <h3>Light Olive T-Shirt</h3>
+                <p class="price">$120</p>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image-container">
+                    <img src="men_product_08.jpg" alt="Wefton Copper Men's T-Shirt">
+                </div>
+                <h3>Midnight Blue T-Shirt</h3>
+                <p class="price">$120</p>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image-container">
+                    <img src="men_product_09.jpg" alt="Wefton Copper Men's T-Shirt">
+                </div>
+                <h3>Graphite Heather T-Shirt</h3>
+                <p class="price">$120</p>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image-container">
+                    <img src="men_product_10.jpg" alt="Wefton Copper Men's T-Shirt">
+                </div>
+                <h3>Copper Clay T-Shirt</h3>
+                <p class="price">$120</p>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image-container">
+                    <img src="men_product_11.jpg" alt="Wefton Copper Men's T-Shirt">
+                </div>
+                <h3>Ash White T-Shirt</h3>
+                <p class="price">$120</p>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image-container">
+                    <img src="men_product_12.jpg" alt="Wefton Copper Men's T-Shirt">
+                </div>
+                <h3>Charcoal Core T-Shirt</h3>
+                <p class="price">$120</p>
+            </div>
+
+        </div>
+    </section>
+
+    <footer>
+        &copy; 2026 Wefton Copper. All rights reserved.
+    </footer>
+
+</body>
+</html>

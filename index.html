@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wefton Copper | Premium Lightweight Micro-French Terry</title>
+    <style>
+        /* CSS Variables based on brand identity */
+        :root {
+            --bg-dark: #0f1115;
+            --bg-darker: #08090a;
+            --copper-light: #d68f64;
+            --copper-main: #b85e26;
+            --text-light: #e0e4e8;
+            --text-muted: #8b929a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 17, 21, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: var(--copper-light);
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--copper-main);
+        }
+
+        /* Dropdown Styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            height: 100%;
+        }
+
+        .dropdown-content {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background-color: rgba(15, 17, 21, 0.95);
+            backdrop-filter: blur(10px);
+            min-width: 150px;
+            box-shadow: 0px 8px 20px 0px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 4px;
+            z-index: 101;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            padding: 10px 0;
+            margin-top: 15px;
+        }
+
+        /* Invisible bridge to keep hover active while moving cursor to dropdown */
+        .dropdown::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            height: 20px;
+        }
+
+        .dropdown:hover .dropdown-content {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .dropdown-content a {
+            padding: 12px 20px;
+            display: block;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .dropdown-content a:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Scroll Rotation Section */
+        #product-sequence-section {
+            height: 400vh;
+            position: relative;
+            background-color: var(--bg-darker);
+        }
+
+        .sticky-container {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: 10;
+        }
+
+        .hero-text {
+            position: absolute;
+            bottom: 15%;
+            text-align: center;
+            z-index: 20;
+            pointer-events: none;
+            text-shadow: 0px 4px 15px rgba(0,0,0,0.8);
+        }
+
+        .hero-text h1 {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .hero-text p {
+            color: var(--copper-light);
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        /* Content Sections */
+        .content-section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .content-section h2 {
+            font-size: 2.5rem;
+            color: var(--copper-light);
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        .content-section p {
+            max-width: 600px;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 15px; /* Added margin for multiple paragraphs */
+        }
+
+        /* Product Grid Styles */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 50px;
+        }
+
+        .product-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            text-align: center;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--copper-main);
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 350px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            background-color: var(--bg-darker);
+        }
+
+        .product-card h3 {
+            color: var(--text-light);
+            font-size: 1.2rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        footer {
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">WEFTON COPPER</div>
+        <div class="nav-links">
+            <a href="#product-sequence-section">Home</a>
+            
+            <div class="dropdown">
+                <a href="#products">Products</a>
+                <div class="dropdown-content">
+                    <a href="men.html">Men</a>
+                    <a href="women.html">Women</a>
+                </div>
+            </div>
+            
+            <a href="#design">Design</a>
+            <a href="#vision">Vision</a>
+            <a href="#about">About Us</a>
+        </div>
+    </nav>
+
+    <section id="product-sequence-section">
+        <div class="sticky-container">
+            <canvas id="hero-lightpass"></canvas>
+            
+            <div class="hero-text">
+                <h1>Micro-French Terry</h1>
+                <p>Scroll to explore every thread.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="products" class="content-section">
+        <h2>The Exclusive Release</h2>
+        <p>Our inaugural piece. Crafted from ultra-lightweight Micro-French Terry, designed to drape flawlessly while maintaining incredible breathability. A testament to minimalist perfection.</p>
+        
+        <div class="product-grid">
+            <div class="product-card">
+                <img src="product1.jpg" alt="Wefton Copper T-Shirt - Onyx">
+                <h3>Onyx Black T-Shirt</h3>
+            </div>
+            <div class="product-card">
+                <img src="product2.jpg" alt="Wefton Copper T-Shirt - Slate">
+                <h3>Slate Grey T-Shirt</h3>
+            </div>
+            <div class="product-card">
+                <img src="product3.jpg" alt="Wefton Copper T-Shirt - Pearl">
+                <h3>Pearl White T-Shirt</h3>
+            </div>
+            <div class="product-card">
+                <img src="product4.jpg" alt="Wefton Copper T-Shirt - Earth">
+                <h3>Earth Brown T-Shirt</h3>
+            </div>
+            <div class="product-card">
+                <img src="product5.jpg" alt="Wefton Copper T-Shirt - Navy">
+                <h3>Deep Navy T-Shirt</h3>
+            </div>
+            <div class="product-card">
+                <img src="product6.jpg" alt="Wefton Copper T-Shirt - Forest">
+                <h3>Forest Green T-Shirt</h3>
+            </div>
+        </div>
+    </section>
+
+    <section id="design" class="content-section" style="background-color: var(--bg-darker);">
+        <h2>Architectural Fit</h2>
+        <p>We approached the round-neck block like architectural engineering. No excess fabric. Reinforced copper-stitched seams. A collar that retains its structure wash after wash.</p>
+    </section>
+
+    <section id="vision" class="content-section">
+        <h2>Our Vision</h2>
+        <p>Wefton promises every product delivered to its customer with a brand promise. A unique serial number will be printed in every product of Wefton. User can verify the serial in wefton product verify link to validate the originality of the product.</p>
+        <p>That's a brand promise.</p>
+        <p>Wefton products are free from plastics. Please use the package cover for your storage utilities for a while and dispose them to non-biodegradable waste to help conserve our environment.</p>
+        <p>Wefton provides an organic fabric freshner pouch, to keep your fabric fresh and smell good. You can use them in your wardrobe.</p>
+        <p>Wefton provides a seedbag with every product packaging. Please encourage yourself and your young ones to grow trees to conserve the environment.</p>
+        <p>Wefton provides a small finger brush, which can be used to rub hard stains if any in the fabric before sending it to laundry. Please check the product website for fabric care and instructions.</p>
+    </section>
+
+    <section id="about" class="content-section" style="background-color: var(--bg-darker);">
+        <h2>The Wefton Copper Ethos</h2>
+        <p>Premium isn't about logos; it's about the feeling of the fabric against the skin and the confidence of the cut. We are redefining the global standard for essential wear, starting from the thread up.</p>
+    </section>
+
+    <footer>
+        &copy; 2026 Wefton Copper. All rights reserved.
+    </footer>
+
+    <script>
+        const canvas = document.getElementById("hero-lightpass");
+        const context = canvas.getContext("2d");
+
+        canvas.width = 1920; 
+        canvas.height = 1080;
+
+        const frameCount = 240;
+
+        const currentFrame = index => (
+            `./weftoncopper_tshirt_frames/ezgif-frame-${index.toString().padStart(3, '0')}.jpg`
+        );
+
+        const images = [];
+        
+        for (let i = 1; i <= frameCount; i++) {
+            const img = new Image();
+            img.src = currentFrame(i);
+            images.push(img);
+        }
+
+        images[0].onload = () => {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(images[0], 0, 0, canvas.width, canvas.height);
+        };
+
+        window.addEventListener("scroll", () => {
+            const section = document.getElementById('product-sequence-section');
+            
+            const scrollPosition = window.scrollY - section.offsetTop;
+            const maxScroll = section.scrollHeight - window.innerHeight;
+            
+            let scrollFraction = scrollPosition / maxScroll;
+            if (scrollFraction < 0) scrollFraction = 0;
+            if (scrollFraction > 1) scrollFraction = 1;
+
+            const frameIndex = Math.min(
+                frameCount - 1,
+                Math.floor(scrollFraction * frameCount)
+            );
+
+            requestAnimationFrame(() => {
+                if (images[frameIndex]) {
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                    context.drawImage(images[frameIndex], 0, 0, canvas.width, canvas.height);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
