@@ -5,12 +5,14 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CartItem } from '@/types';
 import { SHIPPING_COST, FREE_SHIPPING_THRESHOLD, TAX_RATE } from '@/config/brand';
+import { validateCoupon } from '@/services/couponService';
 
 interface CartStore {
   items: CartItem[];
   isOpen: boolean;
   couponCode: string;
   discount: number;
+  couponError: string;
 
   // Actions
   addItem: (item: CartItem) => void;
@@ -20,7 +22,7 @@ interface CartStore {
   toggleCart: () => void;
   openCart: () => void;
   closeCart: () => void;
-  applyCoupon: (code: string) => void;
+  applyCoupon: (code: string) => Promise<void>;
   removeCoupon: () => void;
 
   // Computed
@@ -38,6 +40,7 @@ export const useCartStore = create<CartStore>()(
       isOpen: false,
       couponCode: '',
       discount: 0,
+      couponError: '',
 
       addItem: (newItem) => {
         set((state) => {
@@ -54,7 +57,7 @@ export const useCartStore = create<CartStore>()(
               ),
             };
           }
-          return { items: [...state.items, newItem] };
+          return { items: [...state.items, { ...newItem, quantity: Math.min(newItem.quantity, newItem.inventory) }] };
         });
       },
 
@@ -79,24 +82,23 @@ export const useCartStore = create<CartStore>()(
         }));
       },
 
-      clearCart: () => set({ items: [], couponCode: '', discount: 0 }),
+      clearCart: () => set({ items: [], couponCode: '', discount: 0, couponError: '' }),
 
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
       openCart: () => set({ isOpen: true }),
       closeCart: () => set({ isOpen: false }),
 
-      applyCoupon: (code) => {
-        // Placeholder — integrate with Firestore coupons collection
-        const coupons: Record<string, number> = {
-          WEFTON10: 10,
-          COPPER20: 20,
-          LAUNCH15: 15,
-        };
-        const discount = coupons[code.toUpperCase()] || 0;
-        set({ couponCode: code, discount });
+      applyCoupon: async (code: string) => {
+        set({ couponError: '' });
+        const result = await validateCoupon(code);
+        if (result.valid) {
+          set({ couponCode: code.trim().toUpperCase(), discount: result.discount, couponError: '' });
+        } else {
+          set({ couponCode: '', discount: 0, couponError: result.error || 'Invalid or expired coupon code' });
+        }
       },
 
-      removeCoupon: () => set({ couponCode: '', discount: 0 }),
+      removeCoupon: () => set({ couponCode: '', discount: 0, couponError: '' }),
 
       getItemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
 

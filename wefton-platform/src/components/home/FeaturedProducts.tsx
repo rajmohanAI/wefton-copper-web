@@ -1,15 +1,14 @@
 'use client';
 
-import { useRef } from 'react';
 import Link from 'next/link';
-import { motion, useInView } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
 import { ProductCardSkeleton } from '@/components/ui/Skeleton';
 import type { Product } from '@/types';
 
 interface FeaturedProductsProps {
-  title: string;
+  title?: string;
   subtitle?: string;
   products: Product[];
   loading?: boolean;
@@ -32,22 +31,28 @@ const itemVariants = {
   },
 };
 
+/**
+ * FeaturedProducts — renders a grid of ProductCard components with Framer Motion
+ * viewport entrance animations (whileInView). Accepts a `products` prop for reuse
+ * across pages (e.g., homepage "Featured Collection" or product detail "You May Also Like").
+ *
+ * Shows a "Coming Soon" placeholder when no products are available.
+ * "Add to Cart" on each ProductCard adds the default variant and opens the CartDrawer.
+ */
 export default function FeaturedProducts({
-  title,
+  title = 'Featured Collection',
   subtitle,
   products,
   loading = false,
   viewAllHref,
 }: FeaturedProductsProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-100px' });
-
   return (
-    <section ref={ref} className="py-20 px-6 max-w-[1400px] mx-auto">
+    <section className="py-20 px-6 max-w-[1400px] mx-auto">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
-        animate={inView ? { opacity: 1, y: 0 } : {}}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-100px' }}
         transition={{ duration: 0.6 }}
         className="flex items-end justify-between mb-12"
       >
@@ -59,7 +64,7 @@ export default function FeaturedProducts({
             <p className="mt-2 text-sm text-[var(--text-muted)] max-w-md">{subtitle}</p>
           )}
         </div>
-        {viewAllHref && (
+        {viewAllHref && products.length > 0 && (
           <Link
             href={viewAllHref}
             className="hidden md:flex items-center gap-2 text-xs tracking-widest uppercase text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors group"
@@ -73,28 +78,63 @@ export default function FeaturedProducts({
         )}
       </motion.div>
 
-      {/* Grid */}
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate={inView ? 'visible' : 'hidden'}
-        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
-      >
-        {loading
-          ? Array.from({ length: 8 }).map((_, i) => (
-              <motion.div key={i} variants={itemVariants}>
-                <ProductCardSkeleton />
-              </motion.div>
-            ))
-          : products.map((product, i) => (
-              <motion.div key={product.productId} variants={itemVariants}>
-                <ProductCard product={product} priority={i < 4} />
-              </motion.div>
-            ))}
-      </motion.div>
+      {/* Loading state */}
+      {loading && (
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-100px' }}
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+        >
+          {Array.from({ length: 8 }).map((_, i) => (
+            <motion.div key={i} variants={itemVariants}>
+              <ProductCardSkeleton />
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+
+      {/* "Coming Soon" placeholder when no featured products exist */}
+      {!loading && products.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-100px' }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="flex flex-col items-center justify-center py-16 px-6 rounded-xl border border-dashed border-[var(--border-subtle)] bg-[var(--bg-darker)]/50"
+        >
+          <div className="w-14 h-14 rounded-full bg-[var(--copper-main)]/10 flex items-center justify-center mb-4">
+            <Sparkles size={24} className="text-[var(--copper-light)]" />
+          </div>
+          <h3 className="text-lg font-medium text-[var(--text-light)] mb-2">
+            Coming Soon
+          </h3>
+          <p className="text-sm text-[var(--text-muted)] text-center max-w-sm">
+            Our curated featured collection is being prepared. Check back soon for handpicked essentials.
+          </p>
+        </motion.div>
+      )}
+
+      {/* Product Grid — staggered viewport entrance animations */}
+      {!loading && products.length > 0 && (
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-100px' }}
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+        >
+          {products.map((product, i) => (
+            <motion.div key={product.productId} variants={itemVariants}>
+              <ProductCard product={product} priority={i < 4} />
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
 
       {/* Mobile View All */}
-      {viewAllHref && (
+      {viewAllHref && products.length > 0 && (
         <div className="mt-8 text-center md:hidden">
           <Link
             href={viewAllHref}

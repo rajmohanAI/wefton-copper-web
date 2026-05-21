@@ -4,6 +4,16 @@ import SearchResultsClient from '@/components/search/SearchResultsClient';
 
 export const metadata: Metadata = {
   title: 'Search',
+  description: 'Search Wefton Copper products — find your perfect premium essential.',
+  openGraph: {
+    title: 'Search | Wefton Copper',
+    description: 'Search Wefton Copper products.',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Search | Wefton Copper',
+    description: 'Search Wefton Copper products.',
+  },
   robots: { index: false },
 };
 

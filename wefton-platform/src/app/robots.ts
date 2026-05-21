@@ -1,14 +1,16 @@
 import type { MetadataRoute } from 'next';
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/account/', '/checkout/', '/api/'],
+        disallow: ['/admin/', '/account/'],
       },
     ],
-    sitemap: 'https://weftoncopper.com/sitemap.xml',
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

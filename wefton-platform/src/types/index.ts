@@ -159,6 +159,13 @@ export interface WishlistItem {
   addedAt: string;
 }
 
+export interface Coupon {
+  code: string;
+  discount: number;
+  active: boolean;
+  expiresAt: string | null;
+}
+
 export interface NewsletterSubscriber {
   email: string;
   subscribedAt: string;

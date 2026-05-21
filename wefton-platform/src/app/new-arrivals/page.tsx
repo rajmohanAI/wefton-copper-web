@@ -3,9 +3,27 @@ import { Suspense } from 'react';
 import CollectionPage from '@/components/catalog/CollectionPage';
 import { ProductCardSkeleton } from '@/components/ui/Skeleton';
 
+// Ensure static generation at build time
+export const dynamic = 'force-static';
+
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
+
 export const metadata: Metadata = {
   title: 'New Arrivals',
-  description: 'Shop the latest drops from Wefton Copper.',
+  description:
+    'Shop the latest drops from Wefton Copper. Fresh styles in premium Micro-French Terry for men and women.',
+  openGraph: {
+    title: 'New Arrivals | Wefton Copper',
+    description: 'Shop the latest drops from Wefton Copper. Fresh styles in premium Micro-French Terry.',
+    url: `${siteUrl}/new-arrivals`,
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Wefton Copper New Arrivals' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'New Arrivals | Wefton Copper',
+    description: 'Shop the latest drops from Wefton Copper.',
+    images: ['/og-image.jpg'],
+  },
 };
 
 export default function NewArrivalsPage() {

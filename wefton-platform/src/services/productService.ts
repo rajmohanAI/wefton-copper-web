@@ -115,15 +115,39 @@ export async function getProductsByGender(
   const sortDir = filters.sortBy === 'price-asc' ? ('asc' as const) : ('desc' as const);
 
   constraints.push(orderBy(sortField, sortDir));
-  constraints.push(limit(PAGE_SIZE));
+
+  // Fetch extra docs to account for client-side filtering (price range, rating)
+  const fetchLimit = PAGE_SIZE * 3;
+  constraints.push(limit(fetchLimit));
   if (cursor) constraints.push(startAfter(cursor));
 
   const q = query(collection(db, PRODUCTS_COL), ...constraints);
   const snap = await getDocs(q);
-  const products = snap.docs.map((d) => ({
+
+  let products = snap.docs.map((d) => ({
     productId: d.id,
     ...(d.data() as Omit<Product, 'productId'>),
   }));
+
+  // Client-side filter: price range
+  // Firestore doesn't support inequality filters on multiple fields in a compound query
+  if (filters.priceRange) {
+    const [minPrice, maxPrice] = filters.priceRange;
+    if (minPrice > 0 || (maxPrice < Infinity && maxPrice > 0)) {
+      products = products.filter(
+        (p) => p.price >= minPrice && p.price <= maxPrice
+      );
+    }
+  }
+
+  // Client-side filter: minimum rating
+  if (filters.rating && filters.rating > 0) {
+    products = products.filter((p) => p.ratings >= filters.rating!);
+  }
+
+  // Trim to page size after client-side filtering
+  products = products.slice(0, PAGE_SIZE);
+
   const lastDoc = snap.docs[snap.docs.length - 1] ?? null;
   return { products, lastDoc };
 }

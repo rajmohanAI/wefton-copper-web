@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback, type MouseEvent, type TouchEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,7 +22,8 @@ import { formatPrice, getDiscountPercent } from '@/lib/utils';
 import StarRating from '@/components/ui/StarRating';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
-import FeaturedProducts from '@/components/home/FeaturedProducts';
+import SimilarProducts from '@/components/product/SimilarProducts';
+import ReviewSection from '@/components/product/ReviewSection';
 import type { Product } from '@/types';
 import { SIZES } from '@/config/brand';
 import { cn } from '@/lib/utils';
@@ -32,6 +33,40 @@ interface ProductDetailClientProps {
   similar: Product[];
 }
 
+/** Generate JSON-LD Product structured data */
+function getProductJsonLd(product: Product) {
+  const availability =
+    product.inventory > 0
+      ? 'https://schema.org/InStock'
+      : 'https://schema.org/OutOfStock';
+
+  const jsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    image: product.images?.map((img) => img.url) || [],
+    description: product.description,
+    offers: {
+      '@type': 'Offer',
+      price: product.price,
+      priceCurrency: 'INR',
+      availability,
+    },
+  };
+
+  if (product.reviewsCount > 0) {
+    jsonLd.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: product.ratings,
+      reviewCount: product.reviewsCount,
+      bestRating: 5,
+      worstRating: 1,
+    };
+  }
+
+  return jsonLd;
+}
+
 export default function ProductDetailClient({ product, similar }: ProductDetailClientProps) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
@@ -39,7 +74,15 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
-  const [zoomed, setZoomed] = useState(false);
+
+  // Hover zoom state
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+
+  // Touch swipe state
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const touchDeltaRef = useRef(0);
 
   const { addItem, openCart } = useCartStore();
   const { toggle, has } = useWishlistStore();
@@ -48,6 +91,53 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
 
   const currentPrice = selectedVariant?.price || product.price;
   const currentInventory = selectedVariant?.inventory ?? product.inventory;
+
+  // ── Hover Zoom Handlers (Desktop) ──────────────────────────
+  const handleMouseMove = useCallback((e: MouseEvent<HTMLDivElement>) => {
+    if (!imageContainerRef.current) return;
+    const rect = imageContainerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPosition({ x, y });
+  }, []);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsZooming(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsZooming(false);
+    setZoomPosition({ x: 50, y: 50 });
+  }, []);
+
+  // ── Touch Swipe Handlers (Mobile) ─────────────────────────
+  const handleTouchStart = useCallback((e: TouchEvent<HTMLDivElement>) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    touchDeltaRef.current = 0;
+  }, []);
+
+  const handleTouchMove = useCallback((e: TouchEvent<HTMLDivElement>) => {
+    if (!touchStartRef.current) return;
+    const touch = e.touches[0];
+    touchDeltaRef.current = touch.clientX - touchStartRef.current.x;
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    const delta = touchDeltaRef.current;
+    const threshold = 50; // minimum swipe distance in px
+    if (Math.abs(delta) > threshold) {
+      if (delta < 0) {
+        // Swipe left → next image
+        setSelectedImage((i) => (i + 1) % product.images.length);
+      } else {
+        // Swipe right → previous image
+        setSelectedImage((i) => (i - 1 + product.images.length) % product.images.length);
+      }
+    }
+    touchStartRef.current = null;
+    touchDeltaRef.current = 0;
+  }, [product.images.length]);
 
   const handleAddToCart = () => {
     if (!selectedSize && product.variants?.length > 0) {
@@ -97,8 +187,17 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
   // Unique colors from variants
   const colors = product.variants?.filter((v) => v.color) || [];
 
+  // JSON-LD structured data
+  const jsonLd = getProductJsonLd(product);
+
   return (
     <div className="min-h-screen pt-[var(--nav-height)]">
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* Breadcrumb */}
       <div className="max-w-[1400px] mx-auto px-6 py-4">
         <nav className="flex items-center gap-2 text-xs text-[var(--text-muted)]" aria-label="Breadcrumb">
@@ -117,8 +216,19 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-20">
           {/* Image Gallery */}
           <div className="space-y-4">
-            {/* Main Image */}
-            <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-[var(--bg-darker)] group">
+            {/* Main Image with Hover Zoom and Touch Swipe */}
+            <div
+              ref={imageContainerRef}
+              className="relative aspect-[3/4] rounded-xl overflow-hidden bg-[var(--bg-darker)] group"
+              onMouseMove={handleMouseMove}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              role="img"
+              aria-label={`Product image gallery showing ${product.images?.[selectedImage]?.alt || product.title}`}
+            >
               <AnimatePresence mode="wait">
                 <motion.div
                   key={selectedImage}
@@ -134,10 +244,16 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
                       alt={product.images[selectedImage].alt || product.title}
                       fill
                       className={cn(
-                        'object-cover transition-transform duration-500',
-                        zoomed ? 'scale-150 cursor-zoom-out' : 'cursor-zoom-in'
+                        'object-cover transition-transform duration-300 ease-out',
+                        isZooming
+                          ? 'scale-[2] cursor-zoom-out'
+                          : 'scale-100 cursor-zoom-in'
                       )}
-                      onClick={() => setZoomed((v) => !v)}
+                      style={
+                        isZooming
+                          ? { transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%` }
+                          : undefined
+                      }
                       sizes="(max-width: 1024px) 100vw, 50vw"
                       priority
                     />
@@ -150,14 +266,14 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
                 <>
                   <button
                     onClick={prevImage}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full glass flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full glass flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
                     aria-label="Previous image"
                   >
                     <ChevronLeft size={16} />
                   </button>
                   <button
                     onClick={nextImage}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full glass flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full glass flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
                     aria-label="Next image"
                   >
                     <ChevronRight size={16} />
@@ -165,15 +281,32 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
                 </>
               )}
 
-              {/* Zoom hint */}
-              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* Zoom hint (hidden on touch devices) */}
+              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
                 <div className="glass rounded px-2 py-1 flex items-center gap-1 text-[10px] text-white/70">
-                  <ZoomIn size={10} /> Zoom
+                  <ZoomIn size={10} /> Hover to zoom
                 </div>
               </div>
 
+              {/* Swipe indicator dots (visible on touch devices only) */}
+              {product.images?.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 md:hidden">
+                  <div className="flex gap-1.5">
+                    {product.images.map((_, i) => (
+                      <span
+                        key={i}
+                        className={cn(
+                          'w-1.5 h-1.5 rounded-full transition-colors',
+                          i === selectedImage ? 'bg-white' : 'bg-white/30'
+                        )}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Badges */}
-              <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+              <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
                 {product.newArrival && <Badge variant="copper">New</Badge>}
                 {product.bestseller && <Badge variant="success">Bestseller</Badge>}
                 {discount > 0 && <Badge variant="warning">{discount}% Off</Badge>}
@@ -182,20 +315,28 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
 
             {/* Thumbnails */}
             {product.images?.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto no-scrollbar">
+              <div className="flex gap-2 overflow-x-auto no-scrollbar" role="tablist" aria-label="Product image thumbnails">
                 {product.images.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
+                    role="tab"
+                    aria-selected={i === selectedImage}
                     className={cn(
                       'relative flex-shrink-0 w-16 h-20 rounded overflow-hidden border-2 transition-colors',
                       i === selectedImage
                         ? 'border-[var(--copper-main)]'
                         : 'border-transparent hover:border-white/20'
                     )}
-                    aria-label={`View image ${i + 1}`}
+                    aria-label={img.alt || `View image ${i + 1}`}
                   >
-                    <Image src={img.url} alt={img.alt || ''} fill className="object-cover" sizes="64px" />
+                    <Image
+                      src={img.url}
+                      alt={img.alt || `${product.title} thumbnail ${i + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                    />
                   </button>
                 ))}
               </div>
@@ -416,15 +557,11 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
           </div>
         </div>
 
-        {/* Similar Products */}
-        {similar.length > 0 && (
-          <div className="mt-20">
-            <FeaturedProducts
-              title="You May Also Like"
-              products={similar}
-            />
-          </div>
-        )}
+        {/* Customer Reviews */}
+        <ReviewSection productId={product.productId} />
+
+        {/* Similar Products — hidden if fewer than 2 */}
+        <SimilarProducts products={similar} />
       </div>
     </div>
   );
