@@ -1,12 +1,17 @@
 'use client';
 
 import { useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { getFirebaseAuth, getFirebaseDb } from '@/lib/firebase';
 import { useAuthStore } from '@/store/authStore';
 import type { User } from '@/types';
 
+/**
+ * Subscribes to Firebase Auth state changes and populates the authStore.
+ * Configures browserLocalPersistence so sessions survive browser restarts.
+ * On auth state change, fetches the user document from Firestore `users/{uid}`.
+ */
 export function useAuthListener() {
   const { setUser, setLoading } = useAuthStore();
 
@@ -17,6 +22,11 @@ export function useAuthListener() {
       setLoading(false);
       return;
     }
+
+    // Configure browserLocalPersistence for session persistence across browser restarts
+    setPersistence(auth, browserLocalPersistence).catch((error) => {
+      console.error('[Wefton Auth] Failed to set persistence:', error);
+    });
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
@@ -33,7 +43,7 @@ export function useAuthListener() {
         } catch {
           // Firestore error — fall through to minimal user
         }
-        // Minimal user from Firebase Auth
+        // Minimal user from Firebase Auth when Firestore doc doesn't exist
         setUser({
           uid: firebaseUser.uid,
           name: firebaseUser.displayName || '',
@@ -52,4 +62,18 @@ export function useAuthListener() {
 
     return unsubscribe;
   }, [setUser, setLoading]);
+}
+
+/**
+ * Convenience hook that returns the current auth state from the store.
+ * Returns `{ user, loading, isAdmin }` for use in protected components.
+ *
+ * Requirements: 17.1, 17.2, 17.5
+ */
+export function useAuth() {
+  const user = useAuthStore((state) => state.user);
+  const loading = useAuthStore((state) => state.loading);
+  const isAdmin = useAuthStore((state) => state.isAdmin());
+
+  return { user, loading, isAdmin };
 }

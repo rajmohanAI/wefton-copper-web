@@ -6,7 +6,7 @@ import { create } from 'zustand';
 interface SearchStore {
   query: string;
   isOpen: boolean;
-  history: string[];
+  history: string[]; // capped at 5, no duplicates, most recent first, no empty strings
   setQuery: (q: string) => void;
   openSearch: () => void;
   closeSearch: () => void;
@@ -24,9 +24,10 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
   closeSearch: () => set({ isOpen: false, query: '' }),
 
   addToHistory: (q) => {
-    if (!q.trim()) return;
-    const prev = get().history.filter((h) => h !== q);
-    set({ history: [q, ...prev].slice(0, 8) });
+    const trimmed = q.trim();
+    if (!trimmed) return;
+    const prev = get().history.filter((h) => h !== trimmed);
+    set({ history: [trimmed, ...prev].slice(0, 5) });
   },
 
   clearHistory: () => set({ history: [] }),

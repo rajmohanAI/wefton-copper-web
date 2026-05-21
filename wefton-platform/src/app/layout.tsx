@@ -4,8 +4,10 @@ import AppProviders from '@/components/providers/AppProviders';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://weftoncopper.com'),
+  metadataBase: new URL(siteUrl),
   title: {
     default: 'Wefton Copper | Premium Micro-French Terry',
     template: '%s | Wefton Copper',
@@ -25,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_IN',
-    url: 'https://weftoncopper.com',
+    url: siteUrl,
     siteName: 'Wefton Copper',
     title: 'Wefton Copper | Premium Micro-French Terry',
     description:

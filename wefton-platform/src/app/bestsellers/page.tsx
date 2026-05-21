@@ -3,9 +3,27 @@ import { Suspense } from 'react';
 import CollectionPage from '@/components/catalog/CollectionPage';
 import { ProductCardSkeleton } from '@/components/ui/Skeleton';
 
+// Ensure static generation at build time
+export const dynamic = 'force-static';
+
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
+
 export const metadata: Metadata = {
   title: 'Bestsellers',
-  description: 'Shop the most loved pieces from Wefton Copper.',
+  description:
+    'Shop the most loved pieces from Wefton Copper. Our community favourites in premium Micro-French Terry.',
+  openGraph: {
+    title: 'Bestsellers | Wefton Copper',
+    description: 'Shop the most loved pieces from Wefton Copper. Our community favourites.',
+    url: `${siteUrl}/bestsellers`,
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Wefton Copper Bestsellers' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Bestsellers | Wefton Copper',
+    description: 'Shop the most loved pieces from Wefton Copper.',
+    images: ['/og-image.jpg'],
+  },
 };
 
 export default function BestsellersPage() {
