@@ -256,12 +256,12 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
   return (
     <div className="min-h-screen pt-[var(--nav-height)]">
       {/* Page Header */}
-      <div className="bg-[var(--bg-darker)] border-b border-[var(--border-subtle)] py-12 px-6">
+      <div className="bg-[var(--bg-darker)] border-b border-[var(--border-subtle)] pt-8 pb-12 px-6">
         <div className="max-w-[1400px] mx-auto">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-5xl font-light text-[var(--copper-light)]"
+            className="text-3xl md:text-4xl font-light text-[var(--copper-light)]"
           >
             {title}
           </motion.h1>
@@ -496,8 +496,8 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
                 ))}
               </div>
             ) : products.length === 0 ? (
-              <div className="text-center py-20">
-                <div className="mb-4">
+              <div className="flex flex-col items-center justify-center py-20 w-full">
+                <div className="mb-4 text-center">
                   <SlidersHorizontal size={48} className="mx-auto text-[var(--text-faint)] mb-4" />
                   <p className="text-lg text-[var(--text-muted)]">No products found</p>
                   <p className="text-sm text-[var(--text-faint)] mt-1">
