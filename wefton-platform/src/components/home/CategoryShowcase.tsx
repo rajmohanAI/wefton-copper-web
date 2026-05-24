@@ -156,7 +156,7 @@ export default function CategoryShowcase() {
   const inView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section ref={ref} className="py-20 px-6 max-w-[1400px] mx-auto">
+    <section ref={ref} className="py-20 px-6 max-w-[1920px] mx-auto">
       {/* Section Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

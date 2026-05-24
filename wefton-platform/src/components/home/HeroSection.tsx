@@ -309,7 +309,7 @@ export default function HeroSection() {
         {/* Hero Content — Brand tagline and CTA */}
         <motion.div
           style={prefersReducedMotion ? {} : { y: textY, opacity: textOpacity }}
-          className="relative z-10 text-center px-6 max-w-4xl mx-auto"
+          className="relative z-10 text-center px-6 max-w-4xl ml-auto mr-[10%]"
         >
           <motion.p
             initial={{ opacity: 0, y: 20 }}

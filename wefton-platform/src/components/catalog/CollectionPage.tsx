@@ -254,31 +254,29 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
   };
 
   return (
-    <div className="min-h-screen pt-[var(--nav-height)]">
+    <div className="w-full max-w-[1920px] mx-auto min-h-screen pt-[var(--nav-height)]">
       {/* Page Header */}
-      <div className="bg-[var(--bg-darker)] border-b border-[var(--border-subtle)] pt-8 pb-12 px-6">
-        <div className="max-w-[1400px] mx-auto">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-3xl md:text-4xl font-light text-[var(--copper-light)]"
-          >
-            {title}
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mt-2 text-[var(--text-muted)]"
-          >
-            {subtitle}
-          </motion.p>
-        </div>
+      <div className="w-full bg-[var(--bg-darker)] border-b border-[var(--border-subtle)] pt-12 pb-10 px-6">
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-3xl md:text-4xl font-light text-[var(--copper-light)]"
+        >
+          {title}
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mt-2 text-[var(--text-muted)]"
+        >
+          {subtitle}
+        </motion.p>
       </div>
 
       {/* Category Pills */}
-      <div className="border-b border-[var(--border-subtle)] bg-[var(--bg-dark)]">
-        <div className="max-w-[1400px] mx-auto px-6 py-4 flex gap-2 overflow-x-auto no-scrollbar">
+      <div className="w-full border-b border-[var(--border-subtle)] bg-[var(--bg-dark)]">
+        <div className="w-full px-6 py-4 flex gap-2 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setFilters((f) => ({ ...f, category: [] }))}
             className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs tracking-wider uppercase transition-colors ${
@@ -312,36 +310,35 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
         </div>
       </div>
 
-      {/* Main Content with Desktop Sidebar */}
-      <div className="max-w-[1400px] mx-auto px-6 py-8">
-        <div className="flex gap-8">
-          {/* Desktop Persistent FilterSidebar (≥ 1024px) */}
-          <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="sticky top-[calc(var(--nav-height)+2rem)] max-h-[calc(100vh-var(--nav-height)-4rem)] overflow-y-auto pr-4 border-r border-[var(--border-subtle)]">
-              <div className="pb-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-sm font-medium tracking-widest uppercase text-[var(--text-light)]">
-                    Filters
-                  </h2>
-                  <button
-                    onClick={handleClearFilters}
-                    className="text-xs text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
-                  >
-                    Reset
-                  </button>
-                </div>
-                <FilterSidebar
-                  mode="inline"
-                  filters={filters}
-                  onChange={handleFilterChange}
-                  gender={gender}
-                />
+      {/* Main Content: Sidebar + Product Grid */}
+      <div className="flex w-full min-h-[calc(100vh-300px)] px-6 py-8">
+        {/* Desktop Persistent FilterSidebar (≥ 1024px) */}
+        <aside className="hidden lg:block w-[250px] shrink-0 pr-6 border-r border-[var(--border-subtle)]">
+          <div className="sticky top-[calc(var(--nav-height)+2rem)] max-h-[calc(100vh-var(--nav-height)-4rem)] overflow-y-auto">
+            <div className="pb-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-sm font-medium tracking-widest uppercase text-[var(--text-light)]">
+                  Filters
+                </h2>
+                <button
+                  onClick={handleClearFilters}
+                  className="text-xs text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
+                >
+                  Reset
+                </button>
               </div>
+              <FilterSidebar
+                mode="inline"
+                filters={filters}
+                onChange={handleFilterChange}
+                gender={gender}
+              />
             </div>
-          </aside>
+          </div>
+        </aside>
 
-          {/* Product Content Area */}
-          <div className="flex-1 min-w-0">
+        {/* Product Content Area — takes all remaining space */}
+        <div className="flex-1 w-full pl-0 lg:pl-8">
             {/* Toolbar */}
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
@@ -496,17 +493,17 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
                 ))}
               </div>
             ) : products.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 w-full">
-                <div className="mb-4 text-center">
-                  <SlidersHorizontal size={48} className="mx-auto text-[var(--text-faint)] mb-4" />
-                  <p className="text-lg text-[var(--text-muted)]">No products found</p>
-                  <p className="text-sm text-[var(--text-faint)] mt-1">
-                    Try adjusting your filters or clearing them to see more results.
-                  </p>
+              <div className="w-full h-full flex flex-col items-center justify-center py-20">
+                <SlidersHorizontal size={48} className="text-[var(--text-faint)] mb-4" />
+                <p className="text-lg text-[var(--text-muted)]">No products found</p>
+                <p className="text-sm text-[var(--text-faint)] mt-1">
+                  Try adjusting your filters or clearing them to see more results.
+                </p>
+                <div className="mt-4">
+                  <Button variant="outline" onClick={handleClearFilters}>
+                    Clear Filters
+                  </Button>
                 </div>
-                <Button variant="outline" onClick={handleClearFilters}>
-                  Clear Filters
-                </Button>
               </div>
             ) : (
               <>
@@ -544,7 +541,6 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
             )}
           </div>
         </div>
-      </div>
 
       {/* Mobile Filter Drawer (< 1024px) */}
       <FilterSidebar

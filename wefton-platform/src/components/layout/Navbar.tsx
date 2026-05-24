@@ -64,13 +64,14 @@ export default function Navbar() {
     <>
       <header
         className={cn(
-          'fixed top-0 left-0 right-0 z-50 transition-all duration-500',
+          'top-0 left-0 right-0 z-50 transition-all duration-500',
+          pathname === '/' ? 'fixed' : 'sticky -mb-[1px]',
           scrolled
             ? 'glass border-b border-[var(--glass-border)] py-3'
-            : 'bg-transparent py-5'
+            : 'bg-[var(--bg-dark)]/80 backdrop-blur-sm py-5'
         )}
       >
-        <nav className="max-w-[1400px] mx-auto px-6 flex items-center justify-between">
+        <nav className="max-w-[1920px] mx-auto px-6 flex items-center justify-between">
           {/* Logo */}
           <Link
             href="/"

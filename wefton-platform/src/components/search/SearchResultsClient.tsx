@@ -27,7 +27,7 @@ export default function SearchResultsClient() {
   return (
     <div className="min-h-screen pt-[var(--nav-height)]">
       <div className="bg-[var(--bg-darker)] border-b border-[var(--border-subtle)] py-12 px-6">
-        <div className="max-w-[1400px] mx-auto">
+        <div className="max-w-[1920px] mx-auto">
           <h1 className="text-3xl font-light text-[var(--copper-light)] flex items-center gap-3">
             <Search size={28} />
             {q ? `Results for "${q}"` : 'Search'}
@@ -38,7 +38,7 @@ export default function SearchResultsClient() {
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-6 py-12">
+      <div className="max-w-[1920px] mx-auto px-6 py-12">
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}

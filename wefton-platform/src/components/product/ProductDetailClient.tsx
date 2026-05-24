@@ -199,7 +199,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
       />
 
       {/* Breadcrumb */}
-      <div className="max-w-[1400px] mx-auto px-6 py-4">
+      <div className="max-w-[1920px] mx-auto px-6 py-4">
         <nav className="flex items-center gap-2 text-xs text-[var(--text-muted)]" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-[var(--copper-light)] transition-colors">Home</Link>
           <span>/</span>
@@ -212,7 +212,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
       </div>
 
       {/* Main Content */}
-      <div className="max-w-[1400px] mx-auto px-6 pb-20">
+      <div className="max-w-[1920px] mx-auto px-6 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-20">
           {/* Image Gallery */}
           <div className="space-y-4">

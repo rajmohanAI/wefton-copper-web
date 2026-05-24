@@ -65,7 +65,7 @@ export default function HomePage() {
       {/* Featured products — server component with Suspense */}
       <Suspense
         fallback={
-          <div className="py-20 px-6 max-w-[1400px] mx-auto">
+          <div className="py-20 px-6 max-w-[1920px] mx-auto">
             <Skeleton className="h-8 w-48 mb-12" />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {Array.from({ length: 8 }).map((_, i) => (

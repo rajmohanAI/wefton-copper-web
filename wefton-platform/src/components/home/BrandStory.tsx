@@ -76,7 +76,7 @@ export default function BrandStory() {
         />
       </motion.div>
 
-      <div className="relative max-w-[1400px] mx-auto px-6">
+      <div className="relative max-w-[1920px] mx-auto px-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}

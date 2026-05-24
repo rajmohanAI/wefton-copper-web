@@ -33,7 +33,7 @@ export default function Footer() {
   return (
     <footer className="bg-[var(--bg-darker)] border-t border-[var(--border-subtle)]">
       {/* Main Footer */}
-      <div className="max-w-[1400px] mx-auto px-6 py-16">
+      <div className="max-w-[1920px] mx-auto px-6 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12">
           {/* Brand Column */}
           <div className="lg:col-span-2">
@@ -142,7 +142,7 @@ export default function Footer() {
 
       {/* Bottom Bar */}
       <div className="border-t border-[var(--border-subtle)] py-5">
-        <div className="max-w-[1400px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="max-w-[1920px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-3">
           <p className="text-xs text-[var(--text-faint)]">
             © 2026 Wefton Copper. All rights reserved.
           </p>

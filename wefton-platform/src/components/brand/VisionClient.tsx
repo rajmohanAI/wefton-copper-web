@@ -114,7 +114,7 @@ export default function VisionClient() {
       </section>
 
       {/* Brand Promise Sections */}
-      <section className="py-20 px-6 max-w-[1400px] mx-auto">
+      <section className="py-20 px-6 max-w-[1920px] mx-auto">
         <motion.div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           variants={containerVariants}
