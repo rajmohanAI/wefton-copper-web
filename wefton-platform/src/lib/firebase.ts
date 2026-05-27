@@ -8,8 +8,13 @@
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getFirestore, type Firestore, setLogLevel } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
+
+// Suppress noisy Firestore gRPC warnings during SSR
+if (typeof window === 'undefined') {
+  try { setLogLevel('error'); } catch { /* ignore */ }
+}
 
 /**
  * Builds the Firebase config object using STATIC env var references.

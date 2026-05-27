@@ -225,7 +225,7 @@ export default function ProductFormModal({
           fieldErrors[path] = issue.message;
         }
       }
-      setErrors(fieldErrors);
+      setErrors({ ...fieldErrors, form: `Please fix ${Object.keys(fieldErrors).length} validation error(s): ${Object.values(fieldErrors).join(', ')}` });
       return;
     }
 
