@@ -3,9 +3,6 @@ import { Suspense } from 'react';
 import CollectionPage from '@/components/catalog/CollectionPage';
 import { ProductCardSkeleton } from '@/components/ui/Skeleton';
 
-// Ensure static generation at build time (SSG shell + client-side data)
-export const dynamic = 'force-static';
-
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
 
 export const metadata: Metadata = {
