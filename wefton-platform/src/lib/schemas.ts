@@ -59,11 +59,11 @@ export type EmailFormData = z.infer<typeof emailSchema>;
 /**
  * File upload validation schema
  * Validates payment screenshot uploads (type and size)
- * Accepts: JPEG, PNG, WebP — max 5MB
+ * Accepts: JPEG, PNG, WebP — max 10MB
  * Requirements: 23.6
  */
 const ACCEPTED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export const fileUploadSchema = z.object({
   type: z
@@ -74,7 +74,7 @@ export const fileUploadSchema = z.object({
     ),
   size: z
     .number()
-    .max(MAX_FILE_SIZE, 'File size must be 5MB or less'),
+    .max(MAX_FILE_SIZE, 'File size must be 10MB or less'),
 });
 
 export type FileUploadData = z.infer<typeof fileUploadSchema>;

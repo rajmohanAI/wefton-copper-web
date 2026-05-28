@@ -121,7 +121,7 @@ export default function CheckoutClient() {
   const validateFile = (file: File): string | null => {
     const result = fileUploadSchema.safeParse({ type: file.type, size: file.size });
     if (!result.success) {
-      return 'Please upload a JPEG, PNG, or WebP image under 5 MB';
+      return 'Please upload a JPEG, PNG, or WebP image under 10 MB';
     }
     return null;
   };
@@ -564,7 +564,7 @@ export default function CheckoutClient() {
                                   Click to upload screenshot
                                 </p>
                                 <p className="text-[10px] text-[var(--text-muted)]">
-                                  JPEG, PNG, or WebP · Max 5 MB
+                                  JPEG, PNG, or WebP · Max 10 MB
                                 </p>
                               </div>
                             )}

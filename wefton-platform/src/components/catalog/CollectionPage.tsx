@@ -158,11 +158,12 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
           filters,
           reset ? undefined : (lastDoc as Parameters<typeof getProductsByGender>[2])
         );
+        console.log('[CollectionPage] Fetched products:', newProducts.length, 'gender:', gender);
         setProducts((prev) => (reset ? newProducts : [...prev, ...newProducts]));
         setLastDoc(newLastDoc);
         setHasMore(newProducts.length === 12);
-      } catch {
-        // Firebase not configured — show empty state
+      } catch (error) {
+        console.error('[CollectionPage] Failed to load products:', error);
         if (reset) setProducts([]);
       } finally {
         setLoading(false);

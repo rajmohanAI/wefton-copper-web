@@ -124,6 +124,8 @@ export async function getProductsByGender(
   const q = query(collection(db, PRODUCTS_COL), ...constraints);
   const snap = await getDocs(q);
 
+  console.log('[productService] getProductsByGender:', gender, 'sortField:', sortField, 'sortDir:', sortDir, 'docs returned:', snap.docs.length);
+
   let products = snap.docs.map((d) => ({
     productId: d.id,
     ...(d.data() as Omit<Product, 'productId'>),

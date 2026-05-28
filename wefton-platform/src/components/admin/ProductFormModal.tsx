@@ -148,7 +148,7 @@ export default function ProductFormModal({
     const validFiles = files.filter(
       (f) =>
         ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) &&
-        f.size <= 5 * 1024 * 1024
+        f.size <= 10 * 1024 * 1024
     );
     setImageFiles((prev) => [...prev, ...validFiles]);
   };
