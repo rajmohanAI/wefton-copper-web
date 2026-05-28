@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Heart, ShoppingBag, Eye } from 'lucide-react';
+import { Heart, ShoppingBag, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { formatPrice, getDiscountPercent, cn } from '@/lib/utils';
@@ -20,14 +20,28 @@ interface ProductCardProps {
 export default function ProductCard({ product, priority = false }: ProductCardProps) {
   const [hovered, setHovered] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const { addItem, openCart } = useCartStore();
   const { toggle, has } = useWishlistStore();
   const isWishlisted = has(product.productId);
   const discount = getDiscountPercent(product.price, product.comparePrice || 0);
   const isOutOfStock = product.inventory === 0;
-  const primaryImage = product.images?.[0];
-  const secondaryImage = product.images?.[1];
+  const images = product.images || [];
+  const currentImage = images[currentImageIndex] || images[0];
+  const hasMultipleImages = images.length > 1;
+
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((i) => (i - 1 + images.length) % images.length);
+  };
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((i) => (i + 1) % images.length);
+  };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -38,7 +52,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
       productId: product.productId,
       title: product.title,
       slug: product.slug,
-      image: primaryImage?.url || '/placeholder.jpg',
+      image: images[0]?.url || '/placeholder.jpg',
       price: product.price,
       quantity: 1,
       inventory: product.inventory,
@@ -62,34 +76,54 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
       <Link href={`/products/${product.slug}`} className="block">
         {/* Image Container */}
         <div className="relative overflow-hidden rounded-lg bg-[var(--bg-darker)] aspect-[3/4]">
-          {/* Primary Image */}
-          {primaryImage && (
+          {/* Current Image */}
+          {currentImage && (
             <Image
-              src={primaryImage.url}
-              alt={primaryImage.alt || product.title}
+              src={currentImage.url}
+              alt={currentImage.alt || product.title}
               fill
               priority={priority}
-              className={cn(
-                'object-cover transition-all duration-700 ease-in-out',
-                hovered && secondaryImage ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
-              )}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover transition-opacity duration-500"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 50vw"
+              quality={90}
+              key={currentImageIndex}
             />
           )}
 
-          {/* Secondary Image (hover swap with CSS transition) */}
-          {secondaryImage && (
-            <Image
-              src={secondaryImage.url}
-              alt={secondaryImage.alt || `${product.title} - alternate view`}
-              fill
-              className={cn(
-                'object-cover transition-all duration-700 ease-in-out absolute inset-0',
-                hovered ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
-              )}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            />
+          {/* Prev/Next Navigation Arrows */}
+          {hasMultipleImages && hovered && (
+            <>
+              <button
+                onClick={handlePrevImage}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white/80 hover:text-white hover:bg-black/70 transition-all z-20"
+                aria-label="Previous image"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <button
+                onClick={handleNextImage}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white/80 hover:text-white hover:bg-black/70 transition-all z-20"
+                aria-label="Next image"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </>
           )}
+
+          {/* Image dots indicator */}
+          {hasMultipleImages && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-20">
+              {images.map((_, i) => (
+                <span
+                  key={i}
+                  className={cn(
+                    'w-1.5 h-1.5 rounded-full transition-colors',
+                    i === currentImageIndex ? 'bg-white' : 'bg-white/40'
+                  )}
+                />
+              ))}
+            </div>
+          )
 
           {/* Hover gradient overlay */}
           <motion.div
