@@ -123,7 +123,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
                 />
               ))}
             </div>
-          )
+          )}
 
           {/* Hover gradient overlay */}
           <motion.div

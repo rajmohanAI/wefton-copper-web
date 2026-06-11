@@ -311,14 +311,14 @@ export default function HeroSection() {
           style={prefersReducedMotion ? {} : { y: textY, opacity: textOpacity }}
           className="relative z-10 text-center px-6 max-w-4xl ml-auto mr-[10%]"
         >
-          <motion.p
+{/*           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.8 }}
             className="text-xs tracking-[6px] uppercase text-[var(--copper-light)] mb-6"
           >
             Premium Lifestyle Brand
-          </motion.p>
+          </motion.p> */}
 
           {/* Brand tagline: "Premium Lightweight Micro-French Terry" */}
           <motion.h1
@@ -332,14 +332,14 @@ export default function HeroSection() {
             <span className="gradient-copper copper-glow-text">Micro-French Terry</span>
           </motion.h1>
 
-          <motion.p
+{/*           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.8 }}
             className="text-base md:text-lg text-[var(--text-muted)] max-w-xl mx-auto mb-10 leading-relaxed"
           >
             Crafted for the discerning individual. Experience every thread as you scroll.
-          </motion.p>
+          </motion.p> */}
 
           {/* CTA buttons linking to /men and /women */}
           <motion.div

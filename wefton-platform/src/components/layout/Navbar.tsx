@@ -67,15 +67,15 @@ export default function Navbar() {
           'top-0 left-0 right-0 z-50 transition-all duration-500',
           pathname === '/' ? 'fixed' : 'sticky -mb-[1px]',
           scrolled
-            ? 'glass border-b border-[var(--glass-border)] py-3'
-            : 'bg-[var(--bg-dark)]/80 backdrop-blur-sm py-5'
+            ? 'glass border-b border-[var(--glass-border)] py-5'
+            : 'bg-[var(--bg-dark)]/80 backdrop-blur-sm py-7'
         )}
       >
         <nav className="max-w-[1920px] mx-auto px-6 flex items-center justify-between">
           {/* Logo */}
           <Link
             href="/"
-            className="text-[var(--copper-light)] font-bold tracking-[4px] uppercase text-sm hover:text-[var(--copper-main)] transition-colors"
+            className="text-[var(--copper-light)] font-bold tracking-[4px] uppercase text-base hover:text-[var(--copper-main)] transition-colors"
           >
             WEFTON COPPER
           </Link>
@@ -92,7 +92,7 @@ export default function Navbar() {
                 <Link
                   href={link.href}
                   className={cn(
-                    'flex items-center gap-1 text-xs tracking-widest uppercase transition-colors duration-200',
+                    'flex items-center gap-1 text-sm tracking-widest uppercase transition-colors duration-200',
                     pathname === link.href || pathname.startsWith(link.href + '/')
                       ? 'text-[var(--copper-light)]'
                       : 'text-[var(--text-light)] hover:text-[var(--copper-light)]'
@@ -110,7 +110,7 @@ export default function Navbar() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 8 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-4 glass rounded-lg border border-[var(--glass-border)] shadow-2xl shadow-black/60 min-w-[180px] py-2 z-50"
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-4 glass rounded-lg border border-[var(--glass-border)] shadow-2xl shadow-black/60 min-w-[220px] py-3 z-50"
                       onMouseEnter={() => handleDropdownEnter(link.label)}
                       onMouseLeave={handleDropdownLeave}
                     >
@@ -118,7 +118,7 @@ export default function Navbar() {
                         <Link
                           key={item.id}
                           href={`${link.href}?category=${item.slug}`}
-                          className="block px-5 py-2.5 text-xs tracking-wider text-[var(--text-muted)] hover:text-[var(--copper-light)] hover:bg-white/5 transition-colors"
+                          className="block px-5 py-3 text-sm tracking-wider text-[var(--text-muted)] hover:text-[var(--copper-light)] hover:bg-white/5 transition-colors"
                         >
                           {item.name}
                         </Link>

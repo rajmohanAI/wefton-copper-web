@@ -448,7 +448,7 @@ export default function ProductFormModal({
                   value={sku}
                   onChange={(e) => setSku(e.target.value)}
                   error={errors.sku}
-                  placeholder="WC-PT-001"
+                placeholder="WCM01#36758813247515"
                 />
               </div>
             </div>
@@ -660,7 +660,7 @@ export default function ProductFormModal({
                         value={variant.sku || ''}
                         onChange={(e) => updateVariant(idx, 'sku', e.target.value)}
                         className="h-9 bg-white/5 border border-white/10 rounded text-[var(--text-light)] text-xs px-2 focus:outline-none focus:border-[var(--copper-main)]"
-                        placeholder="WC-V-001"
+                        placeholder="WCM01#36758813247515"
                       />
                     </div>
                   </div>
