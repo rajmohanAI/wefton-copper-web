@@ -19,6 +19,27 @@ import { useWishlistStore } from '@/store/wishlistStore';
 import { useAuthStore } from '@/store/authStore';
 import { useSearchStore } from '@/store/searchStore';
 import { MEN_CATEGORIES, WOMEN_CATEGORIES } from '@/config/brand';
+import ThemeSwitcher from './ThemeSwitcher';
+
+/**
+ * NavbarActionsSkeleton — rendered before hydration completes
+ * to reserve space for the action icons (search, wishlist, user, cart, menu).
+ * Matches the exact dimensions (18px icon size + 4px gap) to prevent CLS.
+ */
+function NavbarActionsSkeleton() {
+  return (
+    <div className="flex items-center gap-4" aria-hidden="true">
+      {/* Search */}
+      <div className="w-[18px] h-[18px] rounded bg-muted/30 animate-pulse" />
+      {/* Wishlist */}
+      <div className="w-[18px] h-[18px] rounded bg-muted/30 animate-pulse" />
+      {/* User */}
+      <div className="w-[18px] h-[18px] rounded bg-muted/30 animate-pulse" />
+      {/* Cart */}
+      <div className="w-[18px] h-[18px] rounded bg-muted/30 animate-pulse" />
+    </div>
+  );
+}
 
 const NAV_LINKS = [
   { label: 'Home', href: '/' },
@@ -34,12 +55,17 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const dropdownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cartCount = useCartStore((s) => s.getItemCount());
   const wishlistCount = useWishlistStore((s) => s.items.length);
   const { user } = useAuthStore();
   const { openSearch } = useSearchStore();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -71,7 +97,7 @@ export default function Navbar() {
             : 'bg-[var(--bg-dark)]/80 backdrop-blur-sm py-7'
         )}
       >
-        <nav className="max-w-[1920px] mx-auto px-6 flex items-center justify-between">
+        <nav className="w-full px-6 md:px-10 lg:px-16 flex items-center justify-between">
           {/* Logo */}
           <Link
             href="/"
@@ -132,6 +158,10 @@ export default function Navbar() {
 
           {/* Actions */}
           <div className="flex items-center gap-4">
+            {!mounted ? (
+              <NavbarActionsSkeleton />
+            ) : (
+              <>
             <button
               onClick={openSearch}
               className="text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
@@ -147,7 +177,7 @@ export default function Navbar() {
             >
               <Heart size={18} />
               {wishlistCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-[var(--copper-main)] text-white text-[9px] flex items-center justify-center font-bold">
+                <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-[var(--copper-main)] text-white text-[0.5625rem] flex items-center justify-center font-bold">
                   {wishlistCount}
                 </span>
               )}
@@ -172,12 +202,15 @@ export default function Navbar() {
                   key={cartCount}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-[var(--copper-main)] text-white text-[9px] flex items-center justify-center font-bold"
+                  className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-[var(--copper-main)] text-white text-[0.5625rem] flex items-center justify-center font-bold"
                 >
                   {cartCount}
                 </motion.span>
               )}
             </button>
+
+            {/* Theme Switcher */}
+            <ThemeSwitcher />
 
             {/* Mobile menu toggle */}
             <button
@@ -187,6 +220,8 @@ export default function Navbar() {
             >
               {mobileOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
+              </>
+            )}
           </div>
         </nav>
       </header>

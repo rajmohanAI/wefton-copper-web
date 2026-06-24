@@ -117,7 +117,7 @@ export default function AboutClient() {
       {/* ─── Hero Section ─── */}
       <section
         ref={heroRef}
-        className="relative py-32 px-6 bg-[var(--bg-darker)] overflow-hidden"
+        className="relative py-32 px-4 md:px-8 bg-[var(--bg-darker)] overflow-hidden"
       >
         <div
           className="absolute inset-0 opacity-10 pointer-events-none"
@@ -159,7 +159,7 @@ export default function AboutClient() {
       </section>
 
       {/* ─── Brand Timeline ─── */}
-      <section className="py-20 px-6 max-w-4xl mx-auto">
+      <section className="py-20 px-4 md:px-8 max-w-4xl mx-auto">
         <h2 className="text-3xl font-light text-[var(--text-light)] text-center mb-16">
           Our <span className="gradient-copper">Journey</span>
         </h2>
@@ -173,7 +173,7 @@ export default function AboutClient() {
       {/* ─── Mission Statement ─── */}
       <section
         ref={missionRef}
-        className="py-20 px-6 bg-[var(--bg-darker)]"
+        className="py-20 px-4 md:px-8 bg-[var(--bg-darker)]"
       >
         <div className="max-w-4xl mx-auto">
           <motion.div
@@ -213,7 +213,7 @@ export default function AboutClient() {
       {/* ─── Sustainability & Ethical Manufacturing ─── */}
       <section
         ref={sustainRef}
-        className="py-20 px-6"
+        className="py-20 px-4 md:px-8"
       >
         <div className="max-w-4xl mx-auto">
           <motion.div
@@ -301,7 +301,7 @@ export default function AboutClient() {
       {/* ─── Contact Information ─── */}
       <section
         ref={contactRef}
-        className="py-20 px-6 bg-[var(--bg-darker)]"
+        className="py-20 px-4 md:px-8 bg-[var(--bg-darker)]"
       >
         <div className="max-w-4xl mx-auto">
           <motion.div
@@ -327,23 +327,23 @@ export default function AboutClient() {
             {/* Email & Phone */}
             <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-10">
               <a
-                href="mailto:hello@weftoncopper.com"
+                href="mailto:weftoncopper@gmail.com"
                 className="flex items-center gap-3 text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors group"
               >
                 <div className="w-10 h-10 rounded-full bg-[var(--copper-main)]/10 flex items-center justify-center group-hover:bg-[var(--copper-main)]/20 transition-colors">
                   <Mail size={18} className="text-[var(--copper-light)]" />
                 </div>
-                <span className="text-sm">hello@weftoncopper.com</span>
+                <span className="text-sm">weftoncopper@gmail.com</span>
               </a>
 
               <a
-                href="tel:+919876543210"
+                href="tel:+918056135201"
                 className="flex items-center gap-3 text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors group"
               >
                 <div className="w-10 h-10 rounded-full bg-[var(--copper-main)]/10 flex items-center justify-center group-hover:bg-[var(--copper-main)]/20 transition-colors">
                   <Phone size={18} className="text-[var(--copper-light)]" />
                 </div>
-                <span className="text-sm">+91 98765 43210</span>
+                <span className="text-sm">+91 80561 35201</span>
               </a>
             </div>
 
@@ -375,7 +375,7 @@ export default function AboutClient() {
       </section>
 
       {/* ─── CTA Section ─── */}
-      <section className="py-20 px-6 text-center">
+      <section className="py-20 px-4 md:px-8 text-center">
         <div className="max-w-xl mx-auto">
           <h2 className="text-3xl font-light text-[var(--text-light)] mb-4">
             Wear the difference.

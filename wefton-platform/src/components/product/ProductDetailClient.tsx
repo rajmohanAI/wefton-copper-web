@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useRef, useCallback, type MouseEvent, type TouchEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, type MouseEvent, type TouchEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Heart,
   ShoppingBag,
@@ -19,6 +18,7 @@ import {
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { formatPrice, getDiscountPercent } from '@/lib/utils';
+import { trackViewItem } from '@/lib/analytics';
 import StarRating from '@/components/ui/StarRating';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -91,6 +91,15 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
 
   const currentPrice = selectedVariant?.price || product.price;
   const currentInventory = selectedVariant?.inventory ?? product.inventory;
+
+  // GA4: Track view_item event on product detail page mount
+  useEffect(() => {
+    trackViewItem({
+      item_id: product.productId,
+      item_name: product.title,
+      price: product.price,
+    });
+  }, [product.productId, product.title, product.price]);
 
   // ── Hover Zoom Handlers (Desktop) ──────────────────────────
   const handleMouseMove = useCallback((e: MouseEvent<HTMLDivElement>) => {
@@ -199,7 +208,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
       />
 
       {/* Breadcrumb */}
-      <div className="max-w-[1920px] mx-auto px-6 py-4">
+      <div className="max-w-[1280px] mx-auto px-4 md:px-8 py-4">
         <nav className="flex items-center gap-2 text-xs text-[var(--text-muted)]" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-[var(--copper-light)] transition-colors">Home</Link>
           <span>/</span>
@@ -212,7 +221,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
       </div>
 
       {/* Main Content */}
-      <div className="max-w-[1920px] mx-auto px-6 pb-20">
+      <div className="max-w-[1280px] mx-auto px-4 md:px-8 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-20">
           {/* Image Gallery */}
           <div className="space-y-4">
@@ -229,37 +238,31 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
               role="img"
               aria-label={`Product image gallery showing ${product.images?.[selectedImage]?.alt || product.title}`}
             >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={selectedImage}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute inset-0"
-                >
-                  {product.images?.[selectedImage] && (
-                    <Image
-                      src={product.images[selectedImage].url}
-                      alt={product.images[selectedImage].alt || product.title}
-                      fill
-                      className={cn(
-                        'object-cover transition-transform duration-300 ease-out',
-                        isZooming
-                          ? 'scale-[2] cursor-zoom-out'
-                          : 'scale-100 cursor-zoom-in'
-                      )}
-                      style={
-                        isZooming
-                          ? { transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%` }
-                          : undefined
-                      }
-                      sizes="(max-width: 1024px) 100vw, 50vw"
-                      priority
-                    />
-                  )}
-                </motion.div>
-              </AnimatePresence>
+              <div
+                key={selectedImage}
+                className="absolute inset-0 animate-fade-in"
+              >
+                {product.images?.[selectedImage] && (
+                  <Image
+                    src={product.images[selectedImage].url}
+                    alt={product.images[selectedImage].alt || product.title}
+                    fill
+                    className={cn(
+                      'object-cover transition-transform duration-300 ease-out',
+                      isZooming
+                        ? 'scale-[2] cursor-zoom-out'
+                        : 'scale-100 cursor-zoom-in'
+                    )}
+                    style={
+                      isZooming
+                        ? { transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%` }
+                        : undefined
+                    }
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    priority
+                  />
+                )}
+              </div>
 
               {/* Nav arrows */}
               {product.images?.length > 1 && (
@@ -283,7 +286,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
 
               {/* Zoom hint (hidden on touch devices) */}
               <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
-                <div className="glass rounded px-2 py-1 flex items-center gap-1 text-[10px] text-white/70">
+                <div className="glass rounded px-2 py-1 flex items-center gap-1 text-[0.625rem] text-white/70">
                   <ZoomIn size={10} /> Hover to zoom
                 </div>
               </div>

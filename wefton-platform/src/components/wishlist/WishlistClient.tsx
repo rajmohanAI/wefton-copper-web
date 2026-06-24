@@ -82,8 +82,8 @@ export default function WishlistClient() {
   return (
     <div className="min-h-screen pt-[var(--nav-height)]">
       {/* Header */}
-      <div className="bg-[var(--bg-darker)] border-b border-[var(--border-subtle)] py-12 px-6">
-        <div className="max-w-[1920px] mx-auto">
+      <div className="bg-[var(--bg-darker)] border-b border-[var(--border-subtle)] py-12 px-4 md:px-8">
+        <div className="max-w-[1280px] mx-auto">
           <h1 className="text-4xl font-light text-[var(--copper-light)] flex items-center gap-3">
             <Heart size={32} /> Wishlist
           </h1>
@@ -93,7 +93,7 @@ export default function WishlistClient() {
         </div>
       </div>
 
-      <div className="max-w-[1920px] mx-auto px-6 py-12">
+      <div className="max-w-[1280px] mx-auto px-4 md:px-8 py-12">
         {/* Loading State */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

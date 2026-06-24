@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { ThemeProvider } from 'next-themes';
 import { useAuthListener } from '@/hooks/useAuth';
+import GA4Provider from '@/components/analytics/GA4Provider';
 
 const CartDrawer = dynamic(() => import('@/components/cart/CartDrawer'), { ssr: false });
 const SearchOverlay = dynamic(() => import('@/components/search/SearchOverlay'), { ssr: false });
@@ -19,8 +20,9 @@ function GlobalAuthModal() {
 
 export default function AppProviders({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
       <AuthListenerWrapper>
+        <GA4Provider consentGranted={true} />
         {children}
         <CartDrawer />
         <SearchOverlay />

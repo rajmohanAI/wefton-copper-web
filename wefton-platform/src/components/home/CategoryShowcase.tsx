@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion, useInView } from 'framer-motion';
 
 /**
  * Category tile data — sourced from a static array with Firebase Storage image URLs.
@@ -95,18 +94,14 @@ function BrandedPlaceholder({ name }: { name: string }) {
 /**
  * Individual category tile with image, name, and link.
  * Shows branded placeholder on image load failure.
+ * Renders immediately without entrance animations.
  */
-function CategoryTileCard({ tile, index }: { tile: CategoryTile; index: number }) {
+function CategoryTileCard({ tile }: { tile: CategoryTile; index: number }) {
   const [imageError, setImageError] = useState(false);
   const href = `/${tile.gender}?category=${tile.slug}`;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
-      transition={{ duration: 0.5, delay: index * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
-    >
+    <div style={{ opacity: 1, transform: 'none' }}>
       <Link
         href={href}
         className="group relative block overflow-hidden rounded-xl aspect-[3/4] bg-[var(--bg-darker)]"
@@ -141,7 +136,7 @@ function CategoryTileCard({ tile, index }: { tile: CategoryTile; index: number }
         {/* Hover border */}
         <div className="absolute inset-0 border-2 border-transparent group-hover:border-[var(--copper-main)]/50 rounded-xl transition-colors duration-300" />
       </Link>
-    </motion.div>
+    </div>
   );
 }
 
@@ -149,20 +144,15 @@ function CategoryTileCard({ tile, index }: { tile: CategoryTile; index: number }
  * CategoryShowcase — displays 6+ category tiles on the homepage.
  * Each tile links to the filtered collection page (/men?category=slug or /women?category=slug).
  * Responsive grid: 2 cols mobile, 3 cols tablet, 4 cols desktop.
- * Uses Framer Motion for viewport entrance animations.
+ * Renders immediately without entrance animations.
  */
 export default function CategoryShowcase() {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
-
   return (
-    <section ref={ref} className="py-20 px-6 max-w-[1920px] mx-auto">
+    <section className="py-20 px-4 md:px-8 lg:px-8 max-w-[1280px] mx-auto">
       {/* Section Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.6 }}
+      <div
         className="text-center mb-12"
+        style={{ opacity: 1, transform: 'none' }}
       >
         <p className="text-xs tracking-[4px] uppercase text-[var(--copper-light)] mb-3">
           Shop by Category
@@ -173,7 +163,7 @@ export default function CategoryShowcase() {
         <p className="mt-3 text-sm text-[var(--text-muted)] max-w-md mx-auto">
           Discover premium essentials crafted from Micro-French Terry for every occasion
         </p>
-      </motion.div>
+      </div>
 
       {/* Category Grid — 2 cols mobile, 3 cols tablet, 4 cols desktop */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">

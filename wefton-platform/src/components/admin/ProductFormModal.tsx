@@ -509,7 +509,7 @@ export default function ProductFormModal({
                         <X size={12} />
                       </button>
                       {img.isPrimary && (
-                        <span className="absolute bottom-0 left-0 right-0 bg-[var(--copper-main)]/80 text-[9px] text-white text-center py-0.5">
+                        <span className="absolute bottom-0 left-0 right-0 bg-[var(--copper-main)]/80 text-[0.5625rem] text-white text-center py-0.5">
                           Primary
                         </span>
                       )}
@@ -535,7 +535,7 @@ export default function ProductFormModal({
                       >
                         <X size={12} />
                       </button>
-                      <span className="absolute bottom-0 left-0 right-0 bg-blue-600/80 text-[9px] text-white text-center py-0.5">
+                      <span className="absolute bottom-0 left-0 right-0 bg-blue-600/80 text-[0.5625rem] text-white text-center py-0.5">
                         New
                       </span>
                     </div>
@@ -594,7 +594,7 @@ export default function ProductFormModal({
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] text-[var(--text-muted)] uppercase">Size</label>
+                      <label className="text-[0.625rem] text-[var(--text-muted)] uppercase">Size</label>
                       <select
                         value={variant.size || ''}
                         onChange={(e) => updateVariant(idx, 'size', e.target.value)}
@@ -607,7 +607,7 @@ export default function ProductFormModal({
                       </select>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] text-[var(--text-muted)] uppercase">Colour</label>
+                      <label className="text-[0.625rem] text-[var(--text-muted)] uppercase">Colour</label>
                       <input
                         value={variant.color || ''}
                         onChange={(e) => updateVariant(idx, 'color', e.target.value)}
@@ -616,7 +616,7 @@ export default function ProductFormModal({
                       />
                     </div>
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] text-[var(--text-muted)] uppercase">Hex</label>
+                      <label className="text-[0.625rem] text-[var(--text-muted)] uppercase">Hex</label>
                       <div className="flex items-center gap-1">
                         <input
                           type="color"
@@ -633,7 +633,7 @@ export default function ProductFormModal({
                       </div>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] text-[var(--text-muted)] uppercase">Price Override</label>
+                      <label className="text-[0.625rem] text-[var(--text-muted)] uppercase">Price Override</label>
                       <input
                         type="number"
                         value={variant.price ?? ''}
@@ -644,7 +644,7 @@ export default function ProductFormModal({
                       />
                     </div>
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] text-[var(--text-muted)] uppercase">Inventory</label>
+                      <label className="text-[0.625rem] text-[var(--text-muted)] uppercase">Inventory</label>
                       <input
                         type="number"
                         value={variant.inventory}
@@ -655,7 +655,7 @@ export default function ProductFormModal({
                       />
                     </div>
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] text-[var(--text-muted)] uppercase">SKU</label>
+                      <label className="text-[0.625rem] text-[var(--text-muted)] uppercase">SKU</label>
                       <input
                         value={variant.sku || ''}
                         onChange={(e) => updateVariant(idx, 'sku', e.target.value)}

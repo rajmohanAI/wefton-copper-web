@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
@@ -14,6 +15,7 @@ import { getFirebaseDb } from '@/lib/firebase';
 import { addressSchema, fileUploadSchema, type AddressFormData } from '@/lib/schemas';
 import { createOrder, uploadPaymentScreenshot } from '@/services/orderService';
 import { formatPrice } from '@/lib/utils';
+import { trackPurchase } from '@/lib/analytics';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import type { Address } from '@/types';
@@ -38,6 +40,7 @@ export default function CheckoutClient() {
   const [saveAddress, setSaveAddress] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [savingAddress, setSavingAddress] = useState(false);
+  const [tosAccepted, setTosAccepted] = useState(false);
 
   // Step 2: QR Payment state
   const [orderCreating, setOrderCreating] = useState(false);
@@ -153,6 +156,20 @@ export default function CheckoutClient() {
     try {
       await uploadPaymentScreenshot(orderId, selectedFile, paymentReference.trim());
       setConfirmedItems([...items]);
+
+      // GA4: Track purchase event after successful checkout
+      trackPurchase({
+        transaction_id: orderId,
+        value: orderTotal,
+        shipping: getShipping(),
+        items: items.map((item) => ({
+          item_id: item.productId,
+          item_name: item.title,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      });
+
       clearCart();
       setStep('confirmation');
     } catch (e: unknown) {
@@ -179,6 +196,12 @@ export default function CheckoutClient() {
 
   // Handle address form submission with Zod validation
   const handleAddressSubmit = form.handleSubmit(async (data) => {
+    // Prevent submission if Terms of Service not accepted
+    if (!tosAccepted) {
+      setError('Please accept the Terms of Service and Refund Policy to continue.');
+      return;
+    }
+
     const newAddress: Address = {
       addressId: selectedAddressId || crypto.randomUUID(),
       name: data.name,
@@ -223,7 +246,8 @@ export default function CheckoutClient() {
 
   return (
     <div className="min-h-screen pt-[var(--nav-height)] bg-[var(--bg-dark)]">
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="w-full px-6 md:px-10 lg:px-16 py-12">
+        <div className="w-full">
         {/* Step Indicator */}
         <div className="flex items-center justify-center gap-4 mb-12">
           {STEPS.map((s, i) => (
@@ -399,6 +423,34 @@ export default function CheckoutClient() {
                       </label>
                     )}
 
+                    {/* Terms of Service Acknowledgment */}
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <div className="relative mt-0.5">
+                        <input
+                          type="checkbox"
+                          checked={tosAccepted}
+                          onChange={(e) => setTosAccepted(e.target.checked)}
+                          className="sr-only peer"
+                          aria-required="true"
+                        />
+                        <div className="w-5 h-5 rounded border border-white/20 bg-white/5 peer-checked:bg-[var(--copper-main)] peer-checked:border-[var(--copper-main)] transition-all flex items-center justify-center">
+                          {tosAccepted && (
+                            <Check size={12} className="text-white" />
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-sm text-[var(--text-muted)] group-hover:text-[var(--text-light)] transition-colors">
+                        I agree to the{' '}
+                        <Link href="/terms" target="_blank" className="text-[var(--copper-light)] hover:underline">
+                          Terms of Service
+                        </Link>{' '}
+                        and{' '}
+                        <Link href="/refund-policy" target="_blank" className="text-[var(--copper-light)] hover:underline">
+                          Refund Policy
+                        </Link>
+                      </span>
+                    </label>
+
                     <Button
                       type="submit"
                       variant="copper"
@@ -406,6 +458,7 @@ export default function CheckoutClient() {
                       fullWidth
                       className="mt-4"
                       loading={savingAddress}
+                      disabled={!tosAccepted}
                     >
                       Continue to Payment
                     </Button>
@@ -882,6 +935,7 @@ export default function CheckoutClient() {
               </div>
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

@@ -181,7 +181,7 @@ export default function TestimonialsSection() {
   const currentTestimonial = testimonials[current];
 
   return (
-    <section ref={sectionRef} className="py-24 px-6 bg-[var(--bg-dark)]">
+    <section ref={sectionRef} className="py-24 px-4 md:px-8 bg-[var(--bg-dark)]">
       <div className="max-w-4xl mx-auto">
         {/* Section header */}
         <motion.div

@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
 import type { Product } from '@/types';
@@ -13,13 +12,12 @@ interface SimilarProductsProps {
 /**
  * Renders a horizontal scrollable row of similar ProductCard components.
  * Hidden entirely if fewer than 2 products are provided.
+ * Renders immediately without entrance animations.
  *
  * Validates: Requirements 14.1–14.3
  */
 export default function SimilarProducts({ products }: SimilarProductsProps) {
-  const sectionRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(sectionRef, { once: true, margin: '-80px' });
 
   // Hide section if fewer than 2 similar products
   if (products.length < 2) {
@@ -36,13 +34,11 @@ export default function SimilarProducts({ products }: SimilarProductsProps) {
   };
 
   return (
-    <section ref={sectionRef} className="mt-20" aria-labelledby="similar-products-heading">
+    <section className="mt-20" aria-labelledby="similar-products-heading">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.6 }}
+      <div
         className="flex items-center justify-between mb-8"
+        style={{ opacity: 1, transform: 'none' }}
       >
         <h2
           id="similar-products-heading"
@@ -68,14 +64,10 @@ export default function SimilarProducts({ products }: SimilarProductsProps) {
             <ChevronRight size={16} />
           </button>
         </div>
-      </motion.div>
+      </div>
 
       {/* Horizontal scrollable row */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.6, delay: 0.2 }}
-      >
+      <div style={{ opacity: 1, transform: 'none' }}>
         <div
           ref={scrollRef}
           className="flex gap-4 md:gap-6 overflow-x-auto no-scrollbar pb-4 snap-x snap-mandatory"
@@ -89,7 +81,7 @@ export default function SimilarProducts({ products }: SimilarProductsProps) {
             </div>
           ))}
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }
