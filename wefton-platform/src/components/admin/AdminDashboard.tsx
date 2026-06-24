@@ -12,6 +12,8 @@ import {
   Clock,
   CreditCard,
   RefreshCw,
+  Ticket,
+  RotateCcw,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { getAllOrders } from '@/services/orderService';
@@ -19,6 +21,8 @@ import { formatPrice } from '@/lib/utils';
 import Button from '@/components/ui/Button';
 import ProductsTab from './ProductsTab';
 import AdminOrders from './AdminOrders';
+import CouponsTab from './CouponsTab';
+import ReturnsTab from './ReturnsTab';
 import type { Order, AdminStats } from '@/types';
 
 function computeAdminStats(orders: Order[], totalProducts: number, totalUsers: number): AdminStats {
@@ -170,7 +174,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen pt-[var(--nav-height)] bg-[var(--bg-dark)]">
-      <div className="max-w-[1920px] mx-auto px-6 py-8">
+      <div className="max-w-[1280px] mx-auto px-4 md:px-8 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -206,6 +210,20 @@ export default function AdminDashboard() {
               <BarChart3 size={15} />
               Stats
             </Tabs.Trigger>
+            <Tabs.Trigger
+              value="coupons"
+              className="flex items-center gap-2 px-4 py-2.5 rounded text-sm transition-colors data-[state=active]:bg-[var(--copper-main)]/10 data-[state=active]:text-[var(--copper-light)] data-[state=active]:border data-[state=active]:border-[var(--copper-main)]/20 text-[var(--text-muted)] hover:text-[var(--text-light)] hover:bg-white/5"
+            >
+              <Ticket size={15} />
+              Coupons
+            </Tabs.Trigger>
+            <Tabs.Trigger
+              value="returns"
+              className="flex items-center gap-2 px-4 py-2.5 rounded text-sm transition-colors data-[state=active]:bg-[var(--copper-main)]/10 data-[state=active]:text-[var(--copper-light)] data-[state=active]:border data-[state=active]:border-[var(--copper-main)]/20 text-[var(--text-muted)] hover:text-[var(--text-light)] hover:bg-white/5"
+            >
+              <RotateCcw size={15} />
+              Returns
+            </Tabs.Trigger>
           </Tabs.List>
 
           {/* Orders Tab */}
@@ -225,6 +243,16 @@ export default function AdminDashboard() {
               loading={statsLoading}
               onRefresh={fetchOrders}
             />
+          </Tabs.Content>
+
+          {/* Coupons Tab */}
+          <Tabs.Content value="coupons" className="outline-none">
+            <CouponsTab />
+          </Tabs.Content>
+
+          {/* Returns Tab */}
+          <Tabs.Content value="returns" className="outline-none">
+            <ReturnsTab />
           </Tabs.Content>
         </Tabs.Root>
       </div>

@@ -182,16 +182,16 @@ describe('Feature: wefton-copper-platform, Property 6: File upload validation', 
    *
    * For any file metadata (type and size), the payment screenshot validator
    * SHALL accept only files where type is one of image/jpeg, image/png, or
-   * image/webp AND size <= 5 * 1024 * 1024 bytes. All other files SHALL be rejected.
+   * image/webp AND size <= 10 * 1024 * 1024 bytes. All other files SHALL be rejected.
    */
 
   const VALID_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
-  const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+  const MAX_SIZE = 10 * 1024 * 1024; // 10MB (matches fileUploadSchema in schemas.ts)
 
   // Arbitrary for valid file types
   const validTypeArb = fc.constantFrom(...VALID_TYPES);
 
-  // Arbitrary for valid file sizes (1 byte to 5MB)
+  // Arbitrary for valid file sizes (1 byte to 10MB)
   const validSizeArb = fc.integer({ min: 1, max: MAX_SIZE });
 
   // Arbitrary for invalid file types (not jpeg/png/webp)
@@ -199,7 +199,7 @@ describe('Feature: wefton-copper-platform, Property 6: File upload validation', 
     (s) => !VALID_TYPES.includes(s as typeof VALID_TYPES[number])
   );
 
-  // Arbitrary for invalid file sizes (> 5MB)
+  // Arbitrary for invalid file sizes (> 10MB)
   const invalidSizeArb = fc.integer({ min: MAX_SIZE + 1, max: MAX_SIZE * 10 });
 
   it('Property 6: valid file type and size always passes validation', () => {

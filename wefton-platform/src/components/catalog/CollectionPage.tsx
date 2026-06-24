@@ -255,9 +255,9 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
   };
 
   return (
-    <div className="w-full max-w-[1920px] mx-auto min-h-screen pt-[var(--nav-height)]">
+    <div className="w-full max-w-[1280px] mx-auto min-h-screen pt-[var(--nav-height)]">
       {/* Page Header */}
-      <div className="w-full bg-[var(--bg-darker)] border-b border-[var(--border-subtle)] pt-12 pb-10 px-6">
+      <div className="w-full bg-[var(--bg-darker)] border-b border-[var(--border-subtle)] pt-12 pb-10 px-4 md:px-8">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -277,7 +277,7 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
 
       {/* Category Pills */}
       <div className="w-full border-b border-[var(--border-subtle)] bg-[var(--bg-dark)]">
-        <div className="w-full px-6 py-4 flex gap-2 overflow-x-auto no-scrollbar">
+        <div className="w-full px-4 md:px-8 py-4 flex gap-2 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setFilters((f) => ({ ...f, category: [] }))}
             className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs tracking-wider uppercase transition-colors ${
@@ -312,7 +312,7 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
       </div>
 
       {/* Main Content: Sidebar + Product Grid */}
-      <div className="flex w-full min-h-[calc(100vh-300px)] px-6 py-8">
+      <div className="flex w-full min-h-[calc(100vh-300px)] px-4 md:px-8 py-8">
         {/* Desktop Persistent FilterSidebar (≥ 1024px) */}
         <aside className="hidden lg:block w-[250px] shrink-0 pr-6 border-r border-[var(--border-subtle)]">
           <div className="sticky top-[calc(var(--nav-height)+2rem)] max-h-[calc(100vh-var(--nav-height)-4rem)] overflow-y-auto">

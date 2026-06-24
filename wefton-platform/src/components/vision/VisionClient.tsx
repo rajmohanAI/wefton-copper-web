@@ -103,7 +103,7 @@ export default function VisionClient() {
       {/* Hero */}
       <section
         ref={heroRef}
-        className="relative py-32 px-6 bg-[var(--bg-darker)] overflow-hidden"
+        className="relative py-32 px-4 md:px-8 bg-[var(--bg-darker)] overflow-hidden"
       >
         <div
           className="absolute inset-0 opacity-10 pointer-events-none"
@@ -149,7 +149,7 @@ export default function VisionClient() {
       </section>
 
       {/* Vision Cards */}
-      <section className="py-20 px-6 max-w-[1920px] mx-auto">
+      <section className="py-20 px-4 md:px-8 max-w-[1280px] mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {VISION_SECTIONS.map((section, i) => (
             <VisionCard key={section.id} section={section} index={i} />
@@ -158,7 +158,7 @@ export default function VisionClient() {
       </section>
 
       {/* Closing Statement */}
-      <section className="py-24 px-6 bg-[var(--bg-darker)] text-center">
+      <section className="py-24 px-4 md:px-8 bg-[var(--bg-darker)] text-center">
         <div className="max-w-3xl mx-auto">
           <blockquote className="text-2xl md:text-3xl font-light text-[var(--text-light)] italic leading-relaxed">
             &ldquo;The Wefton Copper Ethos — Premium isn&apos;t about logos; it&apos;s about the

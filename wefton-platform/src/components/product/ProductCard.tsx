@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 import { Heart, ShoppingBag, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
@@ -68,10 +67,11 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   };
 
   return (
-    <motion.article
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
+    <article
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className="group relative"
+      style={{ opacity: 1, transform: 'none' }}
     >
       <Link href={`/products/${product.slug}`} className="block">
         {/* Image Container */}
@@ -126,10 +126,11 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           )}
 
           {/* Hover gradient overlay */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: hovered ? 1 : 0 }}
-            className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"
+          <div
+            className={cn(
+              "absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-200",
+              hovered ? "opacity-100" : "opacity-0"
+            )}
           />
 
           {/* Out of Stock overlay */}
@@ -164,11 +165,11 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           </button>
 
           {/* Quick Actions on hover */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: hovered ? 1 : 0, y: hovered ? 0 : 10 }}
-            transition={{ duration: 0.2 }}
-            className="absolute bottom-3 left-3 right-3 flex gap-2 z-20"
+          <div
+            className={cn(
+              "absolute bottom-3 left-3 right-3 flex gap-2 z-20 transition-all duration-200",
+              hovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[10px]"
+            )}
           >
             <button
               onClick={handleAddToCart}
@@ -193,7 +194,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             >
               <Eye size={14} />
             </Link>
-          </motion.div>
+          </div>
         </div>
 
         {/* Product Info */}
@@ -243,6 +244,6 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           </div>
         </div>
       </Link>
-    </motion.article>
+    </article>
   );
 }

@@ -80,7 +80,7 @@ export default function VisionClient() {
   return (
     <div className="min-h-screen pt-[var(--nav-height)]">
       {/* Hero Section */}
-      <section className="relative py-32 px-6 bg-[var(--bg-darker)] overflow-hidden">
+      <section className="relative py-32 px-4 md:px-8 bg-[var(--bg-darker)] overflow-hidden">
         <div
           className="absolute inset-0 opacity-10 pointer-events-none"
           style={{
@@ -114,7 +114,7 @@ export default function VisionClient() {
       </section>
 
       {/* Brand Promise Sections */}
-      <section className="py-20 px-6 max-w-[1920px] mx-auto">
+      <section className="py-20 px-4 md:px-8 max-w-[1280px] mx-auto">
         <motion.div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           variants={containerVariants}
@@ -145,7 +145,7 @@ export default function VisionClient() {
       </section>
 
       {/* Authenticity Verification Process */}
-      <section className="py-24 px-6 bg-[var(--bg-darker)]">
+      <section className="py-24 px-4 md:px-8 bg-[var(--bg-darker)]">
         <motion.div
           className="max-w-4xl mx-auto"
           initial={{ opacity: 0, y: 40 }}
@@ -216,7 +216,7 @@ export default function VisionClient() {
       </section>
 
       {/* Closing Statement */}
-      <section className="py-24 px-6 text-center">
+      <section className="py-24 px-4 md:px-8 text-center">
         <motion.blockquote
           className="max-w-3xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
