@@ -269,10 +269,10 @@ export default function AuthModal() {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 p-4"
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 p-4"
           aria-describedby={undefined}
         >
-          <div className="glass border border-[var(--glass-border)] rounded-xl p-8 relative max-h-[90vh] overflow-y-auto">
+          <div className="glass border border-[var(--glass-border)] rounded-xl p-10 relative max-h-[90vh] overflow-y-auto">
             {/* Close Button */}
             <Dialog.Close asChild>
               <button
@@ -297,12 +297,12 @@ export default function AuthModal() {
 
             {/* Error / Success Messages */}
             {error && (
-              <div className="mb-4 p-3 rounded bg-red-500/10 border border-red-500/20 text-xs text-red-400">
+              <div className="mb-4 p-4 rounded-lg bg-red-500/15 border-2 border-red-500/40 text-sm font-medium text-red-400">
                 {error}
               </div>
             )}
             {success && (
-              <div className="mb-4 p-3 rounded bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400">
+              <div className="mb-4 p-4 rounded-lg bg-emerald-500/15 border-2 border-emerald-500/40 text-sm font-medium text-emerald-400">
                 {success}
               </div>
             )}
@@ -407,8 +407,15 @@ export default function AuthModal() {
                           type="tel"
                           placeholder="10-digit mobile number"
                           icon={<Phone size={14} />}
+                          maxLength={10}
+                          inputMode="numeric"
                           error={phoneForm.formState.errors.phone?.message}
-                          {...phoneForm.register('phone')}
+                          {...phoneForm.register('phone', {
+                            onChange: (e: { target: { value: string } }) => {
+                              // Strip non-digit characters and limit to 10 digits
+                              e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                            },
+                          })}
                         />
                       </div>
                     </div>

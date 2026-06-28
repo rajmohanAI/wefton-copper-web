@@ -19,6 +19,7 @@ import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { useAuthStore } from '@/store/authStore';
 import { useSearchStore } from '@/store/searchStore';
+import { useAuthModalStore } from '@/store/authModalStore';
 import { MEN_CATEGORIES, WOMEN_CATEGORIES } from '@/config/brand';
 import ThemeSwitcher from './ThemeSwitcher';
 
@@ -63,6 +64,7 @@ export default function Navbar() {
   const wishlistCount = useWishlistStore((s) => s.items.length);
   const { user } = useAuthStore();
   const { openSearch } = useSearchStore();
+  const { openModal } = useAuthModalStore();
 
   useEffect(() => {
     setMounted(true);
@@ -213,13 +215,23 @@ export default function Navbar() {
               )}
             </Link>
 
-            <Link
-              href={user ? '/account' : '/auth/login'}
-              className="text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
-              aria-label="Account"
-            >
-              <User size={18} />
-            </Link>
+            {user ? (
+              <Link
+                href="/account"
+                className="text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
+                aria-label="Account"
+              >
+                <User size={18} />
+              </Link>
+            ) : (
+              <button
+                onClick={openModal}
+                className="text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
+                aria-label="Sign in"
+              >
+                <User size={18} />
+              </button>
+            )}
 
             <button
               onClick={() => useCartStore.getState().openCart()}
