@@ -69,7 +69,7 @@ html {
 body {
   background-color: var(--bg-dark);
   color: var(--text-light);
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: var(--font-inter, 'Inter'), 'Helvetica Neue', Helvetica, Arial, sans-serif;
   line-height: 1.6;
   overflow-x: hidden;
 }
@@ -180,6 +180,15 @@ body {
   animation: float 3s ease-in-out infinite;
 }
 
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out both;
+}
+
 @keyframes pulse-copper {
   0%, 100% { box-shadow: 0 0 0 0 var(--copper-glow); }
   50% { box-shadow: 0 0 0 8px transparent; }
@@ -212,10 +221,13 @@ body {
 }
 
 /* ── Centering Fix ────────────────────────────────────────── */
-/* Override the global * { margin: 0 } reset that suppresses Tailwind's mx-auto */
+/* Scoped fix: ensure block-level elements with mx-auto center properly */
+/* Does NOT apply display:block to avoid breaking flex/grid children */
 
-.mx-auto {
+section.mx-auto,
+div.mx-auto,
+nav.mx-auto,
+main.mx-auto {
   margin-left: auto !important;
   margin-right: auto !important;
-  display: block;
 }
