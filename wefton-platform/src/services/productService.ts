@@ -96,9 +96,8 @@ export async function getProductsByGender(
   if (filters.category?.length) {
     constraints.push(where('category', 'in', filters.category));
   }
-  if (filters.availability) {
-    constraints.push(where('inventory', '>', 0));
-  }
+  // Note: inventory/availability filtering moved to client-side below
+  // to avoid requiring complex composite indexes in Firestore
   if (filters.newArrivals) {
     constraints.push(where('newArrival', '==', true));
   }
@@ -130,6 +129,11 @@ export async function getProductsByGender(
     productId: d.id,
     ...(d.data() as Omit<Product, 'productId'>),
   }));
+
+  // Client-side filter: availability (inventory > 0)
+  if (filters.availability) {
+    products = products.filter((p) => p.inventory > 0);
+  }
 
   // Client-side filter: price range
   // Firestore doesn't support inequality filters on multiple fields in a compound query

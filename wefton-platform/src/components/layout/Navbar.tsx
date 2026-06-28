@@ -137,7 +137,7 @@ export default function Navbar() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.97 }}
                       transition={{ duration: 0.12, ease: [0.2, 0, 0, 1] }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-4 z-50 w-[min(820px,90vw)] p-6 rounded-2xl border border-white/10 shadow-[0_8px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-4 z-50 w-[min(95vw,1400px)] p-5 rounded-2xl border border-white/10 shadow-[0_8px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]"
                       style={{
                         background: 'linear-gradient(135deg, rgba(20,22,28,0.85) 0%, rgba(30,32,40,0.75) 100%)',
                         backdropFilter: 'blur(24px) saturate(1.5)',
@@ -149,20 +149,20 @@ export default function Navbar() {
                       {/* Inner glow effect */}
                       <div className="absolute inset-0 rounded-2xl opacity-30 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(214,143,100,0.15) 0%, transparent 60%)' }} />
                       
-                      <div className="relative grid grid-cols-5 gap-4">
+                      <div className="relative flex flex-wrap justify-center gap-4">
                         {link.dropdown.map((item) => (
                           <Link
                             key={item.id}
                             href={`${link.href}?category=${item.slug}`}
-                            className="group flex flex-col items-center gap-2.5 p-3 rounded-xl hover:bg-white/8 transition-all duration-200"
+                            className="group flex flex-col items-center gap-2.5 p-3 rounded-xl hover:bg-white/8 transition-all duration-200 w-[120px]"
                           >
-                            <div className="w-[128px] h-[128px] rounded-xl overflow-hidden border border-white/10 relative bg-gradient-to-br from-[var(--bg-darker)] to-[var(--bg-card)] shadow-inner">
+                            <div className="w-[96px] h-[96px] rounded-xl overflow-hidden border border-white/10 relative bg-gradient-to-br from-[var(--bg-darker)] to-[var(--bg-card)] shadow-inner">
                               <Image
                                 src={item.thumbnail}
                                 alt={item.name}
                                 fill
                                 className="object-cover group-hover:scale-110 transition-transform duration-300"
-                                sizes="128px"
+                                sizes="96px"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
                                   target.style.display = 'none';
@@ -173,7 +173,7 @@ export default function Navbar() {
                                 <span className="text-lg font-light text-[var(--copper-light)]/60">{item.name.charAt(0)}</span>
                               </div>
                             </div>
-                            <span className="text-xs text-center leading-tight text-[var(--text-muted)] group-hover:text-[var(--copper-light)] transition-colors font-medium">
+                            <span className="text-xs text-center leading-tight text-white font-bold group-hover:text-[var(--copper-light)] transition-colors">
                               {item.name}
                             </span>
                           </Link>

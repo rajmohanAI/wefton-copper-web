@@ -66,13 +66,17 @@ export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
 
   let product = null;
-  let similar = [];
+  let similar: Product[] = [];
 
   try {
     product = await getProductBySlug(slug);
-    if (!product) notFound();
+    if (!product) {
+      console.error(`[ProductPage] Product not found for slug: "${slug}"`);
+      notFound();
+    }
     similar = await getSimilarProducts(product.category, product.productId, 4);
-  } catch {
+  } catch (error) {
+    console.error(`[ProductPage] Error loading product "${slug}":`, error);
     notFound();
   }
 
