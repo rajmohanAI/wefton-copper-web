@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { lookupPincode } from '@/lib/pincode';
 import { MapPin, CreditCard, CheckCircle, Check, Upload, AlertCircle } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useAuth } from '@/hooks/useAuth';
@@ -377,22 +378,41 @@ export default function CheckoutClient() {
                     />
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <Input
+                        label="PIN Code"
+                        placeholder="6-digit PIN"
+                        {...form.register('pincode', {
+                          onChange: async (e) => {
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                            form.setValue('pincode', val);
+                            if (val.length === 6) {
+                              const result = await lookupPincode(val);
+                              if (result) {
+                                form.setValue('city', result.city);
+                                form.setValue('state', result.state);
+                                form.clearErrors('city');
+                                form.clearErrors('state');
+                              }
+                            }
+                          },
+                        })}
+                        error={form.formState.errors.pincode?.message}
+                        maxLength={6}
+                      />
+                      <Input
                         label="City"
-                        placeholder="City"
+                        placeholder="Auto-filled from PIN"
                         {...form.register('city')}
                         error={form.formState.errors.city?.message}
+                        readOnly
+                        className="bg-[var(--bg-card)] cursor-not-allowed"
                       />
                       <Input
                         label="State"
-                        placeholder="State"
+                        placeholder="Auto-filled from PIN"
                         {...form.register('state')}
                         error={form.formState.errors.state?.message}
-                      />
-                      <Input
-                        label="PIN Code"
-                        placeholder="6-digit PIN"
-                        {...form.register('pincode')}
-                        error={form.formState.errors.pincode?.message}
+                        readOnly
+                        className="bg-[var(--bg-card)] cursor-not-allowed"
                       />
                     </div>
                     <Input
