@@ -20,7 +20,7 @@ function GlobalAuthModal() {
 
 export default function AppProviders({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
       <AuthListenerWrapper>
         <GA4Provider consentGranted={true} />
         {children}

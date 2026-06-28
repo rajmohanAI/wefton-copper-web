@@ -255,7 +255,7 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
   };
 
   return (
-    <div className="w-full max-w-[1280px] mx-auto min-h-screen pt-[var(--nav-height)]">
+    <div className="w-full min-h-screen pt-[var(--nav-height)]">
       {/* Page Header */}
       <div className="w-full bg-[var(--bg-darker)] border-b border-[var(--border-subtle)] pt-12 pb-10 px-4 md:px-8">
         <motion.h1
@@ -271,13 +271,13 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
           transition={{ delay: 0.1 }}
           className="mt-2 text-[var(--text-muted)]"
         >
-          {subtitle}
+          {/* {subtitle} — temporarily hidden */}
         </motion.p>
       </div>
 
       {/* Category Pills */}
       <div className="w-full border-b border-[var(--border-subtle)] bg-[var(--bg-dark)]">
-        <div className="w-full px-4 md:px-8 py-4 flex gap-2 overflow-x-auto no-scrollbar">
+        <div className="w-full px-4 md:px-8 py-5 min-h-[72px] flex items-center gap-2 overflow-x-auto no-scrollbar font-bold">
           <button
             onClick={() => setFilters((f) => ({ ...f, category: [] }))}
             className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs tracking-wider uppercase transition-colors ${
