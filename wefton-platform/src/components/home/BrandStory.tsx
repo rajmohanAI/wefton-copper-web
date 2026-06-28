@@ -35,9 +35,9 @@ const DIFFERENTIATORS = [
   },
   {
     icon: Hand,
-    title: 'Finger Brush',
+    title: 'Collapsible Hanger',
     description:
-      'A complimentary finger brush for gentle fabric care. Maintain the Micro-French Terry texture and remove lint effortlessly between washes.',
+      'A complimentary collapsible hanger included with every order. Compact and portable — perfect for travel or wardrobe organisation. Keeps your garments wrinkle-free.',
   },
 ];
 

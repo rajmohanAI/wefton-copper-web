@@ -44,10 +44,10 @@ const VISION_SECTIONS = [
   {
     id: 'care',
     icon: Scissors,
-    title: 'Fabric Care Tool',
-    subtitle: 'Crafted to last.',
+    title: 'Collapsible Hanger',
+    subtitle: 'Compact. Portable. Essential.',
     description:
-      'Wefton provides a small finger brush, which can be used to rub hard stains if any in the fabric before sending it to laundry. Please check the product website for fabric care and instructions.',
+      'Wefton provides a collapsible hanger with every order — a compact, foldable garment hanger perfect for travel or wardrobe organisation. Keeps your garments wrinkle-free and ready to wear.',
     accent: 'from-amber-500/20',
   },
   {

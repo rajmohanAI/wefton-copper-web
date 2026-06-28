@@ -43,11 +43,11 @@ const BRAND_PROMISES = [
     accent: 'from-green-500/20',
   },
   {
-    id: 'finger-brush',
+    id: 'collapsible-hanger',
     icon: Hand,
-    title: 'Finger Brush',
+    title: 'Collapsible Hanger',
     description:
-      'Wefton Copper includes a specially designed finger brush with every garment, engineered to help you maintain the premium texture of your Micro-French Terry fabric between washes. The brush features soft, densely packed bristles that gently lift surface lint, remove light stains, and restore the fabric\'s natural nap without causing pilling or damage. Simply dampen the brush and gently rub any stubborn spots before sending your garment to laundry — this pre-treatment significantly improves stain removal results. The ergonomic finger-loop design ensures comfortable use, and the brush is made from sustainably sourced bamboo with plant-based bristles. Detailed fabric care instructions are available on our product website for each specific garment type.',
+      'Every Wefton Copper order includes a premium collapsible hanger — a compact, foldable garment hanger designed for modern lifestyles. Whether you\'re travelling, organising a compact wardrobe, or simply need a quick solution to hang your freshly received garment, this lightweight hanger folds flat for easy storage and extends to full size in seconds. Made from reinforced recycled polymer with a soft-grip shoulder design that prevents stretching or creasing of your Micro-French Terry fabric. The hanger accommodates all sizes from XS to XXL and features a rotating hook for closet versatility. A practical everyday essential that reflects Wefton\'s commitment to thoughtful utility.',
     accent: 'from-amber-500/20',
   },
   {
