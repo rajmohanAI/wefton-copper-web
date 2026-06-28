@@ -4,6 +4,7 @@ import { getProductBySlug, getSimilarProducts } from '@/services/productService'
 import ProductDetailClient from '@/components/product/ProductDetailClient';
 import { collection, getDocs } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
+import type { Product } from '@/types';
 
 // ISR: revalidate product detail pages every 3600 seconds (1 hour)
 export const revalidate = 3600;
