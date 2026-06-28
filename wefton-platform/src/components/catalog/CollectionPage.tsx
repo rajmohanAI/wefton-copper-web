@@ -508,8 +508,7 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
               </div>
             ) : (
               <>
-                <motion.div
-                  layout
+                <div
                   className={
                     viewMode === 'grid'
                       ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6'
@@ -517,17 +516,15 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
                   }
                 >
                   {products.map((product, i) => (
-                    <motion.div
+                    <div
                       key={product.productId}
-                      layout
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: Math.min(i * 0.03, 0.3) }}
+                      className="animate-fade-in"
+                      style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
                     >
                       <ProductCard product={product} priority={i < 6} />
-                    </motion.div>
+                    </div>
                   ))}
-                </motion.div>
+                </div>
 
                 {/* Loading more indicator */}
                 {loadingMore && (

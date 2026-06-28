@@ -74,6 +74,7 @@ export default function BannerSlider({ slides }: BannerSliderProps) {
                 className="object-cover"
                 priority={index === 0}
                 loading={index === 0 ? 'eager' : 'lazy'}
+                sizes="100vw"
               />
               <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-center px-4">
                 <h2 className="text-3xl md:text-5xl font-bold text-white">

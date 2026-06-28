@@ -137,7 +137,7 @@ export default function Navbar() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.97 }}
                       transition={{ duration: 0.12, ease: [0.2, 0, 0, 1] }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-4 z-50 w-[820px] p-6 rounded-2xl border border-white/10 shadow-[0_8px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-4 z-50 w-[min(820px,90vw)] p-6 rounded-2xl border border-white/10 shadow-[0_8px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]"
                       style={{
                         background: 'linear-gradient(135deg, rgba(20,22,28,0.85) 0%, rgba(30,32,40,0.75) 100%)',
                         backdropFilter: 'blur(24px) saturate(1.5)',
