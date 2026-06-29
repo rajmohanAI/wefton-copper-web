@@ -269,10 +269,10 @@ export default function AuthModal() {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-50 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 p-4"
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 p-4"
           aria-describedby={undefined}
         >
-          <div className="glass border border-[var(--glass-border)] rounded-xl p-10 relative max-h-[90vh] overflow-y-auto">
+          <div className="glass border border-[var(--glass-border)] rounded-xl p-12 relative max-h-[90vh] overflow-y-auto">
             {/* Close Button */}
             <Dialog.Close asChild>
               <button
@@ -284,11 +284,11 @@ export default function AuthModal() {
             </Dialog.Close>
 
             {/* Logo */}
-            <div className="text-center mb-6">
-              <p className="text-[var(--copper-light)] font-bold tracking-[4px] uppercase text-sm">
+            <div className="text-center mb-8">
+              <p className="text-[var(--copper-light)] font-bold tracking-[4px] uppercase text-base">
                 WEFTON COPPER
               </p>
-              <Dialog.Title className="mt-3 text-xl font-light text-[var(--text-light)]">
+              <Dialog.Title className="mt-3 text-2xl font-light text-[var(--text-light)]">
                 {emailMode === 'forgot' && activeTab === 'email'
                   ? 'Reset password'
                   : 'Welcome'}
@@ -316,22 +316,22 @@ export default function AuthModal() {
                 setSuccess('');
               }}
             >
-              <Tabs.List className="flex gap-1 mb-6 p-1 bg-white/5 rounded-lg border border-white/10">
+              <Tabs.List className="flex gap-1 mb-8 p-1.5 bg-white/5 rounded-lg border border-white/10">
                 <Tabs.Trigger
                   value="social"
-                  className="flex-1 py-2 px-3 text-xs font-medium tracking-wider uppercase rounded transition-all data-[state=active]:bg-[var(--copper-main)] data-[state=active]:text-white text-[var(--text-muted)] hover:text-[var(--text-light)]"
+                  className="flex-1 py-3 px-4 text-sm font-medium tracking-wider uppercase rounded transition-all data-[state=active]:bg-[var(--copper-main)] data-[state=active]:text-white text-[var(--text-muted)] hover:text-[var(--text-light)]"
                 >
                   Social
                 </Tabs.Trigger>
                 <Tabs.Trigger
                   value="phone"
-                  className="flex-1 py-2 px-3 text-xs font-medium tracking-wider uppercase rounded transition-all data-[state=active]:bg-[var(--copper-main)] data-[state=active]:text-white text-[var(--text-muted)] hover:text-[var(--text-light)]"
+                  className="flex-1 py-3 px-4 text-sm font-medium tracking-wider uppercase rounded transition-all data-[state=active]:bg-[var(--copper-main)] data-[state=active]:text-white text-[var(--text-muted)] hover:text-[var(--text-light)]"
                 >
                   Phone
                 </Tabs.Trigger>
                 <Tabs.Trigger
                   value="email"
-                  className="flex-1 py-2 px-3 text-xs font-medium tracking-wider uppercase rounded transition-all data-[state=active]:bg-[var(--copper-main)] data-[state=active]:text-white text-[var(--text-muted)] hover:text-[var(--text-light)]"
+                  className="flex-1 py-3 px-4 text-sm font-medium tracking-wider uppercase rounded transition-all data-[state=active]:bg-[var(--copper-main)] data-[state=active]:text-white text-[var(--text-muted)] hover:text-[var(--text-light)]"
                 >
                   Email
                 </Tabs.Trigger>
@@ -343,7 +343,7 @@ export default function AuthModal() {
                   <button
                     onClick={handleGoogle}
                     disabled={loading}
-                    className="w-full h-11 flex items-center justify-center gap-3 bg-white/5 border border-white/10 rounded text-sm text-[var(--text-light)] hover:bg-white/10 hover:border-white/20 transition-colors disabled:opacity-50"
+                    className="w-full h-14 flex items-center justify-center gap-3 bg-white/5 border border-white/10 rounded-lg text-base text-[var(--text-light)] hover:bg-white/10 hover:border-white/20 transition-colors disabled:opacity-50"
                   >
                     {loading ? (
                       <Loader2 size={18} className="animate-spin" />
@@ -373,7 +373,7 @@ export default function AuthModal() {
                   <button
                     onClick={handleFacebook}
                     disabled={loading}
-                    className="w-full h-11 flex items-center justify-center gap-3 bg-[#1877F2]/10 border border-[#1877F2]/20 rounded text-sm text-[var(--text-light)] hover:bg-[#1877F2]/20 transition-colors disabled:opacity-50"
+                    className="w-full h-14 flex items-center justify-center gap-3 bg-[#1877F2]/10 border border-[#1877F2]/20 rounded-lg text-base text-[var(--text-light)] hover:bg-[#1877F2]/20 transition-colors disabled:opacity-50"
                   >
                     {loading ? (
                       <Loader2 size={18} className="animate-spin" />
@@ -399,16 +399,16 @@ export default function AuthModal() {
                       <label className="text-xs font-medium tracking-wider uppercase text-[var(--text-muted)]">
                         Phone Number
                       </label>
-                      <div className="flex gap-2">
-                        <div className="flex items-center justify-center h-11 px-3 bg-white/5 border border-white/10 rounded text-sm text-[var(--text-muted)]">
+                      <div className="flex gap-2 border border-neutral-400 rounded-lg p-1">
+                        <div className="flex items-center justify-center h-11 px-3 bg-white/5 border border-neutral-400 rounded text-sm text-[var(--text-muted)]">
                           +91
                         </div>
                         <Input
                           type="tel"
                           placeholder="10-digit mobile number"
-                          icon={<Phone size={14} />}
                           maxLength={10}
                           inputMode="numeric"
+                          className="!border-neutral-400"
                           error={phoneForm.formState.errors.phone?.message}
                           {...phoneForm.register('phone', {
                             onChange: (e: { target: { value: string } }) => {
