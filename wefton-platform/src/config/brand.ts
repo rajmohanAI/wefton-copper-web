@@ -9,7 +9,8 @@ export const BRAND = {
     'Redefining the global standard for essential wear, starting from the thread up.',
   email: 'weftoncopper@gmail.com',
   phone: '+91 80561 35201',
-  address: 'India',
+  address: 'Chennai, Tamil Nadu, India',
+  mapUrl: 'https://maps.app.goo.gl/r82wZXHQRbgeAk4X8',
   social: {
     instagram: 'https://instagram.com/weftoncopper',
     facebook: 'https://facebook.com/weftoncopper',
