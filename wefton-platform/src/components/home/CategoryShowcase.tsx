@@ -24,8 +24,9 @@ const CATEGORY_TILES: CategoryTile[] = [
   { id: 'men-premium-tee', name: 'Premium Tee', slug: 'premium-tee', gender: 'men', image: '/men_product_01.png' },
   { id: 'men-oversized-tee', name: 'Oversized Tee', slug: 'oversized-tee', gender: 'men', image: '/men_product_03.png' },
   { id: 'men-premium-polo', name: 'Premium Polo', slug: 'premium-polo', gender: 'men', image: '/men_product_02.png' },
-  { id: 'men-active-wear', name: 'Active Wear', slug: 'active-wear', gender: 'men', image: '/men_product_05.png' },
   { id: 'men-hoodies', name: 'Full Sleeved Tee', slug: 'full-sleeved-tee', gender: 'men', image: '/men_product_04.png' },
+  { id: 'men-active-wear', name: 'Active Wear', slug: 'active-wear', gender: 'men', image: '/men_product_05.png' },
+
   // Women's (1 product that exists in Firestore)
   { id: 'women-premium-tee', name: 'Premium Tee', slug: 'premium-tee', gender: 'women', image: '/women_product_01.png' },
   { id: 'women-active-wear', name: 'Active Wear', slug: 'active-wear', gender: 'women', image: '/women_product_02.png' },
