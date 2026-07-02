@@ -52,18 +52,27 @@ const BANNER_SLIDES: BannerSlide[] = [
     subheading: '',
     ctaText: '',
     ctaHref: '/women',
-    imageUrl: '/banners/hero-women-collection.jpg',
+    imageUrl: '/banners/hero-women-collection2.jpg',
     imageAlt: "Women's Collection Banner — 1920x600",
   },
   {
     id: 'slide-3',
-    headline: 'New Season Drop',
-    subheading: 'Oversized tees, premium polos, and co-ords — just landed',
-    ctaText: 'Explore New Arrivals',
+    headline: '',
+    subheading: '',
+    ctaText: '',
     ctaHref: '/men?category=new-arrivals',
     imageUrl: '/banners/hero-new-arrivals.jpg',
     imageAlt: 'New Arrivals Banner — 1920x600',
   },
+  {
+    id: 'slide-4',
+    headline: '',
+    subheading: '',
+    ctaText: '',
+    ctaHref: '/men?category=new-arrivals',
+    imageUrl: '/banners/hero-women-collection.jpg',
+    imageAlt: 'New Arrivals Banner — 1920x600',
+  }
 ];
 
 export default function HomePage() {

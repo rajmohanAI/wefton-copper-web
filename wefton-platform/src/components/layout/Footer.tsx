@@ -139,6 +139,39 @@ export default function Footer() {
             <NewsletterForm />
           </div>
         </div>
+        {/* Google Maps Location */}
+        <div className="mt-12 pt-8 border-t border-[var(--border-subtle)]">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-6">
+            <div>
+              <h3 className="text-sm font-medium tracking-wider text-[var(--text-light)]">
+                Visit Us
+              </h3>
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                Wefton Copper — Chennai, India
+              </p>
+            </div>
+            <a
+              href="https://maps.app.goo.gl/r82wZXHQRbgeAk4X8"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-[var(--copper-light)] hover:underline"
+            >
+              Open in Google Maps →
+            </a>
+          </div>
+          <div className="w-full h-[250px] rounded-xl overflow-hidden border border-[var(--border-subtle)]">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3886.0!2d80.2209!3d13.0878!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTPCsDA1JzE2LjEiTiA4MMKwMTMnMTUuMiJF!5e0!3m2!1sen!2sin!4v1"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Wefton Copper Location"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Bottom Bar */}
