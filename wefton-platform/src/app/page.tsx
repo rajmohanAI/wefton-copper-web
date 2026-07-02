@@ -63,15 +63,6 @@ const BANNER_SLIDES: BannerSlide[] = [
     ctaHref: '/men?category=new-arrivals',
     imageUrl: '/banners/hero-new-arrivals.jpg',
     imageAlt: 'New Arrivals Banner — 1920x600',
-  },
-  {
-    id: 'slide-4',
-    headline: '',
-    subheading: '',
-    ctaText: '',
-    ctaHref: '/men?category=new-arrivals',
-    imageUrl: '/banners/hero-women-collection.jpg',
-    imageAlt: 'New Arrivals Banner — 1920x600',
   }
 ];
 
