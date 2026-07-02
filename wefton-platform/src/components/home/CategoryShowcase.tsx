@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MEN_CATEGORIES, WOMEN_CATEGORIES } from '@/config/brand';
 
 /**
  * CategoryShowcase — displays product category tiles on the homepage.
@@ -19,24 +18,17 @@ interface CategoryTile {
   image: string;
 }
 
-// Build tiles from brand config — pick a representative subset (7 products)
+// Build tiles from brand config — only categories with actual seeded products
 const CATEGORY_TILES: CategoryTile[] = [
-  // Men's (4 products)
-  ...MEN_CATEGORIES.slice(0, 4).map((cat) => ({
-    id: `men-${cat.id}`,
-    name: cat.name,
-    slug: cat.slug,
-    gender: 'men' as const,
-    image: cat.thumbnail,
-  })),
-  // Women's (3 products)
-  ...WOMEN_CATEGORIES.slice(0, 3).map((cat) => ({
-    id: `women-${cat.id}`,
-    name: cat.name,
-    slug: cat.slug,
-    gender: 'women' as const,
-    image: cat.thumbnail,
-  })),
+  // Men's (5 products that exist in Firestore)
+  { id: 'men-premium-tee', name: 'Premium Tee', slug: 'premium-tee', gender: 'men', image: '/men_product_01.png' },
+  { id: 'men-oversized-tee', name: 'Oversized Tee', slug: 'oversized-tee', gender: 'men', image: '/men_product_03.png' },
+  { id: 'men-premium-polo', name: 'Premium Polo', slug: 'premium-polo', gender: 'men', image: '/men_product_02.png' },
+  { id: 'men-active-wear', name: 'Active Wear', slug: 'active-wear', gender: 'men', image: '/men_product_05.png' },
+  { id: 'men-hoodies', name: 'Full Sleeved Tee', slug: 'full-sleeved-tee', gender: 'men', image: '/men_product_04.png' },
+  // Women's (1 product that exists in Firestore)
+  { id: 'women-premium-tee', name: 'Premium Tee', slug: 'premium-tee', gender: 'women', image: '/women_product_01.png' },
+  { id: 'women-active-wear', name: 'Active Wear', slug: 'active-wear', gender: 'women', image: '/women_product_02.png' },
 ];
 
 function CategoryTileCard({ tile }: { tile: CategoryTile }) {
