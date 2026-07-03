@@ -35,11 +35,23 @@ function requireDb() {
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   const db = requireDb();
+  // Primary: query by slug field
   const q = query(collection(db, PRODUCTS_COL), where('slug', '==', slug), limit(1));
   const snap = await getDocs(q);
-  if (snap.empty) return null;
-  const d = snap.docs[0];
-  return { productId: d.id, ...(d.data() as Omit<Product, 'productId'>) };
+  if (!snap.empty) {
+    const d = snap.docs[0];
+    return { productId: d.id, ...(d.data() as Omit<Product, 'productId'>) };
+  }
+  // Fallback: try document ID lookup
+  try {
+    const docSnap = await getDoc(doc(db, PRODUCTS_COL, slug));
+    if (docSnap.exists()) {
+      return { productId: docSnap.id, ...(docSnap.data() as Omit<Product, 'productId'>) };
+    }
+  } catch {
+    // ignore fallback errors
+  }
+  return null;
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
