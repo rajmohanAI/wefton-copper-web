@@ -37,7 +37,14 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   const db = requireDb();
   const q = query(collection(db, PRODUCTS_COL), where('slug', '==', slug), limit(1));
   const snap = await getDocs(q);
-  if (snap.empty) return null;
+  if (snap.empty) {
+    // Fallback: try finding by document ID
+    const docSnap = await getDoc(doc(db, PRODUCTS_COL, slug));
+    if (docSnap.exists()) {
+      return { productId: docSnap.id, ...(docSnap.data() as Omit<Product, 'productId'>) };
+    }
+    return null;
+  }
   const d = snap.docs[0];
   return { productId: d.id, ...(d.data() as Omit<Product, 'productId'>) };
 }
