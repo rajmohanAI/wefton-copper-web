@@ -35,9 +35,9 @@ const DIFFERENTIATORS = [
   },
   {
     icon: Hand,
-    title: 'Collapsible Hanger',
+    title: 'Finger Brush',
     description:
-      'A complimentary collapsible hanger included with every order. Compact and portable — perfect for travel or wardrobe organisation. Keeps your garments wrinkle-free.',
+      'A complimentary finger brush for gentle fabric care. Maintain the Micro-French Terry texture and remove lint effortlessly between washes.',
   },
 ];
 
@@ -76,7 +76,7 @@ export default function BrandStory() {
         />
       </motion.div>
 
-      <div className="relative max-w-[1280px] mx-auto px-4 md:px-8 lg:px-8">
+      <div className="relative max-w-[1920px] mx-auto px-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -87,12 +87,12 @@ export default function BrandStory() {
           <p className="text-xs tracking-[6px] uppercase text-[var(--copper-light)] mb-4">
             The Wefton Difference
           </p>
-          <h2 className="text-4xl md:text-5xl font-light text-[var(--text-light)] max-w-2xl mx-auto leading-tight text-center">
+          <h2 className="text-4xl md:text-5xl font-light text-[var(--text-light)] max-w-2xl mx-auto leading-tight">
             More than a garment.
             <br />
             <span className="gradient-copper">An experience.</span>
           </h2>
-          <p className="mt-6 text-base text-[var(--text-muted)] max-w-xl mx-auto leading-relaxed text-center">
+          <p className="mt-6 text-base text-[var(--text-muted)] max-w-xl mx-auto leading-relaxed">
             Every Wefton Copper product comes with five thoughtful extras that reflect our
             commitment to quality, sustainability, and care.
           </p>
@@ -148,7 +148,7 @@ export default function BrandStory() {
           <h3 className="text-2xl md:text-3xl font-light text-[var(--text-light)] mb-4">
             Copper-Stitched Craftsmanship
           </h3>
-          <p className="text-sm md:text-base text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed text-center">
+          <p className="text-sm md:text-base text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed">
             Every Wefton garment features signature copper-stitched seams — a hallmark of our
             dedication to durability and design. The reinforced copper threading strengthens
             structural points while adding a subtle metallic accent that distinguishes genuine

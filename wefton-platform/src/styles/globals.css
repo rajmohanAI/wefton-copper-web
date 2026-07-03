@@ -5,34 +5,7 @@
    ============================================================ */
 
 :root {
-  /* Light Theme Colors — warm neutral, not harsh white */
-  --bg-dark: #e8e4e0;
-  --bg-darker: #f0ece8;
-  --bg-card: rgba(0, 0, 0, 0.03);
-  --copper-light: #9a4e1f;
-  --copper-main: #7a3d18;
-  --copper-dark: #5c2e12;
-  --copper-glow: rgba(184, 94, 38, 0.1);
-  --copper-glow-strong: rgba(184, 94, 38, 0.25);
-  --text-light: #111111;
-  --text-muted: #3d3d3d;
-  --text-faint: #6b6b6b;
-  --border-subtle: rgba(0, 0, 0, 0.1);
-  --border-copper: rgba(184, 94, 38, 0.4);
-  --glass-bg: rgba(240, 236, 232, 0.9);
-  --glass-border: rgba(0, 0, 0, 0.08);
-
-  /* Spacing */
-  --nav-height: 96px;
-
-  /* Transitions */
-  --ease-luxury: cubic-bezier(0.165, 0.84, 0.44, 1);
-  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Dark Theme — applied via next-themes class="dark" on <html> */
-:root.dark,
-.dark {
+  /* Brand Colors */
   --bg-dark: #0f1115;
   --bg-darker: #08090a;
   --bg-card: rgba(255, 255, 255, 0.02);
@@ -48,6 +21,13 @@
   --border-copper: rgba(184, 94, 38, 0.3);
   --glass-bg: rgba(15, 17, 21, 0.85);
   --glass-border: rgba(255, 255, 255, 0.06);
+
+  /* Spacing */
+  --nav-height: 90px;
+
+  /* Transitions */
+  --ease-luxury: cubic-bezier(0.165, 0.84, 0.44, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Reset & Base ─────────────────────────────────────────── */
@@ -69,7 +49,7 @@ html {
 body {
   background-color: var(--bg-dark);
   color: var(--text-light);
-  font-family: var(--font-inter, 'Inter'), 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   line-height: 1.6;
   overflow-x: hidden;
 }
@@ -180,21 +160,22 @@ body {
   animation: float 3s ease-in-out infinite;
 }
 
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.4s ease-out both;
-}
-
 @keyframes pulse-copper {
   0%, 100% { box-shadow: 0 0 0 0 var(--copper-glow); }
   50% { box-shadow: 0 0 0 8px transparent; }
 }
 
+@keyframes hero-ken-burns {
+  0% { transform: scale(1) translate(0, 0); }
+  25% { transform: scale(1.05) translate(-1%, -1%); }
+  50% { transform: scale(1.1) translate(1%, 0%); }
+  75% { transform: scale(1.05) translate(0%, 1%); }
+  100% { transform: scale(1) translate(0, 0); }
+}
 
+.animate-hero-ken-burns {
+  animation: hero-ken-burns 20s ease-in-out infinite;
+}
 
 /* ── Utility ──────────────────────────────────────────────── */
 
@@ -218,16 +199,4 @@ body {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-/* ── Centering Fix ────────────────────────────────────────── */
-/* Scoped fix: ensure block-level elements with mx-auto center properly */
-/* Does NOT apply display:block to avoid breaking flex/grid children */
-
-section.mx-auto,
-div.mx-auto,
-nav.mx-auto,
-main.mx-auto {
-  margin-left: auto !important;
-  margin-right: auto !important;
 }
