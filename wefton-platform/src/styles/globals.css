@@ -23,7 +23,7 @@
   --glass-border: rgba(0, 0, 0, 0.08);
 
   /* Spacing */
-  --nav-height: 90px;
+  --nav-height: 72px;
 
   /* Transitions */
   --ease-luxury: cubic-bezier(0.165, 0.84, 0.44, 1);

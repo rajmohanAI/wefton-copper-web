@@ -95,8 +95,8 @@ export default function Navbar() {
         className={cn(
           'top-0 left-0 right-0 z-50 transition-all duration-500 fixed',
           scrolled
-            ? 'glass border-b border-[var(--glass-border)] py-5'
-            : 'bg-[var(--bg-dark)]/80 backdrop-blur-sm py-7'
+            ? 'bg-[var(--bg-dark)] border-b border-[var(--glass-border)] py-3'
+            : 'bg-[var(--bg-dark)] py-4'
         )}
       >
         <nav className="w-full min-h-[48px] px-[0.5cm] flex items-center justify-between">
