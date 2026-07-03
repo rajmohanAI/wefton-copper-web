@@ -93,8 +93,7 @@ export default function Navbar() {
     <>
       <header
         className={cn(
-          'top-0 left-0 right-0 z-50 transition-all duration-500',
-          pathname === '/' ? 'fixed' : 'sticky -mb-[1px]',
+          'top-0 left-0 right-0 z-50 transition-all duration-500 fixed',
           scrolled
             ? 'glass border-b border-[var(--glass-border)] py-5'
             : 'bg-[var(--bg-dark)]/80 backdrop-blur-sm py-7'
