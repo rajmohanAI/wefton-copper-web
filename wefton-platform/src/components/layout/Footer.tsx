@@ -18,6 +18,7 @@ const FOOTER_LINKS = {
   ],
   Support: [
     { label: 'Size Guide', href: '/size-guide' },
+    { label: 'Wash Care', href: '/wash-care' },
     { label: 'Shipping Policy', href: '/shipping' },
     { label: 'Return Policy', href: '/returns' },
     { label: 'Contact Us', href: '/contact' },
