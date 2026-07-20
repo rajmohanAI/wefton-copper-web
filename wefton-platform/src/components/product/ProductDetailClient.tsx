@@ -260,6 +260,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
                     }
                     sizes="(max-width: 1024px) 100vw, 50vw"
                     priority
+                    quality={75}
                   />
                 )}
               </div>

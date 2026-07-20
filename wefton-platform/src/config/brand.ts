@@ -40,20 +40,8 @@ export const MEN_CATEGORIES = [
 ] as const;
 
 export const WOMEN_CATEGORIES = [
-  { id: 'kurtis', name: 'Kurtis', slug: 'kurtis', thumbnail: '/women_product_01.png' },
-  { id: 'crop-top', name: 'Crop Top', slug: 'crop-top', thumbnail: '/women_product_02.png' },
-  { id: 'smocked-top', name: 'Smocked Top', slug: 'smocked-top', thumbnail: '/women_product_01.png' },
-  { id: 'halter-tops', name: 'Halter Tops', slug: 'halter-tops', thumbnail: '/women_product_02.png' },
-  { id: 'sweetheart-tops', name: 'Sweetheart Tops', slug: 'sweetheart-tops', thumbnail: '/women_product_01.png' },
-  { id: 'long-skirts', name: 'Long Skirts', slug: 'long-skirts', thumbnail: '/women_product_02.png' },
-  { id: 'shorts', name: 'Shorts', slug: 'shorts', thumbnail: '/women_product_01.png' },
-  { id: 'denim-pants', name: 'Denim Pants', slug: 'denim-pants', thumbnail: '/women_product_02.png' },
-  { id: 'leggings', name: 'Leggings', slug: 'leggings', thumbnail: '/women_product_01.png' },
-  { id: 'palazzo-pants', name: 'Palazzo Pants', slug: 'palazzo-pants', thumbnail: '/women_product_02.png' },
-  { id: 'active-wear', name: 'Active Wear', slug: 'active-wear', thumbnail: '/women_product_01.png' },
-  { id: 'tee', name: 'Tee', slug: 'tee', thumbnail: '/women_product_02.png' },
-  { id: 'polo', name: 'Polo', slug: 'polo', thumbnail: '/women_product_01.png' },
-  { id: 'ribbed-full-sleeve', name: 'Ribbed Full Sleeve', slug: 'ribbed-full-sleeve', thumbnail: '/women_product_02.png' },
+  { id: 'premium-tee', name: 'Premium Tee', slug: 'premium-tee', thumbnail: '/women_product_01.png' },
+  { id: 'active-wear', name: 'Active Wear Tshirt', slug: 'active-wear', thumbnail: '/women_product_02.png' },
 ] as const;
 
 export const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'] as const;

@@ -84,8 +84,9 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
               fill
               priority={priority}
               className="object-cover transition-opacity duration-500"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
-              quality={85}
+              sizes="(max-width: 640px) 45vw, (max-width: 1024px) 33vw, 25vw"
+              quality={70}
+              loading={priority ? 'eager' : 'lazy'}
               key={currentImageIndex}
             />
           )}
