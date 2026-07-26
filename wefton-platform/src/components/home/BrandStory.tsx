@@ -17,9 +17,9 @@ const DIFFERENTIATORS = [
   },
   {
     icon: Leaf,
-    title: 'Plastic-Free Packaging',
+    title: 'Premium Packaging',
     description:
-      'Our packaging is entirely plastic-free. Repurpose the premium cover for storage or dispose responsibly — zero plastic touches your Wefton product.',
+      'Our packaging reflects the quality inside. Each garment arrives in a beautifully crafted box with tissue wrap, ensuring a luxurious unboxing experience worthy of the Wefton name.',
   },
   {
     icon: Sprout,

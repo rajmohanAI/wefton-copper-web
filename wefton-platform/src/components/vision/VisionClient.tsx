@@ -17,8 +17,8 @@ const VISION_SECTIONS = [
   {
     id: 'sustainability',
     icon: Leaf,
-    title: 'Plastic-Free Promise',
-    subtitle: 'For the planet we share.',
+    title: 'Premium Packaging',
+    subtitle: 'Unboxing worth the wait.',
     description:
       'Wefton products are free from plastics. Please use the package cover for your storage utilities for a while and dispose them to non-biodegradable waste to help conserve our environment.',
     accent: 'from-emerald-500/20',

@@ -19,11 +19,11 @@ const BRAND_PROMISES = [
     accent: 'from-[var(--copper-main)]/20',
   },
   {
-    id: 'plastic-free',
+    id: 'premium-packaging',
     icon: Leaf,
-    title: 'Plastic-Free Packaging',
+    title: 'Premium Packaging',
     description:
-      'Wefton Copper has made a firm commitment to eliminate plastic from every stage of our packaging process. From the outer shipping cover to the inner garment wrap, every material is sourced from biodegradable or recyclable alternatives. Our packaging is crafted from recycled kraft paper and organic cotton dust bags that you can repurpose for storage or travel. When you are ready to dispose of them, simply add them to your compostable waste — they break down naturally without leaving microplastics in our soil or waterways. By choosing Wefton, you are actively reducing the fashion industry\'s plastic footprint while receiving your garments in packaging that feels as premium as the product inside.',
+      'Every Wefton Copper order arrives in a carefully designed premium box with tissue wrap and branded elements. Our packaging is crafted to deliver a luxurious unboxing experience that matches the quality of the garment inside. From the outer box to the inner wrap, every detail is considered — making it worthy of gifting without any additional packaging. We use high-quality materials that protect your garment during transit while maintaining an aesthetic you will want to keep and reuse.',
     accent: 'from-emerald-500/20',
   },
   {

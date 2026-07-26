@@ -59,7 +59,7 @@ const STATIC_TESTIMONIALS: Testimonial[] = [
     name: 'Rahul Nair',
     location: 'Delhi',
     rating: 5,
-    text: 'The serial number verification is a genius touch. Knowing my product is authentic adds to the premium experience. The packaging is also completely plastic-free.',
+    text: 'The serial number verification is a genius touch. Knowing my product is authentic adds to the premium experience. The packaging is also beautifully done — feels like a luxury unboxing.',
     product: 'Premium Polo',
     verified: true,
     avatar: 'RN',

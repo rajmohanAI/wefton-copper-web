@@ -31,7 +31,7 @@ const MILESTONES = [
     year: '2026',
     title: 'Launch',
     description:
-      'Wefton Copper launches with a promise: every product verified with a unique serial number, every thread intentional, every package plastic-free.',
+      'Wefton Copper launches with a promise: every product verified with a unique serial number, every thread intentional, every package premium.',
   },
 ];
 
@@ -238,12 +238,12 @@ export default function AboutClient() {
               className="glass-card p-6"
             >
               <h3 className="text-lg font-medium text-[var(--text-light)] mb-3">
-                Plastic-Free Packaging
+                Premium Packaging
               </h3>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                Every Wefton product ships in 100% plastic-free packaging. Our biodegradable
-                materials protect both your garment and the planet. We encourage reusing our
-                packaging covers before responsible disposal.
+                Every Wefton product ships in premium packaging. Our carefully designed
+                materials protect both your garment and deliver a luxurious unboxing experience.
+                We encourage reusing our packaging covers before responsible disposal.
               </p>
             </motion.div>
 
