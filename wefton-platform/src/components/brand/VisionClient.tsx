@@ -35,11 +35,11 @@ const BRAND_PROMISES = [
     accent: 'from-blue-500/20',
   },
   {
-    id: 'seed-bag',
+    id: 'plantable-seed-tag',
     icon: Sprout,
-    title: 'Seed Bag',
+    title: 'Plantable Seed Tag',
     description:
-      'Every Wefton Copper order includes a carefully curated seed bag containing native Indian plant seeds selected for easy growth in home gardens and balconies. We believe that fashion should give back to the earth, not just take from it. The seed bag comes with simple planting instructions and a QR code linking to our growing guide, making it accessible for both experienced gardeners and first-time planters. Whether you grow herbs for your kitchen, flowers for your balcony, or saplings for your community, each seed represents our shared responsibility toward a greener future. We encourage families to involve children in the planting process, nurturing environmental awareness from an early age.',
+      'Every Wefton Copper garment features a plantable seed tag attached to the garment label. Made from biodegradable seed paper embedded with native Indian plant seeds, this tag transforms into a living plant when buried in soil. Simply tear off the tag, place it in a pot with soil, water it, and watch it sprout within days. It comes with a QR code linking to our growing guide, making it accessible for everyone. Our seed tags have already contributed to thousands of plants grown across Indian homes — a small gesture that connects fashion to nature in a meaningful way.',-time planters. Whether you grow herbs for your kitchen, flowers for your balcony, or saplings for your community, each seed represents our shared responsibility toward a greener future. We encourage families to involve children in the planting process, nurturing environmental awareness from an early age.',
     accent: 'from-green-500/20',
   },
   {

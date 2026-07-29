@@ -35,10 +35,10 @@ const VISION_SECTIONS = [
   {
     id: 'seeds',
     icon: Sprout,
-    title: 'Seed Bag Initiative',
+    title: 'Plantable Seed Tag',
     subtitle: 'Grow with every purchase.',
     description:
-      'Wefton provides a seed bag with every product packaging. Please encourage yourself and your young ones to grow trees to conserve the environment.',
+      'Every Wefton garment comes with a plantable seed tag. Tear it off, bury it in soil, and watch it grow into a plant. Encourage yourself and your young ones to nurture greenery and conserve the environment.',
     accent: 'from-green-500/20',
   },
   {

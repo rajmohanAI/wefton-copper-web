@@ -23,9 +23,9 @@ const DIFFERENTIATORS = [
   },
   {
     icon: Sprout,
-    title: 'Seed Bag Inclusion',
+    title: 'Plantable Seed Tag',
     description:
-      'Each order includes a seed bag. Plant it, nurture it, and grow something beautiful — our way of giving back to the earth with every purchase.',
+      'Every garment comes with a plantable seed tag. Simply tear it off, bury it in soil, and watch it grow into a plant — our way of giving back to the earth with every purchase.',
   },
   {
     icon: Sparkles,

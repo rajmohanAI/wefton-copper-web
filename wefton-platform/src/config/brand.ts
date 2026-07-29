@@ -7,7 +7,7 @@ export const BRAND = {
   tagline: 'Premium Lightweight Micro-French Terry',
   description:
     'Redefining the global standard for essential wear, starting from the thread up.',
-  email: 'weftoncopper@gmail.com',
+  email: 'sales@weftoncopper.com',
   phone: '+91 80561 35201',
   address: 'Chennai, Tamil Nadu, India',
   mapUrl: 'https://maps.app.goo.gl/r82wZXHQRbgeAk4X8',

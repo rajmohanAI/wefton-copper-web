@@ -44,7 +44,7 @@ export default function CookiePolicyPage() {
 
           <section>
             <h2 className="text-lg font-medium text-[var(--text-light)] mb-3">Contact</h2>
-            <p>For questions about our cookie practices, email us at <a href="mailto:weftoncopper@gmail.com" className="text-[var(--copper-light)] hover:underline">weftoncopper@gmail.com</a>.</p>
+            <p>For questions about our cookie practices, email us at <a href="mailto:sales@weftoncopper.com" className="text-[var(--copper-light)] hover:underline">sales@weftoncopper.com</a>.</p>
           </section>
         </div>
       </div>

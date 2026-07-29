@@ -82,7 +82,7 @@ export default function HomePage() {
     ],
     contactPoint: {
       '@type': 'ContactPoint',
-      email: 'weftoncopper@gmail.com',
+      email: 'sales@weftoncopper.com',
       contactType: 'customer service',
     },
   };
