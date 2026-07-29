@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, Loader2, CheckCircle } from 'lucide-react';
+import { Loader2, CheckCircle } from 'lucide-react';
 import { emailSchema, type EmailFormData } from '@/lib/schemas';
 import { subscribeNewsletter } from '@/services/newsletterService';
 
@@ -62,16 +62,12 @@ export default function NewsletterForm() {
     >
       <div className="flex gap-2 w-full">
         <div className="relative flex-1 md:w-64">
-          <Mail
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)] pointer-events-none"
-          />
           <input
             type="email"
             {...register('email')}
             placeholder="Your email address"
             disabled={submitStatus === 'loading'}
-            className="w-full h-10 bg-white/5 border border-white/10 rounded pl-9 pr-4 text-sm text-[var(--text-light)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--copper-main)] transition-colors disabled:opacity-50"
+            className="w-full h-10 bg-white/5 border border-white/10 rounded pl-4 pr-4 text-sm text-[var(--text-light)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--copper-main)] transition-colors disabled:opacity-50"
             aria-describedby="newsletter-error"
           />
         </div>
