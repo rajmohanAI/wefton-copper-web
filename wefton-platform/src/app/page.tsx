@@ -138,13 +138,12 @@ export default function HomePage() {
           <TestimonialsSection />
         </section>
 
-        {/* 6. Newsletter — email signup section */}
+        {/* 6. Newsletter — temporarily hidden
         <section
           aria-label="Newsletter signup"
           className="py-16 md:py-24 bg-[var(--color-card,#f9f9f9)] dark:bg-[var(--color-card,#171717)]"
         >
           <div className="max-w-[1280px] mx-auto px-4 md:px-8 text-center">
-            {/* Placeholder image area */}
             <div className="w-full max-w-2xl mx-auto mb-10 aspect-[16/5] rounded-lg bg-[var(--color-border,#e5e5e5)] dark:bg-[var(--color-border,#262626)] flex items-center justify-center">
               <p className="text-sm text-[var(--color-muted,#737373)]">
                 Newsletter Banner — 1280x400
@@ -162,6 +161,7 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+        */}
 
       </div>
     </>
