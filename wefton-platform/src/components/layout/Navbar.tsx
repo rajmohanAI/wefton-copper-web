@@ -236,7 +236,7 @@ export default function Navbar() {
             <button
               onClick={() => useCartStore.getState().openCart()}
               className="relative text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
-              aria-label="Cart"
+              aria-label={cartCount > 0 ? `Cart, ${cartCount} items` : 'Cart'}
             >
               <ShoppingBag size={18} />
               {cartCount > 0 && (
@@ -244,6 +244,7 @@ export default function Navbar() {
                   key={cartCount}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
+                  aria-hidden="true"
                   className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-[var(--copper-main)] text-white text-[0.5625rem] flex items-center justify-center font-bold"
                 >
                   {cartCount}

@@ -39,7 +39,7 @@ const BRAND_PROMISES = [
     icon: Sprout,
     title: 'Plantable Seed Tag',
     description:
-      'Every Wefton Copper garment features a plantable seed tag attached to the garment label. Made from biodegradable seed paper embedded with native Indian plant seeds, this tag transforms into a living plant when buried in soil. Simply tear off the tag, place it in a pot with soil, water it, and watch it sprout within days. It comes with a QR code linking to our growing guide, making it accessible for everyone. Our seed tags have already contributed to thousands of plants grown across Indian homes — a small gesture that connects fashion to nature in a meaningful way.',-time planters. Whether you grow herbs for your kitchen, flowers for your balcony, or saplings for your community, each seed represents our shared responsibility toward a greener future. We encourage families to involve children in the planting process, nurturing environmental awareness from an early age.',
+      'Every Wefton Copper garment features a plantable seed tag attached to the garment label. Made from biodegradable seed paper embedded with native Indian plant seeds, this tag transforms into a living plant when buried in soil. Simply tear off the tag, place it in a pot with soil, water it, and watch it sprout within days. It comes with a QR code linking to our growing guide, making it accessible for everyone. Our seed tags have already contributed to thousands of plants grown across Indian homes — a small gesture that connects fashion to nature in a meaningful way. Whether you grow herbs for your kitchen, flowers for your balcony, or saplings for your community, each seed represents our shared responsibility toward a greener future.',
     accent: 'from-green-500/20',
   },
   {

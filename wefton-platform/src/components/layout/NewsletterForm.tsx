@@ -67,7 +67,7 @@ export default function NewsletterForm() {
             {...register('email')}
             placeholder="Your email address"
             disabled={submitStatus === 'loading'}
-            className="w-full h-10 bg-white/5 border border-white/10 rounded pl-4 pr-4 text-sm text-[var(--text-light)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--copper-main)] transition-colors disabled:opacity-50"
+            className="w-full h-10 bg-white/5 border border-white/10 rounded pl-4 pr-4 text-sm text-[var(--text-light)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--copper-main)] transition-colors disabled:opacity-50"
             aria-describedby="newsletter-error"
           />
         </div>

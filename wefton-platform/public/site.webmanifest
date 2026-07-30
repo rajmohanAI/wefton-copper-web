@@ -1,0 +1,21 @@
+{
+  "name": "Wefton Copper",
+  "short_name": "Wefton",
+  "description": "Premium Cotton Fabric essentials for men and women",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#B87333",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
