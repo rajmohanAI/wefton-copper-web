@@ -19,7 +19,7 @@ const MILESTONES = [
     year: '2025',
     title: 'First Thread',
     description:
-      'Sourced the finest Micro-French Terry fabric from ethical mills. Months of R&D perfecting the ideal weight, drape, and softness.',
+      'Sourced the finest Cotton Fabric fabric from ethical mills. Months of R&D perfecting the ideal weight, drape, and softness.',
   },
   {
     year: '2025',
@@ -31,7 +31,7 @@ const MILESTONES = [
     year: '2026',
     title: 'Launch',
     description:
-      'Wefton Copper launches with a promise: every product verified with a unique serial number, every thread intentional, every package plastic-free.',
+      'Wefton Copper launches with a promise: every product verified with a unique serial number, every thread intentional, every package premium.',
   },
 ];
 
@@ -202,7 +202,7 @@ export default function AboutClient() {
             </blockquote>
             <p className="text-sm text-[var(--text-muted)] text-center mt-6 leading-relaxed max-w-2xl mx-auto">
               At Wefton Copper, we exist to bridge the gap between luxury and everyday wear. Our
-              Micro-French Terry fabric is engineered for comfort, durability, and a premium hand-feel
+              Cotton Fabric fabric is engineered for comfort, durability, and a premium hand-feel
               that lasts. Every decision — from sourcing to stitching — is guided by our commitment to
               quality without compromise.
             </p>
@@ -238,12 +238,12 @@ export default function AboutClient() {
               className="glass-card p-6"
             >
               <h3 className="text-lg font-medium text-[var(--text-light)] mb-3">
-                Plastic-Free Packaging
+                Premium Packaging
               </h3>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                Every Wefton product ships in 100% plastic-free packaging. Our biodegradable
-                materials protect both your garment and the planet. We encourage reusing our
-                packaging covers before responsible disposal.
+                Every Wefton product ships in premium packaging. Our carefully designed
+                materials protect both your garment and deliver a luxurious unboxing experience.
+                We encourage reusing our packaging covers before responsible disposal.
               </p>
             </motion.div>
 
@@ -257,7 +257,7 @@ export default function AboutClient() {
                 Ethical Sourcing
               </h3>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                Our Micro-French Terry fabric is sourced from certified ethical mills that ensure
+                Our Cotton Fabric fabric is sourced from certified ethical mills that ensure
                 fair wages, safe working conditions, and environmentally responsible production
                 processes at every stage.
               </p>
@@ -270,12 +270,12 @@ export default function AboutClient() {
               className="glass-card p-6"
             >
               <h3 className="text-lg font-medium text-[var(--text-light)] mb-3">
-                Seed Bag Initiative
+                Plantable Seed Tag
               </h3>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                Every purchase includes a seed bag — our way of giving back to nature. We encourage
-                customers and their families to plant trees and contribute to a greener future, one
-                order at a time.
+                Every garment comes with a plantable seed tag — our way of giving back to nature. Tear it off,
+                bury it in soil, and watch it grow. We encourage customers and their families to nurture greenery
+                and contribute to a greener future, one order at a time.
               </p>
             </motion.div>
 
@@ -327,13 +327,13 @@ export default function AboutClient() {
             {/* Email & Phone */}
             <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-10">
               <a
-                href="mailto:weftoncopper@gmail.com"
+                href="mailto:sales@weftoncopper.com"
                 className="flex items-center gap-3 text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors group"
               >
                 <div className="w-10 h-10 rounded-full bg-[var(--copper-main)]/10 flex items-center justify-center group-hover:bg-[var(--copper-main)]/20 transition-colors">
                   <Mail size={18} className="text-[var(--copper-light)]" />
                 </div>
-                <span className="text-sm">weftoncopper@gmail.com</span>
+                <span className="text-sm">sales@weftoncopper.com</span>
               </a>
 
               <a

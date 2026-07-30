@@ -19,11 +19,11 @@ const BRAND_PROMISES = [
     accent: 'from-[var(--copper-main)]/20',
   },
   {
-    id: 'plastic-free',
+    id: 'premium-packaging',
     icon: Leaf,
-    title: 'Plastic-Free Packaging',
+    title: 'Premium Packaging',
     description:
-      'Wefton Copper has made a firm commitment to eliminate plastic from every stage of our packaging process. From the outer shipping cover to the inner garment wrap, every material is sourced from biodegradable or recyclable alternatives. Our packaging is crafted from recycled kraft paper and organic cotton dust bags that you can repurpose for storage or travel. When you are ready to dispose of them, simply add them to your compostable waste — they break down naturally without leaving microplastics in our soil or waterways. By choosing Wefton, you are actively reducing the fashion industry\'s plastic footprint while receiving your garments in packaging that feels as premium as the product inside.',
+      'Every Wefton Copper order arrives in a carefully designed premium box with tissue wrap and branded elements. Our packaging is crafted to deliver a luxurious unboxing experience that matches the quality of the garment inside. From the outer box to the inner wrap, every detail is considered — making it worthy of gifting without any additional packaging. We use high-quality materials that protect your garment during transit while maintaining an aesthetic you will want to keep and reuse.',
     accent: 'from-emerald-500/20',
   },
   {
@@ -31,15 +31,15 @@ const BRAND_PROMISES = [
     icon: Sparkles,
     title: 'Organic Fabric Freshener',
     description:
-      'Each Wefton Copper garment arrives with a handcrafted organic fabric freshener pouch, blended from natural essential oils and dried botanicals sourced from sustainable farms across India. Unlike synthetic air fresheners that release harmful chemicals, our freshener uses lavender, eucalyptus, and cedarwood extracts to keep your fabrics smelling naturally fresh. Place the pouch in your wardrobe alongside your Wefton essentials, and it will maintain a subtle, clean fragrance for up to three months. The pouch is refillable — simply add a few drops of your favourite essential oil to extend its life. This thoughtful addition ensures your Micro-French Terry garments always feel and smell as fresh as the day they arrived.',
+      'Each Wefton Copper garment arrives with a handcrafted organic fabric freshener pouch, blended from natural essential oils and dried botanicals sourced from sustainable farms across India. Unlike synthetic air fresheners that release harmful chemicals, our freshener uses lavender, eucalyptus, and cedarwood extracts to keep your fabrics smelling naturally fresh. Place the pouch in your wardrobe alongside your Wefton essentials, and it will maintain a subtle, clean fragrance for up to three months. The pouch is refillable — simply add a few drops of your favourite essential oil to extend its life. This thoughtful addition ensures your Cotton Fabric garments always feel and smell as fresh as the day they arrived.',
     accent: 'from-blue-500/20',
   },
   {
-    id: 'seed-bag',
+    id: 'plantable-seed-tag',
     icon: Sprout,
-    title: 'Seed Bag',
+    title: 'Plantable Seed Tag',
     description:
-      'Every Wefton Copper order includes a carefully curated seed bag containing native Indian plant seeds selected for easy growth in home gardens and balconies. We believe that fashion should give back to the earth, not just take from it. The seed bag comes with simple planting instructions and a QR code linking to our growing guide, making it accessible for both experienced gardeners and first-time planters. Whether you grow herbs for your kitchen, flowers for your balcony, or saplings for your community, each seed represents our shared responsibility toward a greener future. We encourage families to involve children in the planting process, nurturing environmental awareness from an early age.',
+      'Every Wefton Copper garment features a plantable seed tag attached to the garment label. Made from biodegradable seed paper embedded with native Indian plant seeds, this tag transforms into a living plant when buried in soil. Simply tear off the tag, place it in a pot with soil, water it, and watch it sprout within days. It comes with a QR code linking to our growing guide, making it accessible for everyone. Our seed tags have already contributed to thousands of plants grown across Indian homes — a small gesture that connects fashion to nature in a meaningful way. Whether you grow herbs for your kitchen, flowers for your balcony, or saplings for your community, each seed represents our shared responsibility toward a greener future.',
     accent: 'from-green-500/20',
   },
   {
@@ -47,7 +47,7 @@ const BRAND_PROMISES = [
     icon: Hand,
     title: 'Collapsible Hanger',
     description:
-      'Every Wefton Copper order includes a premium collapsible hanger — a compact, foldable garment hanger designed for modern lifestyles. Whether you\'re travelling, organising a compact wardrobe, or simply need a quick solution to hang your freshly received garment, this lightweight hanger folds flat for easy storage and extends to full size in seconds. Made from reinforced recycled polymer with a soft-grip shoulder design that prevents stretching or creasing of your Micro-French Terry fabric. The hanger accommodates all sizes from XS to XXL and features a rotating hook for closet versatility. A practical everyday essential that reflects Wefton\'s commitment to thoughtful utility.',
+      'Every Wefton Copper order includes a premium collapsible hanger — a compact, foldable garment hanger designed for modern lifestyles. Whether you\'re travelling, organising a compact wardrobe, or simply need a quick solution to hang your freshly received garment, this lightweight hanger folds flat for easy storage and extends to full size in seconds. Made from reinforced recycled polymer with a soft-grip shoulder design that prevents stretching or creasing of your Cotton Fabric fabric. The hanger accommodates all sizes from XS to XXL and features a rotating hook for closet versatility. A practical everyday essential that reflects Wefton\'s commitment to thoughtful utility.',
     accent: 'from-amber-500/20',
   },
   {

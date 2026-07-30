@@ -47,7 +47,7 @@ export default function BannerSlider({ slides }: BannerSliderProps) {
             Wefton Copper
           </h2>
           <p className="text-base md:text-lg text-[var(--color-muted,#737373)] mt-2">
-            Premium Micro-French Terry Essentials
+            Premium Cotton Fabric Essentials
           </p>
         </div>
       </section>
@@ -83,12 +83,14 @@ export default function BannerSlider({ slides }: BannerSliderProps) {
                 <p className="text-base md:text-lg text-white/90 mt-2">
                   {slide.subheading}
                 </p>
-                <a
-                  href={slide.ctaHref}
-                  className="mt-6 px-8 py-3 bg-white text-black font-medium rounded hover:bg-white/90 transition-colors"
-                >
-                  {slide.ctaText}
-                </a>
+                {slide.ctaText && (
+                  <a
+                    href={slide.ctaHref}
+                    className="mt-6 px-8 py-3 bg-white text-black font-medium rounded hover:bg-white/90 transition-colors"
+                  >
+                    {slide.ctaText}
+                  </a>
+                )}
               </div>
             </div>
           </SwiperSlide>

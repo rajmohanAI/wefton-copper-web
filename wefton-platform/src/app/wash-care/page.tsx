@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Wash Care Instructions',
-  description: 'How to care for your Wefton Copper Micro-French Terry garments to maintain quality and longevity.',
+  description: 'How to care for your Wefton Copper Cotton Fabric garments to maintain quality and longevity.',
 };
 
 export default function WashCarePage() {
@@ -71,7 +71,7 @@ export default function WashCarePage() {
               </li>
               <li className="flex gap-3">
                 <span className="text-[var(--copper-light)]">•</span>
-                Do not tumble dry — high heat can shrink Micro-French Terry and damage fibres.
+                Do not tumble dry — high heat can shrink Cotton Fabric and damage fibres.
               </li>
               <li className="flex gap-3">
                 <span className="text-[var(--copper-light)]">•</span>
@@ -113,7 +113,7 @@ export default function WashCarePage() {
               </li>
               <li className="flex gap-3">
                 <span className="text-[var(--copper-light)]">•</span>
-                Keep away from rough surfaces that may snag the Micro-French Terry weave.
+                Keep away from rough surfaces that may snag the Cotton Fabric weave.
               </li>
             </ul>
           </section>

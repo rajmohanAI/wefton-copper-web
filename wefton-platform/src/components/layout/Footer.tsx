@@ -47,7 +47,7 @@ export default function Footer() {
             </Link>
             <p className="mt-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-xs">
               Redefining the global standard for essential wear, starting from the thread up.
-              Premium Micro-French Terry crafted for the discerning individual.
+              Premium Cotton Fabric crafted for the discerning individual.
             </p>
 
             {/* Social */}

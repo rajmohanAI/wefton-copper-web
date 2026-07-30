@@ -17,8 +17,8 @@ const VISION_SECTIONS = [
   {
     id: 'sustainability',
     icon: Leaf,
-    title: 'Plastic-Free Promise',
-    subtitle: 'For the planet we share.',
+    title: 'Premium Packaging',
+    subtitle: 'Unboxing worth the wait.',
     description:
       'Wefton products are free from plastics. Please use the package cover for your storage utilities for a while and dispose them to non-biodegradable waste to help conserve our environment.',
     accent: 'from-emerald-500/20',
@@ -35,10 +35,10 @@ const VISION_SECTIONS = [
   {
     id: 'seeds',
     icon: Sprout,
-    title: 'Seed Bag Initiative',
+    title: 'Plantable Seed Tag',
     subtitle: 'Grow with every purchase.',
     description:
-      'Wefton provides a seed bag with every product packaging. Please encourage yourself and your young ones to grow trees to conserve the environment.',
+      'Every Wefton garment comes with a plantable seed tag. Tear it off, bury it in soil, and watch it grow into a plant. Encourage yourself and your young ones to nurture greenery and conserve the environment.',
     accent: 'from-green-500/20',
   },
   {
