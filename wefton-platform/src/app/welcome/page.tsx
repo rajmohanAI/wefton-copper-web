@@ -15,28 +15,9 @@ const PRODUCTS = [
 
 export default function WelcomePage() {
   return (
-    <div className="min-h-screen bg-[#1a1a1a] text-white">
-      {/* Hero / Brand Identity */}
-      <section className="flex flex-col items-center justify-center px-6 pt-14 pb-10">
-        <p className="text-[var(--copper-light,#B87333)] font-bold tracking-[6px] uppercase text-sm mb-3">
-          WEFTON COPPER
-        </p>
-        <h1 className="text-2xl md:text-3xl font-light text-center leading-snug max-w-md">
-          Premium Cotton Fabric Essentials
-        </h1>
-        <p className="mt-3 text-sm text-neutral-400 text-center max-w-xs">
-          Redefining the global standard for essential wear, starting from the thread up.
-        </p>
-        <Link
-          href="/"
-          className="mt-6 px-8 py-3 bg-[#B87333] text-white text-sm font-medium tracking-wider uppercase rounded hover:bg-[#a0632b] transition-colors"
-        >
-          Shop Now
-        </Link>
-      </section>
-
+    <div className="min-h-screen bg-[#f8f6f3] text-[#1a1a1a] pt-[var(--nav-height)]">
       {/* Product Grid */}
-      <section className="px-4 pb-10">
+      <section className="px-4 py-10">
         <p className="text-xs tracking-[4px] uppercase text-[#B87333] text-center mb-6">
           Our Collection
         </p>
@@ -45,7 +26,7 @@ export default function WelcomePage() {
             <Link
               key={`${product.gender}-${product.id}`}
               href={`/${product.gender}?category=${product.slug}`}
-              className="group relative block overflow-hidden rounded-lg aspect-[3/4] bg-neutral-900"
+              className="group relative block overflow-hidden rounded-lg aspect-[3/4] bg-[#ece8e3]"
             >
               <Image
                 src={product.thumbnail}
@@ -55,10 +36,10 @@ export default function WelcomePage() {
                 sizes="(max-width: 640px) 50vw, 25vw"
                 quality={70}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-3">
                 <p className="text-xs font-medium text-white">{product.name}</p>
-                <p className="text-[0.625rem] text-white/50 uppercase">
+                <p className="text-[0.625rem] text-white/60 uppercase">
                   {product.gender === 'men' ? "Men's" : "Women's"}
                 </p>
               </div>
@@ -68,37 +49,37 @@ export default function WelcomePage() {
       </section>
 
       {/* Brand Differentiators */}
-      <section className="px-6 py-10 border-t border-white/10">
+      <section className="px-6 py-10 border-t border-neutral-200">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-2xl mx-auto text-center">
           <div>
             <p className="text-lg font-light text-[#B87333]">✓</p>
-            <p className="text-xs text-neutral-300 mt-1">Authenticity Serial Number</p>
+            <p className="text-xs text-neutral-600 mt-1">Authenticity Serial Number</p>
           </div>
           <div>
             <p className="text-lg font-light text-[#B87333]">✓</p>
-            <p className="text-xs text-neutral-300 mt-1">Premium Packaging</p>
+            <p className="text-xs text-neutral-600 mt-1">Premium Packaging</p>
           </div>
           <div>
             <p className="text-lg font-light text-[#B87333]">✓</p>
-            <p className="text-xs text-neutral-300 mt-1">Plantable Seed Tag</p>
+            <p className="text-xs text-neutral-600 mt-1">Plantable Seed Tag</p>
           </div>
           <div>
             <p className="text-lg font-light text-[#B87333]">✓</p>
-            <p className="text-xs text-neutral-300 mt-1">Fabric Freshener</p>
+            <p className="text-xs text-neutral-600 mt-1">Fabric Freshener</p>
           </div>
           <div>
             <p className="text-lg font-light text-[#B87333]">✓</p>
-            <p className="text-xs text-neutral-300 mt-1">Collapsible Hanger</p>
+            <p className="text-xs text-neutral-600 mt-1">Collapsible Hanger</p>
           </div>
           <div>
             <p className="text-lg font-light text-[#B87333]">✓</p>
-            <p className="text-xs text-neutral-300 mt-1">Copper Stitching</p>
+            <p className="text-xs text-neutral-600 mt-1">Copper Stitching</p>
           </div>
         </div>
       </section>
 
       {/* Social Handles + Contact */}
-      <section className="px-6 py-10 border-t border-white/10 text-center">
+      <section className="px-6 py-10 border-t border-neutral-200 text-center">
         <p className="text-xs tracking-[4px] uppercase text-[#B87333] mb-4">
           Connect With Us
         </p>
@@ -107,7 +88,7 @@ export default function WelcomePage() {
             href={BRAND.social.instagram}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-neutral-400 hover:text-white transition-colors text-sm"
+            className="text-neutral-500 hover:text-[#B87333] transition-colors text-sm"
           >
             Instagram
           </a>
@@ -115,7 +96,7 @@ export default function WelcomePage() {
             href={BRAND.social.facebook}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-neutral-400 hover:text-white transition-colors text-sm"
+            className="text-neutral-500 hover:text-[#B87333] transition-colors text-sm"
           >
             Facebook
           </a>
@@ -123,7 +104,7 @@ export default function WelcomePage() {
             href={BRAND.social.twitter}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-neutral-400 hover:text-white transition-colors text-sm"
+            className="text-neutral-500 hover:text-[#B87333] transition-colors text-sm"
           >
             Twitter
           </a>
@@ -136,14 +117,14 @@ export default function WelcomePage() {
       </section>
 
       {/* Footer CTA */}
-      <section className="px-6 py-8 border-t border-white/10 text-center">
+      <section className="px-6 py-8 border-t border-neutral-200 text-center">
         <Link
           href="/"
           className="inline-block px-10 py-3 border border-[#B87333] text-[#B87333] text-sm font-medium tracking-wider uppercase rounded hover:bg-[#B87333] hover:text-white transition-colors"
         >
           Visit Full Store
         </Link>
-        <p className="mt-4 text-[0.625rem] text-neutral-600">
+        <p className="mt-4 text-[0.625rem] text-neutral-400">
           © 2026 Wefton Copper. All rights reserved.
         </p>
       </section>
