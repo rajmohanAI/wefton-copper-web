@@ -51,12 +51,12 @@ export default function Footer() {
             </p>
 
             {/* Social */}
-            <div className="flex items-center gap-4 mt-6">
+            <div className="flex items-center gap-2 mt-6">
               <a
                 href={BRAND.social.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
+                className="p-2 text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
                 aria-label="Instagram"
               >
                 <Instagram size={18} />
@@ -65,7 +65,7 @@ export default function Footer() {
                 href={BRAND.social.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
+                className="p-2 text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
                 aria-label="Facebook"
               >
                 <Facebook size={18} />
@@ -74,7 +74,7 @@ export default function Footer() {
                 href={BRAND.social.twitter}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
+                className="p-2 text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
                 aria-label="Twitter"
               >
                 <Twitter size={18} />
@@ -82,17 +82,17 @@ export default function Footer() {
             </div>
 
             {/* Contact */}
-            <div className="mt-6 space-y-2">
+            <div className="mt-6 space-y-1">
               <a
                 href={`mailto:${BRAND.email}`}
-                className="flex items-center gap-2 text-xs text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
+                className="flex items-center gap-2 py-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
               >
                 <Mail size={13} />
                 {BRAND.email}
               </a>
               <a
                 href={`tel:${BRAND.phone}`}
-                className="flex items-center gap-2 text-xs text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
+                className="flex items-center gap-2 py-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
               >
                 <Phone size={13} />
                 {BRAND.phone}
