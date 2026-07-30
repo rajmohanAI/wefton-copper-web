@@ -19,7 +19,7 @@ const MILESTONES = [
     year: '2025',
     title: 'First Thread',
     description:
-      'Sourced the finest Micro-French Terry fabric from ethical mills. Months of R&D perfecting the ideal weight, drape, and softness.',
+      'Sourced the finest Cotton Fabric fabric from ethical mills. Months of R&D perfecting the ideal weight, drape, and softness.',
   },
   {
     year: '2025',
@@ -202,7 +202,7 @@ export default function AboutClient() {
             </blockquote>
             <p className="text-sm text-[var(--text-muted)] text-center mt-6 leading-relaxed max-w-2xl mx-auto">
               At Wefton Copper, we exist to bridge the gap between luxury and everyday wear. Our
-              Micro-French Terry fabric is engineered for comfort, durability, and a premium hand-feel
+              Cotton Fabric fabric is engineered for comfort, durability, and a premium hand-feel
               that lasts. Every decision — from sourcing to stitching — is guided by our commitment to
               quality without compromise.
             </p>
@@ -257,7 +257,7 @@ export default function AboutClient() {
                 Ethical Sourcing
               </h3>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                Our Micro-French Terry fabric is sourced from certified ethical mills that ensure
+                Our Cotton Fabric fabric is sourced from certified ethical mills that ensure
                 fair wages, safe working conditions, and environmentally responsible production
                 processes at every stage.
               </p>

@@ -9,7 +9,7 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
 export const metadata: Metadata = {
   title: 'Bestsellers',
   description:
-    'Shop the most loved pieces from Wefton Copper. Our community favourites in premium Micro-French Terry.',
+    'Shop the most loved pieces from Wefton Copper. Our community favourites in premium Cotton Fabric.',
   openGraph: {
     title: 'Bestsellers | Wefton Copper',
     description: 'Shop the most loved pieces from Wefton Copper. Our community favourites.',

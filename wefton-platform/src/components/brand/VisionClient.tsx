@@ -31,7 +31,7 @@ const BRAND_PROMISES = [
     icon: Sparkles,
     title: 'Organic Fabric Freshener',
     description:
-      'Each Wefton Copper garment arrives with a handcrafted organic fabric freshener pouch, blended from natural essential oils and dried botanicals sourced from sustainable farms across India. Unlike synthetic air fresheners that release harmful chemicals, our freshener uses lavender, eucalyptus, and cedarwood extracts to keep your fabrics smelling naturally fresh. Place the pouch in your wardrobe alongside your Wefton essentials, and it will maintain a subtle, clean fragrance for up to three months. The pouch is refillable — simply add a few drops of your favourite essential oil to extend its life. This thoughtful addition ensures your Micro-French Terry garments always feel and smell as fresh as the day they arrived.',
+      'Each Wefton Copper garment arrives with a handcrafted organic fabric freshener pouch, blended from natural essential oils and dried botanicals sourced from sustainable farms across India. Unlike synthetic air fresheners that release harmful chemicals, our freshener uses lavender, eucalyptus, and cedarwood extracts to keep your fabrics smelling naturally fresh. Place the pouch in your wardrobe alongside your Wefton essentials, and it will maintain a subtle, clean fragrance for up to three months. The pouch is refillable — simply add a few drops of your favourite essential oil to extend its life. This thoughtful addition ensures your Cotton Fabric garments always feel and smell as fresh as the day they arrived.',
     accent: 'from-blue-500/20',
   },
   {
@@ -47,7 +47,7 @@ const BRAND_PROMISES = [
     icon: Hand,
     title: 'Collapsible Hanger',
     description:
-      'Every Wefton Copper order includes a premium collapsible hanger — a compact, foldable garment hanger designed for modern lifestyles. Whether you\'re travelling, organising a compact wardrobe, or simply need a quick solution to hang your freshly received garment, this lightweight hanger folds flat for easy storage and extends to full size in seconds. Made from reinforced recycled polymer with a soft-grip shoulder design that prevents stretching or creasing of your Micro-French Terry fabric. The hanger accommodates all sizes from XS to XXL and features a rotating hook for closet versatility. A practical everyday essential that reflects Wefton\'s commitment to thoughtful utility.',
+      'Every Wefton Copper order includes a premium collapsible hanger — a compact, foldable garment hanger designed for modern lifestyles. Whether you\'re travelling, organising a compact wardrobe, or simply need a quick solution to hang your freshly received garment, this lightweight hanger folds flat for easy storage and extends to full size in seconds. Made from reinforced recycled polymer with a soft-grip shoulder design that prevents stretching or creasing of your Cotton Fabric fabric. The hanger accommodates all sizes from XS to XXL and features a rotating hook for closet versatility. A practical everyday essential that reflects Wefton\'s commitment to thoughtful utility.',
     accent: 'from-amber-500/20',
   },
   {

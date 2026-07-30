@@ -8,8 +8,8 @@ const SAMPLE_PRODUCTS = [
   {
     title: 'Premium Navy Tee',
     slug: 'premium-navy-tee',
-    description: 'Our signature Micro-French Terry tee in deep navy. Lightweight, breathable, and built to last with copper-stitched seams that reinforce every stress point.',
-    shortDescription: 'Signature Micro-French Terry tee in deep navy',
+    description: 'Our signature Cotton Fabric tee in deep navy. Lightweight, breathable, and built to last with copper-stitched seams that reinforce every stress point.',
+    shortDescription: 'Signature Cotton Fabric tee in deep navy',
     category: 'premium-tee',
     gender: 'men',
     tags: ['premium', 'navy', 'tee', 'micro-french-terry'],
@@ -42,8 +42,8 @@ const SAMPLE_PRODUCTS = [
   {
     title: 'Oversized Black Tee',
     slug: 'oversized-black-tee',
-    description: 'The perfect oversized silhouette in premium black Micro-French Terry. Drop shoulders, relaxed fit, and our signature copper-stitched collar that never loses shape.',
-    shortDescription: 'Oversized fit in premium black Micro-French Terry',
+    description: 'The perfect oversized silhouette in premium black Cotton Fabric. Drop shoulders, relaxed fit, and our signature copper-stitched collar that never loses shape.',
+    shortDescription: 'Oversized fit in premium black Cotton Fabric',
     category: 'oversized-tee',
     gender: 'men',
     tags: ['oversized', 'black', 'tee', 'relaxed-fit'],
@@ -76,8 +76,8 @@ const SAMPLE_PRODUCTS = [
   {
     title: 'Premium Polo - Olive',
     slug: 'premium-polo-olive',
-    description: 'Elevated polo crafted from our proprietary Micro-French Terry blend. The architectural collar with copper stitching retains its shape wash after wash.',
-    shortDescription: 'Elevated polo in olive Micro-French Terry',
+    description: 'Elevated polo crafted from our proprietary Cotton Fabric blend. The architectural collar with copper stitching retains its shape wash after wash.',
+    shortDescription: 'Elevated polo in olive Cotton Fabric',
     category: 'premium-polo',
     gender: 'men',
     tags: ['polo', 'olive', 'premium', 'collar'],
@@ -110,7 +110,7 @@ const SAMPLE_PRODUCTS = [
   {
     title: 'Active Wear Tee - Charcoal',
     slug: 'active-wear-tee-charcoal',
-    description: 'Engineered for movement. Our Active Wear tee combines moisture-wicking Micro-French Terry with four-way stretch for gym-to-street versatility.',
+    description: 'Engineered for movement. Our Active Wear tee combines moisture-wicking Cotton Fabric with four-way stretch for gym-to-street versatility.',
     shortDescription: 'Moisture-wicking active tee in charcoal',
     category: 'active-wear',
     gender: 'men',
@@ -144,7 +144,7 @@ const SAMPLE_PRODUCTS = [
   {
     title: 'Copper Hoodie - Midnight',
     slug: 'copper-hoodie-midnight',
-    description: 'Premium heavyweight Micro-French Terry hoodie with kangaroo pocket and copper-stitched drawstring hood. The ultimate layering piece for cooler days.',
+    description: 'Premium heavyweight Cotton Fabric hoodie with kangaroo pocket and copper-stitched drawstring hood. The ultimate layering piece for cooler days.',
     shortDescription: 'Heavyweight hoodie in midnight black',
     category: 'hoodies',
     gender: 'men',
@@ -178,7 +178,7 @@ const SAMPLE_PRODUCTS = [
   {
     title: 'Women Premium Tee - Blush',
     slug: 'women-premium-tee-blush',
-    description: 'Feminine silhouette in soft blush Micro-French Terry. Slightly cropped with a relaxed shoulder for effortless everyday style.',
+    description: 'Feminine silhouette in soft blush Cotton Fabric. Slightly cropped with a relaxed shoulder for effortless everyday style.',
     shortDescription: 'Feminine premium tee in soft blush',
     category: 'premium-tee',
     gender: 'women',

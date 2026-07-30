@@ -8,7 +8,7 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
 export const metadata: Metadata = {
   title: "Men's Collection",
   description:
-    "Shop Wefton Copper Men's Collection — Premium Tees, Polos, Oversized, Active Wear, Hoodies, and more. Crafted from Micro-French Terry.",
+    "Shop Wefton Copper Men's Collection — Premium Tees, Polos, Oversized, Active Wear, Hoodies, and more. Crafted from Cotton Fabric.",
   openGraph: {
     title: "Men's Collection | Wefton Copper",
     description:
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "Men's Collection | Wefton Copper",
-    description: "Shop Wefton Copper Men's Collection — Premium Micro-French Terry essentials.",
+    description: "Shop Wefton Copper Men's Collection — Premium Cotton Fabric essentials.",
     images: ['/og-image.jpg'],
   },
 };
@@ -51,7 +51,7 @@ export default function MenPage() {
         </div>
       </div>
     }>
-      <CollectionPage gender="men" title="Men's Collection" subtitle="Engineered for precision. Crafted from lightweight Micro-French Terry." />
+      <CollectionPage gender="men" title="Men's Collection" subtitle="Engineered for precision. Crafted from lightweight Cotton Fabric." />
     </Suspense>
   );
 }

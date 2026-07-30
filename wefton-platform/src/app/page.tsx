@@ -13,20 +13,20 @@ import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
 
 export const metadata: Metadata = {
-  title: 'Wefton Copper | Premium Micro-French Terry',
+  title: 'Wefton Copper | Premium Cotton Fabric',
   description:
-    'Wefton Copper — Premium Micro-French Terry essentials for men and women. Redefining the global standard for essential wear, starting from the thread up.',
+    'Wefton Copper — Premium Cotton Fabric essentials for men and women. Redefining the global standard for essential wear, starting from the thread up.',
   openGraph: {
-    title: 'Wefton Copper | Premium Micro-French Terry',
+    title: 'Wefton Copper | Premium Cotton Fabric',
     description:
-      'Premium Micro-French Terry essentials. Crafted for the discerning individual.',
+      'Premium Cotton Fabric essentials. Crafted for the discerning individual.',
     url: siteUrl,
     images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Wefton Copper' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Wefton Copper | Premium Micro-French Terry',
-    description: 'Premium Micro-French Terry essentials.',
+    title: 'Wefton Copper | Premium Cotton Fabric',
+    description: 'Premium Cotton Fabric essentials.',
     images: ['/og-image.jpg'],
   },
 };
@@ -74,7 +74,7 @@ export default function HomePage() {
     url: siteUrl,
     logo: `${siteUrl}/logo.png`,
     description:
-      'Premium Micro-French Terry essentials. Redefining the global standard for essential wear, starting from the thread up.',
+      'Premium Cotton Fabric essentials. Redefining the global standard for essential wear, starting from the thread up.',
     sameAs: [
       'https://www.instagram.com/weftoncopper',
       'https://www.facebook.com/weftoncopper',

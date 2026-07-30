@@ -9,10 +9,10 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
 export const metadata: Metadata = {
   title: 'New Arrivals',
   description:
-    'Shop the latest drops from Wefton Copper. Fresh styles in premium Micro-French Terry for men and women.',
+    'Shop the latest drops from Wefton Copper. Fresh styles in premium Cotton Fabric for men and women.',
   openGraph: {
     title: 'New Arrivals | Wefton Copper',
-    description: 'Shop the latest drops from Wefton Copper. Fresh styles in premium Micro-French Terry.',
+    description: 'Shop the latest drops from Wefton Copper. Fresh styles in premium Cotton Fabric.',
     url: `${siteUrl}/new-arrivals`,
     images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Wefton Copper New Arrivals' }],
   },

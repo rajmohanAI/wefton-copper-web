@@ -39,7 +39,7 @@ const STATIC_TESTIMONIALS: Testimonial[] = [
     name: 'Arjun Mehta',
     location: 'Mumbai',
     rating: 5,
-    text: 'The Micro-French Terry fabric is unlike anything I\'ve worn before. Incredibly lightweight yet structured. The copper-stitched seams are a beautiful detail.',
+    text: 'The Cotton Fabric fabric is unlike anything I\'ve worn before. Incredibly lightweight yet structured. The copper-stitched seams are a beautiful detail.',
     product: 'Premium Tee',
     verified: true,
     avatar: 'AM',

@@ -12,14 +12,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Women's Collection | Wefton Copper",
     description:
-      "Shop Wefton Copper Women's Collection — Elevated silhouettes crafted from premium Micro-French Terry.",
+      "Shop Wefton Copper Women's Collection — Elevated silhouettes crafted from premium Cotton Fabric.",
     url: `${siteUrl}/women`,
     images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: "Wefton Copper Women's Collection" }],
   },
   twitter: {
     card: 'summary_large_image',
     title: "Women's Collection | Wefton Copper",
-    description: "Shop Wefton Copper Women's Collection — Premium Micro-French Terry essentials.",
+    description: "Shop Wefton Copper Women's Collection — Premium Cotton Fabric essentials.",
     images: ['/og-image.jpg'],
   },
 };
