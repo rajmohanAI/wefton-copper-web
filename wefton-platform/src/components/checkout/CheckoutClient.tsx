@@ -549,7 +549,7 @@ export default function CheckoutClient() {
                           className="object-contain"
                           unoptimized
                         />
-                      </div>}
+                      </div>
 
                       {/* UPI ID */}
                       {process.env.NEXT_PUBLIC_UPI_ID && (
