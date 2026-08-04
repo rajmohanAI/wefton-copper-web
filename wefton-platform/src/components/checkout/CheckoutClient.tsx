@@ -540,27 +540,16 @@ export default function CheckoutClient() {
                   ) : orderCreated ? (
                     <div className="flex flex-col items-center gap-6">
                       {/* QR Code Image */}
-                      {process.env.NEXT_PUBLIC_UPI_QR_IMAGE_URL ? (
-                        <div className="w-52 h-52 bg-white rounded-xl flex items-center justify-center overflow-hidden p-2">
-                          <Image
-                            src={process.env.NEXT_PUBLIC_UPI_QR_IMAGE_URL}
-                            alt="UPI QR Code for payment"
-                            width={192}
-                            height={192}
-                            className="object-contain"
-                            unoptimized
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-52 h-52 bg-white rounded-xl flex items-center justify-center">
-                          <div className="text-center text-gray-400 text-xs p-4">
-                            <p className="font-medium text-gray-600 mb-1">
-                              UPI QR Code
-                            </p>
-                            <p>QR code not configured</p>
-                          </div>
-                        </div>
-                      )}
+                      <div className="w-52 h-52 bg-white rounded-xl flex items-center justify-center overflow-hidden p-2">
+                        <Image
+                          src={process.env.NEXT_PUBLIC_UPI_QR_IMAGE_URL || '/payment-qr.png'}
+                          alt="UPI QR Code for payment"
+                          width={192}
+                          height={192}
+                          className="object-contain"
+                          unoptimized
+                        />
+                      </div>
 
                       {/* UPI ID */}
                       {process.env.NEXT_PUBLIC_UPI_ID && (

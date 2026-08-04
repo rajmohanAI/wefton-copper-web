@@ -49,12 +49,12 @@ env:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_UPI_QR_IMAGE_URL
-    value: https://firebasestorage.googleapis.com/v0/b/weflive-58678.firebasestorage.app/o/config%2Fupi-qr.png?alt=media
+    value: /payment-qr.png
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_UPI_ID
-    value: weftoncopper@upi
+    value: weftoncopper@idfcbank.com
     availability:
       - BUILD
       - RUNTIME
