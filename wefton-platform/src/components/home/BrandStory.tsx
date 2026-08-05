@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
-import { Shield, Leaf, Shirt, Sparkles, Hand } from 'lucide-react';
+import { Shield, Leaf, Shirt, Sparkles, Award } from 'lucide-react';
 
 /**
  * Five product differentiators that define the Wefton Copper brand.
@@ -34,10 +34,10 @@ const DIFFERENTIATORS = [
       'An organic fabric freshener accompanies every garment. Keep your Wefton essentials smelling fresh naturally, without harsh chemicals or synthetic fragrances.',
   },
   {
-    icon: Hand,
-    title: 'Collapsible Hanger',
+    icon: Award,
+    title: 'Promise of Quality',
     description:
-      'A complimentary collapsible hanger included with every order. Compact and portable — perfect for travel or wardrobe organisation. Keeps your garments wrinkle-free.',
+      'Each garment is crafted from handpicked, meticulously selected high-quality fabric — engineered for lasting comfort and a premium feel you can trust, wear after wear.',
   },
 ];
 
