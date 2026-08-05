@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
-import { Shield, Leaf, Sprout, Sparkles, Hand } from 'lucide-react';
+import { Shield, Leaf, Shirt, Sparkles, Hand } from 'lucide-react';
 
 /**
  * Five product differentiators that define the Wefton Copper brand.
@@ -22,10 +22,10 @@ const DIFFERENTIATORS = [
       'Our packaging reflects the quality inside. Each garment arrives in a beautifully crafted box with tissue wrap, ensuring a luxurious unboxing experience worthy of the Wefton name.',
   },
   {
-    icon: Sprout,
-    title: 'Plantable Seed Tag',
+    icon: Shirt,
+    title: '100% Premium Cotton',
     description:
-      'Every garment comes with a plantable seed tag. Simply tear it off, bury it in soil, and watch it grow into a plant — our way of giving back to the earth with every purchase.',
+      'Every Wefton garment is crafted from 100% premium cotton fabric — soft, breathable, and built to last. No blends, no compromises — pure comfort against your skin.',
   },
   {
     icon: Sparkles,
@@ -85,7 +85,7 @@ export default function BrandStory() {
           className="text-center mb-16"
         >
           <p className="text-xs tracking-[6px] uppercase text-[var(--copper-light)] mb-4">
-            The Wefton Difference
+            The Wefton Copper Difference
           </p>
           <h2 className="text-4xl md:text-5xl font-light text-[var(--text-light)] max-w-2xl mx-auto leading-tight text-center">
             More than a garment.
