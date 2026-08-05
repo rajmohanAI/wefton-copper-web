@@ -20,7 +20,7 @@ export const addressSchema = z.object({
   state: z.string().min(1, 'State is required'),
   pincode: z
     .string()
-    .regex(/^\d{6}$/, 'PIN code must be exactly 6 digits'),
+    .regex(/^[1-9]\d{5}$/, 'Please enter a valid 6-digit Indian PIN code. We currently deliver only within India.'),
   country: z.string().min(1, 'Country is required'),
 });
 

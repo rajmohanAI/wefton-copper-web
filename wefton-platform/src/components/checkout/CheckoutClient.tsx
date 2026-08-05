@@ -391,6 +391,13 @@ export default function CheckoutClient() {
                                 form.setValue('state', result.state);
                                 form.clearErrors('city');
                                 form.clearErrors('state');
+                                form.clearErrors('pincode');
+                              } else {
+                                form.setError('pincode', {
+                                  message: 'Invalid PIN code. We currently deliver only within India. Please enter a valid Indian PIN code.',
+                                });
+                                form.setValue('city', '');
+                                form.setValue('state', '');
                               }
                             }
                           },
