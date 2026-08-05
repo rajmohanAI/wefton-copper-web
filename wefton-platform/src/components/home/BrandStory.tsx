@@ -82,17 +82,17 @@ export default function BrandStory() {
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          className="flex flex-col items-center text-center mb-16"
         >
           <p className="text-xs tracking-[6px] uppercase text-[var(--copper-light)] mb-4">
             The Wefton Copper Difference
           </p>
-          <h2 className="text-4xl md:text-5xl font-light text-[var(--text-light)] max-w-lg mx-auto leading-tight text-center">
+          <h2 className="text-4xl md:text-5xl font-light text-[var(--text-light)] leading-tight text-center">
             More than a garment.
             <br />
             <span className="gradient-copper">An experience.</span>
           </h2>
-          <p className="mt-6 text-base text-[var(--text-muted)] max-w-md mx-auto leading-relaxed text-center">
+          <p className="mt-6 text-base text-[var(--text-muted)] leading-relaxed text-center">
             Every Wefton Copper product comes with five thoughtful extras that reflect our
             commitment to quality, sustainability, and care.
           </p>
