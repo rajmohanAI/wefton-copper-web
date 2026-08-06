@@ -81,7 +81,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
         <div className="relative overflow-hidden rounded-lg bg-[var(--bg-darker)] aspect-[3/4]">
           {/* Shimmer loader */}
           {!imageLoaded && (
-            <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-darker)] via-white/5 to-[var(--bg-darker)] animate-pulse" />
+            <div className="absolute inset-0 bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
           )}
           {/* Current Image */}
           {currentImage && (
