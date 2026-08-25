@@ -12,17 +12,22 @@ from qrcode.image.styles.colormasks import VerticalGradiantColorMask
 from PIL import Image, ImageDraw
 import os
 
-# Configuration
-URL = "https://www.weftoncopper.com/welcome"
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", "public", "brand-qr.png")
-LOGO_PATH = os.path.join(os.path.dirname(__file__), "..", "public", "Loo_png.png")
+# Configuration — list of (url, output filename) pairs
+QR_TARGETS = [
+    ("https://www.weftoncopper.com/welcome", "brand-qr.png"),
+    ("https://www.weftoncopper.com/wash-care", "wash-care-qr.png"),
+]
+PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
+LOGO_PATH = os.path.join(PUBLIC_DIR, "Loo_png.png")
 
 # Colors
 COLOR_1 = (180, 112, 61)    # #B4703D (copper)
 COLOR_2 = (10, 155, 166)    # #0A9BA6 (teal)
 BG_COLOR = (255, 255, 255)  # White background
 
-def generate_qr():
+def generate_qr(url, output_filename):
+    OUTPUT_PATH = os.path.join(PUBLIC_DIR, output_filename)
+    URL = url
     # Create QR code instance
     qr = qrcode.QRCode(
         version=None,
@@ -82,4 +87,5 @@ def generate_qr():
     print(f"   Size: {img.size[0]}x{img.size[1]}px")
 
 if __name__ == "__main__":
-    generate_qr()
+    for url, filename in QR_TARGETS:
+        generate_qr(url, filename)
