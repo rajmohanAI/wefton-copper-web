@@ -7,19 +7,28 @@ Requirements: pip install qrcode[pil] Pillow numpy
 
 import qrcode
 from qrcode.image.styledpil import StyledPilImage
-from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer, CircleModuleDrawer
-from qrcode.image.styles.colormasks import VerticalGradiantColorMask
+from qrcode.image.styles.moduledrawers.pil import (
+    RoundedModuleDrawer,
+    CircleModuleDrawer,
+)
+from qrcode.image.styles.colormasks import (
+    VerticalGradiantColorMask,
+    SolidFillColorMask,
+)
 from PIL import Image, ImageDraw
 import os
 
 # Configuration — list of QR targets.
-# Each entry: (url, output_filename, styled)
-#   styled=True  → branded QR (rounded modules, copper→teal gradient, logo overlay)
-#   styled=False → plain black & white QR, square modules, no logo
+# Each entry: (url, output_filename, style)
+#   "branded"  → rounded modules, copper→teal gradient, logo overlay
+#   "plain"    → plain black & white QR, square modules, no logo
+#   "bw-dots"  → black & white QR, rounded/dot modules + rounded finder
+#                eyes with circular centers (matches the attached image)
 QR_TARGETS = [
-    ("https://www.weftoncopper.com/welcome", "brand-qr.png", True),
-    ("https://www.weftoncopper.com/wash-care", "wash-care-qr.png", True),
-    ("https://www.weftoncopper.com/wash-care", "wash_care_tag.png", False),
+    ("https://www.weftoncopper.com/welcome", "brand-qr.png", "branded"),
+    ("https://www.weftoncopper.com/wash-care", "wash-care-qr.png", "branded"),
+    ("https://www.weftoncopper.com/wash-care", "wash_care_tag.png", "plain"),
+    ("https://www.weftoncopper.com/wash-care", "wash_care_tag_dots.png", "bw-dots"),
 ]
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 LOGO_PATH = os.path.join(PUBLIC_DIR, "Loo_png.png")
@@ -29,7 +38,7 @@ COLOR_1 = (180, 112, 61)    # #B4703D (copper)
 COLOR_2 = (10, 155, 166)    # #0A9BA6 (teal)
 BG_COLOR = (255, 255, 255)  # White background
 
-def generate_qr(url, output_filename, styled=True):
+def generate_qr(url, output_filename, style="branded"):
     OUTPUT_PATH = os.path.join(PUBLIC_DIR, output_filename)
     URL = url
     # Create QR code instance
@@ -43,13 +52,32 @@ def generate_qr(url, output_filename, styled=True):
     qr.make(fit=True)
 
     # Plain black & white QR: square modules, no gradient, no logo.
-    if not styled:
+    if style == "plain":
         bw = qr.make_image(fill_color="black", back_color="white").convert("RGB")
         os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
         bw.save(OUTPUT_PATH, "PNG", quality=95)
         print(f"✅ B&W QR code saved to: {OUTPUT_PATH}")
         print(f"   URL: {URL}")
         print(f"   Size: {bw.size[0]}x{bw.size[1]}px")
+        return
+
+    # Black & white QR with rounded/dot modules and rounded finder eyes
+    # with circular centers — matches the attached reference image.
+    if style == "bw-dots":
+        dots = qr.make_image(
+            image_factory=StyledPilImage,
+            module_drawer=RoundedModuleDrawer(radius_ratio=1.0),
+            eye_drawer=RoundedModuleDrawer(radius_ratio=1.0),
+            color_mask=SolidFillColorMask(
+                back_color=(255, 255, 255),
+                front_color=(0, 0, 0),
+            ),
+        ).convert("RGB")
+        os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+        dots.save(OUTPUT_PATH, "PNG", quality=95)
+        print(f"✅ B&W dotted QR code saved to: {OUTPUT_PATH}")
+        print(f"   URL: {URL}")
+        print(f"   Size: {dots.size[0]}x{dots.size[1]}px")
         return
 
     # Generate styled QR with rounded modules and vertical gradient
@@ -101,5 +129,5 @@ def generate_qr(url, output_filename, styled=True):
     print(f"   Size: {img.size[0]}x{img.size[1]}px")
 
 if __name__ == "__main__":
-    for url, filename, styled in QR_TARGETS:
-        generate_qr(url, filename, styled)
+    for url, filename, style in QR_TARGETS:
+        generate_qr(url, filename, style)
