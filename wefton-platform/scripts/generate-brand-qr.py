@@ -12,10 +12,14 @@ from qrcode.image.styles.colormasks import VerticalGradiantColorMask
 from PIL import Image, ImageDraw
 import os
 
-# Configuration — list of (url, output filename) pairs
+# Configuration — list of QR targets.
+# Each entry: (url, output_filename, styled)
+#   styled=True  → branded QR (rounded modules, copper→teal gradient, logo overlay)
+#   styled=False → plain black & white QR, square modules, no logo
 QR_TARGETS = [
-    ("https://www.weftoncopper.com/welcome", "brand-qr.png"),
-    ("https://www.weftoncopper.com/wash-care", "wash-care-qr.png"),
+    ("https://www.weftoncopper.com/welcome", "brand-qr.png", True),
+    ("https://www.weftoncopper.com/wash-care", "wash-care-qr.png", True),
+    ("https://www.weftoncopper.com/wash-care", "wash_care_tag.png", False),
 ]
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 LOGO_PATH = os.path.join(PUBLIC_DIR, "Loo_png.png")
@@ -25,7 +29,7 @@ COLOR_1 = (180, 112, 61)    # #B4703D (copper)
 COLOR_2 = (10, 155, 166)    # #0A9BA6 (teal)
 BG_COLOR = (255, 255, 255)  # White background
 
-def generate_qr(url, output_filename):
+def generate_qr(url, output_filename, styled=True):
     OUTPUT_PATH = os.path.join(PUBLIC_DIR, output_filename)
     URL = url
     # Create QR code instance
@@ -37,6 +41,16 @@ def generate_qr(url, output_filename):
     )
     qr.add_data(URL)
     qr.make(fit=True)
+
+    # Plain black & white QR: square modules, no gradient, no logo.
+    if not styled:
+        bw = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+        os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+        bw.save(OUTPUT_PATH, "PNG", quality=95)
+        print(f"✅ B&W QR code saved to: {OUTPUT_PATH}")
+        print(f"   URL: {URL}")
+        print(f"   Size: {bw.size[0]}x{bw.size[1]}px")
+        return
 
     # Generate styled QR with rounded modules and vertical gradient
     img = qr.make_image(
@@ -87,5 +101,5 @@ def generate_qr(url, output_filename):
     print(f"   Size: {img.size[0]}x{img.size[1]}px")
 
 if __name__ == "__main__":
-    for url, filename in QR_TARGETS:
-        generate_qr(url, filename)
+    for url, filename, styled in QR_TARGETS:
+        generate_qr(url, filename, styled)
