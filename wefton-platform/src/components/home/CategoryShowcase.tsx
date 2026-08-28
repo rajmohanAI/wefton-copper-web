@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getCategoriesByGender } from '@/services/categoryService';
 
 /**
  * CategoryShowcase — displays product category tiles on the homepage.
@@ -18,7 +19,8 @@ interface CategoryTile {
   image: string;
 }
 
-// Build tiles from brand config — only categories with actual seeded products
+// Static fallback tiles — used for SSR/first paint and when Firestore
+// categories are unavailable. Only categories with actual seeded products.
 const CATEGORY_TILES: CategoryTile[] = [
   // Men's (5 products that exist in Firestore)
   { id: 'men-premium-tee', name: 'Premium Tee', slug: 'premium-tee', gender: 'men', image: '/men_product_01.png' },
@@ -80,6 +82,44 @@ function CategoryTileCard({ tile }: { tile: CategoryTile }) {
 }
 
 export default function CategoryShowcase() {
+  const [tiles, setTiles] = useState<CategoryTile[]>(CATEGORY_TILES);
+
+  // Hydrate tiles from Firestore categories so the homepage showcase
+  // reflects the same categories as the menu. Falls back to static.
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      getCategoriesByGender('men'),
+      getCategoriesByGender('women'),
+    ])
+      .then(([men, women]) => {
+        if (cancelled) return;
+        const next: CategoryTile[] = [
+          ...men.map((c) => ({
+            id: `men-${c.slug}`,
+            name: c.name,
+            slug: c.slug,
+            gender: 'men' as const,
+            image: c.thumbnail,
+          })),
+          ...women.map((c) => ({
+            id: `women-${c.slug}`,
+            name: c.name,
+            slug: c.slug,
+            gender: 'women' as const,
+            image: c.thumbnail,
+          })),
+        ];
+        if (next.length) setTiles(next);
+      })
+      .catch(() => {
+        /* keep static fallback */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <section className="py-20 px-4 md:px-8 lg:px-8 max-w-[1280px] mx-auto">
       {/* Section Header */}
@@ -94,7 +134,7 @@ export default function CategoryShowcase() {
 
       {/* Category Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-        {CATEGORY_TILES.map((tile) => (
+        {tiles.map((tile) => (
           <CategoryTileCard key={tile.id} tile={tile} />
         ))}
       </div>
