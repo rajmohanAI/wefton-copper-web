@@ -17,11 +17,13 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['framer-motion', 'lucide-react'],
   },
-  // Hangtag QR short link: /ig -> Instagram profile (301 permanent).
+  // Hangtag QR short link: /ig -> Instagram profile (permanent).
+  // Matches case-insensitively (/ig, /IG, /Ig ...) so the uppercase QR
+  // payload (HTTPS://WEFTONCOPPER.COM/IG) also resolves correctly.
   async redirects() {
     return [
       {
-        source: '/ig',
+        source: '/:ig(ig|IG|Ig|iG)',
         destination: 'https://www.instagram.com/weftoncopper',
         permanent: true,
       },

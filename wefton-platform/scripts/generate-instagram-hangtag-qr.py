@@ -17,13 +17,14 @@ import os
 import re
 import segno
 
-# Tiny-QR optimization: uppercase + no scheme puts the QR into alphanumeric
-# mode and drops it to version 1 (29x29) — the smallest standard QR — so it
-# stays scannable when printed under 1 cm^2. Domains and the /ig redirect
-# resolve case-insensitively, so this reaches the same destination as
-# https://www.weftoncopper.com/ig. Phone cameras auto-detect it as a link.
-URL = "WEFTONCOPPER.COM/IG"
-CANONICAL_URL = "https://www.weftoncopper.com/ig"  # where it actually resolves
+# Tiny-QR optimization: ALL-UPPERCASE including the HTTPS:// scheme keeps the
+# QR in alphanumeric mode -> version 2 (33x33), the smallest standard QR that
+# still carries an explicit https scheme. The scheme is REQUIRED: without it,
+# phones open http:// and hit an insecure-connection warning. URL scheme/host
+# are case-insensitive, and next.config.ts matches the /IG path case-
+# insensitively, so this resolves securely to https://weftoncopper.com/ig.
+URL = "HTTPS://WEFTONCOPPER.COM/IG"
+CANONICAL_URL = "https://weftoncopper.com/ig"  # where it actually resolves
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 os.makedirs(PUBLIC_DIR, exist_ok=True)
 
