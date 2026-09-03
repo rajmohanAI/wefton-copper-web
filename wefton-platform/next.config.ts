@@ -27,6 +27,13 @@ const nextConfig: NextConfig = {
         destination: 'https://www.instagram.com/weftoncopper',
         permanent: true,
       },
+      // Hangtag QR short link: /wc -> wash-care instructions page.
+      // Case-insensitive so an uppercase QR payload (/WC) also resolves.
+      {
+        source: '/:wc(wc|WC|Wc|wC)',
+        destination: '/wash-care',
+        permanent: true,
+      },
     ];
   },
   // Security headers
