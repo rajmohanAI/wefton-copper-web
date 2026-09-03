@@ -17,14 +17,17 @@ import os
 import re
 import segno
 
-# Tiny-QR optimization: ALL-UPPERCASE including the HTTPS:// scheme keeps the
-# QR in alphanumeric mode -> version 2 (33x33), the smallest standard QR that
-# still carries an explicit https scheme. The scheme is REQUIRED: without it,
-# phones open http:// and hit an insecure-connection warning. URL scheme/host
-# are case-insensitive, and next.config.ts matches the /IG path case-
-# insensitively, so this resolves securely to https://weftoncopper.com/ig.
-URL = "HTTPS://WEFTONCOPPER.COM/IG"
-CANONICAL_URL = "https://weftoncopper.com/ig"  # where it actually resolves
+# Tiny-QR optimization: ALL-UPPERCASE incl. the HTTPS:// scheme AND the "WWW."
+# host keeps the QR in alphanumeric mode -> version 2 (33x33), the smallest
+# standard QR that still works.
+#   - The scheme is REQUIRED: without https:// phones open http:// and hit an
+#     insecure-connection warning.
+#   - The "www." host is REQUIRED: the bare domain weftoncopper.com has no DNS
+#     record; only www.weftoncopper.com resolves.
+# Scheme/host are case-insensitive, and the live /IG redirect resolves to
+# https://www.instagram.com/weftoncopper (verified via curl -> 308).
+URL = "HTTPS://WWW.WEFTONCOPPER.COM/IG"
+CANONICAL_URL = "https://www.weftoncopper.com/ig"  # where it actually resolves
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 os.makedirs(PUBLIC_DIR, exist_ok=True)
 
