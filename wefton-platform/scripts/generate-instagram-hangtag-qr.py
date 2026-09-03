@@ -17,7 +17,14 @@ import os
 import re
 import segno
 
-URL = "https://www.weftoncopper.com/ig"
+# Tiny-QR optimization: ALL-UPPERCASE including the HTTPS:// scheme keeps the
+# QR in alphanumeric mode -> version 2 (33x33), the smallest standard QR that
+# still carries an explicit https scheme. The scheme is REQUIRED: without it,
+# phones open http:// and hit an insecure-connection warning. URL scheme/host
+# are case-insensitive, and next.config.ts matches the /IG path case-
+# insensitively, so this resolves securely to https://weftoncopper.com/ig.
+URL = "HTTPS://WEFTONCOPPER.COM/IG"
+CANONICAL_URL = "https://weftoncopper.com/ig"  # where it actually resolves
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 os.makedirs(PUBLIC_DIR, exist_ok=True)
 
@@ -57,8 +64,9 @@ def build():
     # version low = larger modules at tiny print size = easier to scan.
     qr = segno.make(URL, micro=False, error="m")
     w, h = qr.symbol_size()
-    print("✅ Standard QR generated (scannable by all phones)")
+    print("✅ Tiny standard QR generated (scannable by all phones)")
     print(f"   data    : {URL}")
+    print(f"   resolves: {CANONICAL_URL}")
     print(f"   version : {qr.version}")
     print(f"   error   : {qr.error}")
     print(f"   modules : {w}x{h}")
