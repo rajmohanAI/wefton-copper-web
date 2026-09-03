@@ -17,6 +17,16 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['framer-motion', 'lucide-react'],
   },
+  // Hangtag QR short link: /ig -> Instagram profile (301 permanent).
+  async redirects() {
+    return [
+      {
+        source: '/ig',
+        destination: 'https://www.instagram.com/weftoncopper',
+        permanent: true,
+      },
+    ];
+  },
   // Security headers
   async headers() {
     return [

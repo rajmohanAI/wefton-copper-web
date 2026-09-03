@@ -20,6 +20,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const [hovered, setHovered] = useState(false);
   const [adding, setAdding] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const { addItem, openCart } = useCartStore();
   const { toggle, has } = useWishlistStore();
@@ -33,12 +34,14 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const handlePrevImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setImageLoaded(false);
     setCurrentImageIndex((i) => (i - 1 + images.length) % images.length);
   };
 
   const handleNextImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setImageLoaded(false);
     setCurrentImageIndex((i) => (i + 1) % images.length);
   };
 
@@ -76,6 +79,10 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
       <Link href={`/products/${product.slug}`} className="block">
         {/* Image Container */}
         <div className="relative overflow-hidden rounded-lg bg-[var(--bg-darker)] aspect-[3/4]">
+          {/* Shimmer loader */}
+          {!imageLoaded && (
+            <div className="absolute inset-0 bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+          )}
           {/* Current Image */}
           {currentImage && (
             <Image
@@ -83,11 +90,12 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
               alt={currentImage.alt || product.title}
               fill
               priority={priority}
-              className="object-cover transition-opacity duration-500"
+              className={cn('object-cover transition-opacity duration-500', imageLoaded ? 'opacity-100' : 'opacity-0')}
               sizes="(max-width: 640px) 45vw, (max-width: 1024px) 33vw, 25vw"
               quality={70}
               loading={priority ? 'eager' : 'lazy'}
               key={currentImageIndex}
+              onLoad={() => setImageLoaded(true)}
             />
           )}
 

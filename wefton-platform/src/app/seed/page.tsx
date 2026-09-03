@@ -217,15 +217,18 @@ const SAMPLE_COUPONS = [
   { code: 'EXPIRED5', discount: 5, active: true, expiresAt: '2024-01-01T00:00:00Z' },
 ];
 
+// Categories mirror the actual seeded products so the menu and homepage
+// showcase stay in sync with what customers can actually buy.
 const SAMPLE_CATEGORIES = [
-  { categoryId: 'cat-1', name: 'Premium Tee', slug: 'premium-tee', gender: 'men', order: 1 },
-  { categoryId: 'cat-2', name: 'Premium Polo', slug: 'premium-polo', gender: 'men', order: 2 },
-  { categoryId: 'cat-3', name: 'Oversized Tee', slug: 'oversized-tee', gender: 'men', order: 3 },
-  { categoryId: 'cat-4', name: 'Active Wear', slug: 'active-wear', gender: 'men', order: 4 },
-  { categoryId: 'cat-5', name: 'Hoodies', slug: 'hoodies', gender: 'men', order: 5 },
-  { categoryId: 'cat-6', name: 'Joggers', slug: 'joggers', gender: 'men', order: 6 },
-  { categoryId: 'cat-7', name: 'Premium Tee', slug: 'premium-tee', gender: 'women', order: 1 },
-  { categoryId: 'cat-8', name: 'Co-Ords', slug: 'co-ords', gender: 'women', order: 2 },
+  // Men (matches the 5 men's products above)
+  { categoryId: 'cat-1', name: 'Premium Tee', slug: 'premium-tee', gender: 'men', image: '/men_product_01.png', order: 1 },
+  { categoryId: 'cat-2', name: 'Premium Polo', slug: 'premium-polo', gender: 'men', image: '/men_product_02.png', order: 2 },
+  { categoryId: 'cat-3', name: 'Oversized Tee', slug: 'oversized-tee', gender: 'men', image: '/men_product_03.png', order: 3 },
+  { categoryId: 'cat-4', name: 'Active Wear', slug: 'active-wear', gender: 'men', image: '/men_product_05.png', order: 4 },
+  { categoryId: 'cat-5', name: 'Hoodies', slug: 'hoodies', gender: 'men', image: '/men_product_09.png', order: 5 },
+  // Women (matches the women's product above)
+  { categoryId: 'cat-7', name: 'Premium Tee', slug: 'premium-tee', gender: 'women', image: '/women_product_01.png', order: 1 },
+  { categoryId: 'cat-8', name: 'Active Wear', slug: 'active-wear', gender: 'women', image: '/women_product_02.png', order: 2 },
 ];
 
 export default function SeedPage() {

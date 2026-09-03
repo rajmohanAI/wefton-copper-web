@@ -21,6 +21,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useSearchStore } from '@/store/searchStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import { MEN_CATEGORIES, WOMEN_CATEGORIES } from '@/config/brand';
+import { getNavCategories, type NavCategory } from '@/services/categoryService';
 import ThemeSwitcher from './ThemeSwitcher';
 
 /**
@@ -43,14 +44,43 @@ function NavbarActionsSkeleton() {
   );
 }
 
-const NAV_LINKS = [
-  { label: 'Home', href: '/' },
-  { label: 'Men', href: '/men', dropdown: MEN_CATEGORIES },
-  { label: 'Women', href: '/women', dropdown: WOMEN_CATEGORIES },
-  { label: 'New Arrivals', href: '/new-arrivals' },
-  { label: 'Vision', href: '/vision' },
-  { label: 'About', href: '/about' },
-];
+interface NavLink {
+  label: string;
+  href: string;
+  dropdown?: readonly NavCategory[] | NavCategory[];
+}
+
+/**
+ * Build the nav links from the given category lists.
+ * Defaults to the static brand config so SSR and the first paint
+ * render a populated menu; hydration then swaps in Firestore data.
+ */
+function buildNavLinks(
+  men: readonly NavCategory[] | NavCategory[],
+  women: readonly NavCategory[] | NavCategory[]
+): NavLink[] {
+  return [
+    { label: 'Home', href: '/' },
+    { label: 'Men', href: '/men', dropdown: men },
+    { label: 'Women', href: '/women', dropdown: women },
+    { label: 'New Arrivals', href: '/new-arrivals' },
+    { label: 'Vision', href: '/vision' },
+    { label: 'About', href: '/about' },
+  ];
+}
+
+const STATIC_MEN: NavCategory[] = MEN_CATEGORIES.map((c) => ({
+  id: c.id,
+  name: c.name,
+  slug: c.slug,
+  thumbnail: c.thumbnail,
+}));
+const STATIC_WOMEN: NavCategory[] = WOMEN_CATEGORIES.map((c) => ({
+  id: c.id,
+  name: c.name,
+  slug: c.slug,
+  thumbnail: c.thumbnail,
+}));
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -58,6 +88,9 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [navLinks, setNavLinks] = useState<NavLink[]>(() =>
+    buildNavLinks(STATIC_MEN, STATIC_WOMEN)
+  );
   const dropdownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cartCount = useCartStore((s) => s.getItemCount());
@@ -68,6 +101,31 @@ export default function Navbar() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Hydrate menu categories from Firestore so newly added product
+  // categories appear in the menu without a code change. Falls back
+  // to the static brand config on error / empty collection.
+  useEffect(() => {
+    let cancelled = false;
+    getNavCategories()
+      .then(({ men, women }) => {
+        if (cancelled) return;
+        if (men.length || women.length) {
+          setNavLinks(
+            buildNavLinks(
+              men.length ? men : STATIC_MEN,
+              women.length ? women : STATIC_WOMEN
+            )
+          );
+        }
+      })
+      .catch(() => {
+        /* keep static fallback */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -111,7 +169,7 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <ul className="hidden lg:flex items-center gap-8">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <li
                 key={link.label}
                 className="relative"
@@ -280,7 +338,7 @@ export default function Navbar() {
             className="fixed inset-0 z-40 glass lg:hidden pt-[var(--nav-height)]"
           >
             <nav className="flex flex-col p-8 gap-2">
-              {NAV_LINKS.map((link) => (
+              {navLinks.map((link) => (
                 <div key={link.label}>
                   <Link
                     href={link.href}

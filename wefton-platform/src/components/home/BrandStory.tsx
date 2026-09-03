@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
-import { Shield, Leaf, Sprout, Sparkles, Hand } from 'lucide-react';
+import { Shield, Leaf, Shirt, Sparkles, Award } from 'lucide-react';
 
 /**
  * Five product differentiators that define the Wefton Copper brand.
@@ -22,10 +22,10 @@ const DIFFERENTIATORS = [
       'Our packaging reflects the quality inside. Each garment arrives in a beautifully crafted box with tissue wrap, ensuring a luxurious unboxing experience worthy of the Wefton name.',
   },
   {
-    icon: Sprout,
-    title: 'Plantable Seed Tag',
+    icon: Shirt,
+    title: '100% Premium Cotton',
     description:
-      'Every garment comes with a plantable seed tag. Simply tear it off, bury it in soil, and watch it grow into a plant — our way of giving back to the earth with every purchase.',
+      'Every Wefton garment is crafted from 100% premium cotton fabric — soft, breathable, and built to last. No blends, no compromises — pure comfort against your skin.',
   },
   {
     icon: Sparkles,
@@ -34,10 +34,10 @@ const DIFFERENTIATORS = [
       'An organic fabric freshener accompanies every garment. Keep your Wefton essentials smelling fresh naturally, without harsh chemicals or synthetic fragrances.',
   },
   {
-    icon: Hand,
-    title: 'Collapsible Hanger',
+    icon: Award,
+    title: 'Promise of Quality',
     description:
-      'A complimentary collapsible hanger included with every order. Compact and portable — perfect for travel or wardrobe organisation. Keeps your garments wrinkle-free.',
+      'Each garment is crafted from handpicked, meticulously selected high-quality fabric — engineered for lasting comfort and a premium feel you can trust, wear after wear.',
   },
 ];
 
@@ -82,17 +82,17 @@ export default function BrandStory() {
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          className="flex flex-col items-center text-center mb-16"
         >
           <p className="text-xs tracking-[6px] uppercase text-[var(--copper-light)] mb-4">
-            The Wefton Difference
+            The Wefton Copper Difference
           </p>
-          <h2 className="text-4xl md:text-5xl font-light text-[var(--text-light)] max-w-2xl mx-auto leading-tight text-center">
+          <h2 className="text-4xl md:text-5xl font-light text-[var(--text-light)] leading-tight text-center">
             More than a garment.
             <br />
             <span className="gradient-copper">An experience.</span>
           </h2>
-          <p className="mt-6 text-base text-[var(--text-muted)] max-w-xl mx-auto leading-relaxed text-center">
+          <p className="mt-6 text-base text-[var(--text-muted)] leading-relaxed text-center">
             Every Wefton Copper product comes with five thoughtful extras that reflect our
             commitment to quality, sustainability, and care.
           </p>

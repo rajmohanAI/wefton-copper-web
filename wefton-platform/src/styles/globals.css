@@ -56,8 +56,12 @@
 *::before,
 *::after {
   box-sizing: border-box;
-  margin: 0;
   padding: 0;
+}
+
+/* Reset margins but preserve Tailwind's mx-auto centering */
+*:where(:not([class*="mx-auto"])) {
+  margin: 0;
 }
 
 html {
