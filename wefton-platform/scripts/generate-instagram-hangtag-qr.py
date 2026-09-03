@@ -17,7 +17,13 @@ import os
 import re
 import segno
 
-URL = "https://www.weftoncopper.com/ig"
+# Tiny-QR optimization: uppercase + no scheme puts the QR into alphanumeric
+# mode and drops it to version 1 (29x29) — the smallest standard QR — so it
+# stays scannable when printed under 1 cm^2. Domains and the /ig redirect
+# resolve case-insensitively, so this reaches the same destination as
+# https://www.weftoncopper.com/ig. Phone cameras auto-detect it as a link.
+URL = "WEFTONCOPPER.COM/IG"
+CANONICAL_URL = "https://www.weftoncopper.com/ig"  # where it actually resolves
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 os.makedirs(PUBLIC_DIR, exist_ok=True)
 
@@ -57,8 +63,9 @@ def build():
     # version low = larger modules at tiny print size = easier to scan.
     qr = segno.make(URL, micro=False, error="m")
     w, h = qr.symbol_size()
-    print("✅ Standard QR generated (scannable by all phones)")
+    print("✅ Tiny standard QR generated (scannable by all phones)")
     print(f"   data    : {URL}")
+    print(f"   resolves: {CANONICAL_URL}")
     print(f"   version : {qr.version}")
     print(f"   error   : {qr.error}")
     print(f"   modules : {w}x{h}")
