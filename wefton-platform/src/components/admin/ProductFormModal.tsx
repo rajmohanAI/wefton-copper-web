@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Plus, Trash2, Upload, Image as ImageIcon } from 'lucide-react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getFirebaseStorage } from '@/lib/firebase';
+import { uploadProductImages, filterValidImageFiles } from '@/services/productImageService';
 import { slugify } from '@/lib/utils';
 import { productFormSchema, type ProductFormData } from '@/lib/schemas';
 import { createProduct, updateProduct, getProductBySlug } from '@/services/productService';
@@ -145,11 +144,7 @@ export default function ProductFormModal({
   // Image handling
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const validFiles = files.filter(
-      (f) =>
-        ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) &&
-        f.size <= 10 * 1024 * 1024
-    );
+    const validFiles = filterValidImageFiles(files);
     setImageFiles((prev) => [...prev, ...validFiles]);
   };
 
@@ -161,23 +156,15 @@ export default function ProductFormModal({
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Upload images to Firebase Storage
+  // Upload images to Firebase Storage (delegates to shared service)
   const uploadImages = useCallback(async (productId: string): Promise<ProductImage[]> => {
-    const storage = getFirebaseStorage();
-    if (!storage || imageFiles.length === 0) return [];
-
-    const uploaded: ProductImage[] = [];
-    for (const file of imageFiles) {
-      const filename = `${Date.now()}-${file.name}`;
-      const storageRef = ref(storage, `products/${productId}/${filename}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      uploaded.push({
-        url,
-        alt: title || file.name,
-        isPrimary: images.length === 0 && uploaded.length === 0,
-      });
-    }
+    if (imageFiles.length === 0) return [];
+    const { uploaded } = await uploadProductImages(
+      productId,
+      imageFiles,
+      title,
+      images.length === 0 // mark first as primary only if no existing images
+    );
     return uploaded;
   }, [imageFiles, images.length, title]);
 
