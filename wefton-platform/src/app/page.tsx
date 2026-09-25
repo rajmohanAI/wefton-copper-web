@@ -52,7 +52,7 @@ const BANNER_SLIDES: BannerSlide[] = [
     subheading: '',
     ctaText: '',
     ctaHref: '/women',
-    imageUrl: '/banners/hero-women-collection2.jpg',
+    imageUrl: '/banners/hero-women-collection2.png',
     imageAlt: "Women's Collection Banner — 1920x600",
   },
   {
