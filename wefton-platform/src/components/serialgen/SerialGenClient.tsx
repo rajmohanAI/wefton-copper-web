@@ -8,7 +8,6 @@ import { validateSerialConfig, buildSerials, type SerialConfig } from '@/lib/ser
 
 interface GenResult {
   file: string;
-  url: string;
   count: number;
   first: string;
   last: string;
@@ -59,12 +58,39 @@ export default function SerialGenClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...cfg, barcodeType }),
       });
-      const data = await res.json();
+
+      // Errors come back as JSON; success comes back as a ZIP file.
       if (!res.ok) {
-        setError(data.error || 'Generation failed.');
+        let message = 'Generation failed.';
+        try {
+          const data = await res.json();
+          message = data.error || message;
+        } catch {
+          /* non-JSON error body */
+        }
+        setError(message);
         return;
       }
-      setResult(data as GenResult);
+
+      // Read the ZIP as a Blob and trigger a download to the user's device.
+      const blob = await res.blob();
+      const filename =
+        res.headers.get('X-Serial-Filename') || 'barcodes.zip';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setResult({
+        file: filename,
+        count: Number(res.headers.get('X-Serial-Count') || 0),
+        first: decodeURIComponent(res.headers.get('X-Serial-First') || ''),
+        last: decodeURIComponent(res.headers.get('X-Serial-Last') || ''),
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Request failed.');
     } finally {
@@ -79,9 +105,8 @@ export default function SerialGenClient() {
           <Barcode size={28} /> Serial / Barcode Generator
         </h1>
         <p className="text-sm text-[var(--text-muted)] mb-8">
-          Generate a batch of product barcodes and download them as a ZIP. Files are saved to
-          <code className="mx-1 px-1.5 py-0.5 rounded bg-white/5 text-[var(--copper-light)]">public/serial/</code>
-          on the local machine running the app.
+          Generate a batch of product barcodes. The barcodes are bundled into a ZIP that
+          downloads directly to your device.
         </p>
 
         <div className="glass-card p-6 space-y-5">
@@ -131,22 +156,17 @@ export default function SerialGenClient() {
           )}
 
           <Button variant="copper" onClick={handleGenerate} loading={submitting} disabled={submitting || !validation.valid}>
-            {submitting ? 'Generating…' : 'Generate & Download ZIP'}
+            {submitting ? 'Generating…' : 'Generate & Download to Device'}
           </Button>
 
           {result && (
-            <div className="rounded border border-emerald-500/20 bg-emerald-500/10 p-4 space-y-2">
+            <div className="rounded border border-emerald-500/20 bg-emerald-500/10 p-4 space-y-1">
               <p className="text-sm text-emerald-300 flex items-center gap-2">
-                <CheckCircle2 size={16} /> Generated {result.count} barcode(s): {result.first} … {result.last}
+                <CheckCircle2 size={16} /> Downloaded {result.count} barcode(s): {result.first} … {result.last}
               </p>
-              <a
-                href={result.url}
-                download
-                className="inline-flex items-center gap-1.5 text-xs text-[var(--copper-light)] hover:text-[var(--copper-main)] transition-colors"
-              >
-                <Download size={13} /> Download {result.file}
-              </a>
-              <p className="text-[10px] text-[var(--text-faint)]">Saved to public/serial/{result.file}</p>
+              <p className="text-[10px] text-[var(--text-faint)] flex items-center gap-1.5">
+                <Download size={11} /> Saved to your device as {result.file}. Check your browser&apos;s downloads folder.
+              </p>
             </div>
           )}
         </div>

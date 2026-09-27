@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
 import JSZip from 'jszip';
 import {
   validateSerialConfig,
@@ -10,20 +8,19 @@ import {
   type SerialConfig,
 } from '@/lib/serialgen';
 
-// Barcode rendering + filesystem writes require the Node.js runtime.
+// Barcode rendering requires the Node.js runtime.
 export const runtime = 'nodejs';
-// This is a local admin utility that writes files on demand — never cache.
+// Generated on demand — never cache.
 export const dynamic = 'force-dynamic';
-
-const OUTPUT_DIR = path.join(process.cwd(), 'public', 'serial');
 
 /**
  * POST /api/serialgen
  * Body: { prefix, suffix, start, end, increment, barcodeType? }
- * Generates a Code128 barcode PNG per serial, zips them, writes the ZIP to
- * public/serial/, and returns the download URL.
  *
- * Local admin utility only — not intended for the deployed app.
+ * Generates a Code128 (or QR) barcode PNG per serial, zips them, and returns
+ * the ZIP file directly in the response so the browser can download it and
+ * save it to the user's device. Nothing is written to server storage, so this
+ * works both locally and on the deployed app.
  */
 export async function POST(request: NextRequest) {
   let body: Partial<SerialConfig> & { barcodeType?: string };
@@ -77,18 +74,22 @@ export async function POST(request: NextRequest) {
     zip.file('serials.txt', serials.join('\n') + '\n');
 
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
-
-    await fs.mkdir(OUTPUT_DIR, { recursive: true });
     const zipName = buildZipName(cfg);
-    await fs.writeFile(path.join(OUTPUT_DIR, zipName), zipBuffer);
 
-    return NextResponse.json({
-      success: true,
-      file: zipName,
-      url: `/serial/${zipName}`,
-      count: serials.length,
-      first: serials[0],
-      last: serials[serials.length - 1],
+    // Return the ZIP bytes directly so the browser downloads to the device.
+    // Batch metadata is exposed via headers for the UI to display.
+    return new NextResponse(new Uint8Array(zipBuffer), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/zip',
+        'Content-Disposition': `attachment; filename="${zipName}"`,
+        'Content-Length': String(zipBuffer.length),
+        'Cache-Control': 'no-store',
+        'X-Serial-Count': String(serials.length),
+        'X-Serial-First': encodeURIComponent(serials[0]),
+        'X-Serial-Last': encodeURIComponent(serials[serials.length - 1]),
+        'X-Serial-Filename': zipName,
+      },
     });
   } catch (e) {
     console.error('[serialgen] Generation failed:', e);
