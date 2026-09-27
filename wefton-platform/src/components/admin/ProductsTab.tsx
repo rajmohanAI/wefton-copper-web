@@ -5,10 +5,12 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 import { deleteProduct } from '@/services/productService';
 import { formatPrice } from '@/lib/utils';
-import { Plus, Edit2, Trash2, Package } from 'lucide-react';
+import { Plus, Edit2, Trash2, Package, Image as ImageIcon, FileSpreadsheet, AlertTriangle } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import ProductFormModal from './ProductFormModal';
+import ProductImageManager from './ProductImageManager';
+import BulkImportModal from './bulk/BulkImportModal';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 import type { Product } from '@/types';
 
@@ -19,6 +21,8 @@ export default function ProductsTab() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [imageTarget, setImageTarget] = useState<Product | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -90,9 +94,14 @@ export default function ProductsTab() {
         <h2 className="text-lg font-light text-[var(--text-light)]">
           Products ({products.length})
         </h2>
-        <Button variant="copper" size="sm" onClick={handleAddProduct}>
-          <Plus size={14} /> Add Product
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setBulkOpen(true)}>
+            <FileSpreadsheet size={14} /> Bulk Import
+          </Button>
+          <Button variant="copper" size="sm" onClick={handleAddProduct}>
+            <Plus size={14} /> Add Product
+          </Button>
+        </div>
       </div>
 
       {products.length === 0 ? (
@@ -134,9 +143,13 @@ export default function ProductsTab() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package size={16} className="text-[var(--text-faint)]" />
-                    </div>
+                    <button
+                      onClick={() => setImageTarget(product)}
+                      className="w-full h-full flex items-center justify-center bg-amber-500/10 hover:bg-amber-500/20 transition-colors"
+                      title="No images — click to add"
+                    >
+                      <AlertTriangle size={16} className="text-amber-400" />
+                    </button>
                   )}
                 </div>
 
@@ -177,6 +190,13 @@ export default function ProductsTab() {
                     <Edit2 size={14} />
                   </button>
                   <button
+                    onClick={() => setImageTarget(product)}
+                    className="p-1.5 rounded hover:bg-white/10 text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
+                    title="Manage images"
+                  >
+                    <ImageIcon size={14} />
+                  </button>
+                  <button
                     onClick={() => setDeleteTarget(product)}
                     className="p-1.5 rounded hover:bg-red-500/10 text-[var(--text-muted)] hover:text-red-400 transition-colors"
                     title="Delete product"
@@ -195,6 +215,21 @@ export default function ProductsTab() {
         open={formOpen}
         onOpenChange={setFormOpen}
         product={editingProduct}
+        onSuccess={handleFormSuccess}
+      />
+
+      {/* Bulk Import Modal */}
+      <BulkImportModal
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        onSuccess={handleFormSuccess}
+      />
+
+      {/* Per-product Image Manager */}
+      <ProductImageManager
+        open={!!imageTarget}
+        onOpenChange={(open) => !open && setImageTarget(null)}
+        product={imageTarget}
         onSuccess={handleFormSuccess}
       />
 

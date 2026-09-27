@@ -17,8 +17,8 @@ const VISION_SECTIONS = [
   {
     id: 'sustainability',
     icon: Leaf,
-    title: 'Plastic-Free Promise',
-    subtitle: 'For the planet we share.',
+    title: 'Premium Packaging',
+    subtitle: 'Unboxing worth the wait.',
     description:
       'Wefton products are free from plastics. Please use the package cover for your storage utilities for a while and dispose them to non-biodegradable waste to help conserve our environment.',
     accent: 'from-emerald-500/20',
@@ -35,19 +35,19 @@ const VISION_SECTIONS = [
   {
     id: 'seeds',
     icon: Sprout,
-    title: 'Seed Bag Initiative',
+    title: 'Plantable Seed Tag',
     subtitle: 'Grow with every purchase.',
     description:
-      'Wefton provides a seed bag with every product packaging. Please encourage yourself and your young ones to grow trees to conserve the environment.',
+      'Every Wefton garment comes with a plantable seed tag. Tear it off, bury it in soil, and watch it grow into a plant. Encourage yourself and your young ones to nurture greenery and conserve the environment.',
     accent: 'from-green-500/20',
   },
   {
     id: 'care',
     icon: Scissors,
-    title: 'Fabric Care Tool',
-    subtitle: 'Crafted to last.',
+    title: 'Collapsible Hanger',
+    subtitle: 'Compact. Portable. Essential.',
     description:
-      'Wefton provides a small finger brush, which can be used to rub hard stains if any in the fabric before sending it to laundry. Please check the product website for fabric care and instructions.',
+      'Wefton provides a collapsible hanger with every order — a compact, foldable garment hanger perfect for travel or wardrobe organisation. Keeps your garments wrinkle-free and ready to wear.',
     accent: 'from-amber-500/20',
   },
   {
@@ -103,7 +103,7 @@ export default function VisionClient() {
       {/* Hero */}
       <section
         ref={heroRef}
-        className="relative py-32 px-6 bg-[var(--bg-darker)] overflow-hidden"
+        className="relative py-32 px-4 md:px-8 bg-[var(--bg-darker)] overflow-hidden"
       >
         <div
           className="absolute inset-0 opacity-10 pointer-events-none"
@@ -149,7 +149,7 @@ export default function VisionClient() {
       </section>
 
       {/* Vision Cards */}
-      <section className="py-20 px-6 max-w-[1920px] mx-auto">
+      <section className="py-20 px-4 md:px-8 max-w-[1280px] mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {VISION_SECTIONS.map((section, i) => (
             <VisionCard key={section.id} section={section} index={i} />
@@ -158,7 +158,7 @@ export default function VisionClient() {
       </section>
 
       {/* Closing Statement */}
-      <section className="py-24 px-6 bg-[var(--bg-darker)] text-center">
+      <section className="py-24 px-4 md:px-8 bg-[var(--bg-darker)] text-center">
         <div className="max-w-3xl mx-auto">
           <blockquote className="text-2xl md:text-3xl font-light text-[var(--text-light)] italic leading-relaxed">
             &ldquo;The Wefton Copper Ethos — Premium isn&apos;t about logos; it&apos;s about the

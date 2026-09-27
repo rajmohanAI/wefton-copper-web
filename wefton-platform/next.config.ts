@@ -10,11 +10,31 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
     formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512, 750],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 31536000, // Cache optimized images for 1 year
   },
   experimental: {
     optimizePackageImports: ['framer-motion', 'lucide-react'],
+  },
+  // Hangtag QR short link: /ig -> Instagram profile (permanent).
+  // Matches case-insensitively (/ig, /IG, /Ig ...) so the uppercase QR
+  // payload (HTTPS://WEFTONCOPPER.COM/IG) also resolves correctly.
+  async redirects() {
+    return [
+      {
+        source: '/:ig(ig|IG|Ig|iG)',
+        destination: 'https://www.instagram.com/weftoncopper',
+        permanent: true,
+      },
+      // Hangtag QR short link: /wc -> wash-care instructions page.
+      // Case-insensitive so an uppercase QR payload (/WC) also resolves.
+      {
+        source: '/:wc(wc|WC|Wc|wC)',
+        destination: '/wash-care',
+        permanent: true,
+      },
+    ];
   },
   // Security headers
   async headers() {
@@ -26,6 +46,12 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+      {
+        source: '/_next/image(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
     ];

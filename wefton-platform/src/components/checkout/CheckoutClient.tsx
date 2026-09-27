@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { lookupPincode } from '@/lib/pincode';
 import { MapPin, CreditCard, CheckCircle, Check, Upload, AlertCircle } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,6 +16,7 @@ import { getFirebaseDb } from '@/lib/firebase';
 import { addressSchema, fileUploadSchema, type AddressFormData } from '@/lib/schemas';
 import { createOrder, uploadPaymentScreenshot } from '@/services/orderService';
 import { formatPrice } from '@/lib/utils';
+import { trackPurchase } from '@/lib/analytics';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import type { Address } from '@/types';
@@ -38,6 +41,7 @@ export default function CheckoutClient() {
   const [saveAddress, setSaveAddress] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [savingAddress, setSavingAddress] = useState(false);
+  const [tosAccepted, setTosAccepted] = useState(false);
 
   // Step 2: QR Payment state
   const [orderCreating, setOrderCreating] = useState(false);
@@ -153,6 +157,20 @@ export default function CheckoutClient() {
     try {
       await uploadPaymentScreenshot(orderId, selectedFile, paymentReference.trim());
       setConfirmedItems([...items]);
+
+      // GA4: Track purchase event after successful checkout
+      trackPurchase({
+        transaction_id: orderId,
+        value: orderTotal,
+        shipping: getShipping(),
+        items: items.map((item) => ({
+          item_id: item.productId,
+          item_name: item.title,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      });
+
       clearCart();
       setStep('confirmation');
     } catch (e: unknown) {
@@ -179,6 +197,12 @@ export default function CheckoutClient() {
 
   // Handle address form submission with Zod validation
   const handleAddressSubmit = form.handleSubmit(async (data) => {
+    // Prevent submission if Terms of Service not accepted
+    if (!tosAccepted) {
+      setError('Please accept the Terms of Service and Refund Policy to continue.');
+      return;
+    }
+
     const newAddress: Address = {
       addressId: selectedAddressId || crypto.randomUUID(),
       name: data.name,
@@ -223,7 +247,8 @@ export default function CheckoutClient() {
 
   return (
     <div className="min-h-screen pt-[var(--nav-height)] bg-[var(--bg-dark)]">
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="w-full px-6 md:px-10 lg:px-16 py-12">
+        <div className="w-full">
         {/* Step Indicator */}
         <div className="flex items-center justify-center gap-4 mb-12">
           {STEPS.map((s, i) => (
@@ -353,22 +378,48 @@ export default function CheckoutClient() {
                     />
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <Input
+                        label="PIN Code"
+                        placeholder="6-digit PIN"
+                        {...form.register('pincode', {
+                          onChange: async (e) => {
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                            form.setValue('pincode', val);
+                            if (val.length === 6) {
+                              const result = await lookupPincode(val);
+                              if (result) {
+                                form.setValue('city', result.city);
+                                form.setValue('state', result.state);
+                                form.clearErrors('city');
+                                form.clearErrors('state');
+                                form.clearErrors('pincode');
+                              } else {
+                                form.setError('pincode', {
+                                  message: 'Invalid PIN code. We currently deliver only within India. Please enter a valid Indian PIN code.',
+                                });
+                                form.setValue('city', '');
+                                form.setValue('state', '');
+                              }
+                            }
+                          },
+                        })}
+                        error={form.formState.errors.pincode?.message}
+                        maxLength={6}
+                      />
+                      <Input
                         label="City"
-                        placeholder="City"
+                        placeholder="Auto-filled from PIN"
                         {...form.register('city')}
                         error={form.formState.errors.city?.message}
+                        readOnly
+                        className="bg-[var(--bg-card)] cursor-not-allowed"
                       />
                       <Input
                         label="State"
-                        placeholder="State"
+                        placeholder="Auto-filled from PIN"
                         {...form.register('state')}
                         error={form.formState.errors.state?.message}
-                      />
-                      <Input
-                        label="PIN Code"
-                        placeholder="6-digit PIN"
-                        {...form.register('pincode')}
-                        error={form.formState.errors.pincode?.message}
+                        readOnly
+                        className="bg-[var(--bg-card)] cursor-not-allowed"
                       />
                     </div>
                     <Input
@@ -399,6 +450,34 @@ export default function CheckoutClient() {
                       </label>
                     )}
 
+                    {/* Terms of Service Acknowledgment */}
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <div className="relative mt-0.5">
+                        <input
+                          type="checkbox"
+                          checked={tosAccepted}
+                          onChange={(e) => setTosAccepted(e.target.checked)}
+                          className="sr-only peer"
+                          aria-required="true"
+                        />
+                        <div className="w-5 h-5 rounded border border-white/20 bg-white/5 peer-checked:bg-[var(--copper-main)] peer-checked:border-[var(--copper-main)] transition-all flex items-center justify-center">
+                          {tosAccepted && (
+                            <Check size={12} className="text-white" />
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-sm text-[var(--text-muted)] group-hover:text-[var(--text-light)] transition-colors">
+                        I agree to the{' '}
+                        <Link href="/terms" target="_blank" className="text-[var(--copper-light)] hover:underline">
+                          Terms of Service
+                        </Link>{' '}
+                        and{' '}
+                        <Link href="/refund-policy" target="_blank" className="text-[var(--copper-light)] hover:underline">
+                          Refund Policy
+                        </Link>
+                      </span>
+                    </label>
+
                     <Button
                       type="submit"
                       variant="copper"
@@ -406,6 +485,7 @@ export default function CheckoutClient() {
                       fullWidth
                       className="mt-4"
                       loading={savingAddress}
+                      disabled={!tosAccepted}
                     >
                       Continue to Payment
                     </Button>
@@ -467,27 +547,16 @@ export default function CheckoutClient() {
                   ) : orderCreated ? (
                     <div className="flex flex-col items-center gap-6">
                       {/* QR Code Image */}
-                      {process.env.NEXT_PUBLIC_UPI_QR_IMAGE_URL ? (
-                        <div className="w-52 h-52 bg-white rounded-xl flex items-center justify-center overflow-hidden p-2">
-                          <Image
-                            src={process.env.NEXT_PUBLIC_UPI_QR_IMAGE_URL}
-                            alt="UPI QR Code for payment"
-                            width={192}
-                            height={192}
-                            className="object-contain"
-                            unoptimized
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-52 h-52 bg-white rounded-xl flex items-center justify-center">
-                          <div className="text-center text-gray-400 text-xs p-4">
-                            <p className="font-medium text-gray-600 mb-1">
-                              UPI QR Code
-                            </p>
-                            <p>QR code not configured</p>
-                          </div>
-                        </div>
-                      )}
+                      <div className="w-52 h-52 bg-white rounded-xl flex items-center justify-center overflow-hidden p-2">
+                        <Image
+                          src={process.env.NEXT_PUBLIC_UPI_QR_IMAGE_URL || '/payment-qr.png'}
+                          alt="UPI QR Code for payment"
+                          width={192}
+                          height={192}
+                          className="object-contain"
+                          unoptimized
+                        />
+                      </div>
 
                       {/* UPI ID */}
                       {process.env.NEXT_PUBLIC_UPI_ID && (
@@ -882,6 +951,7 @@ export default function CheckoutClient() {
               </div>
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

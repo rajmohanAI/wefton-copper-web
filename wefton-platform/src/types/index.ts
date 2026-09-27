@@ -160,10 +160,13 @@ export interface WishlistItem {
 }
 
 export interface Coupon {
+  couponId: string;
   code: string;
   discount: number;
   active: boolean;
   expiresAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface NewsletterSubscriber {
@@ -178,4 +181,44 @@ export interface AdminStats {
   totalUsers: number;
   pendingOrders: number;
   pendingPayments: number;
+}
+
+// ============================================================
+// Return/Refund Types
+// ============================================================
+
+export type ReturnReason =
+  | 'defective'
+  | 'wrong_item'
+  | 'size_issue'
+  | 'changed_mind'
+  | 'other';
+
+export type ReturnStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'refunded';
+
+export interface ReturnItem {
+  productId: string;
+  variantId: string;
+  title: string;
+  size?: string;
+  color?: string;
+  quantity: number;
+  image: string;
+}
+
+export interface ReturnRequest {
+  returnId: string;
+  orderId: string;
+  customerId: string;
+  items: ReturnItem[];
+  reason: ReturnReason;
+  comments?: string;
+  status: ReturnStatus;
+  rejectionReason?: string;
+  createdAt: string;
+  updatedAt: string;
 }

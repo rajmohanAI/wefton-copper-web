@@ -22,7 +22,7 @@ export default async function FeaturedProductsServer() {
       {/* Always render FeaturedProducts — shows "Coming Soon" placeholder when empty */}
       <FeaturedProducts
         title="Featured Collection"
-        subtitle="Handpicked essentials from our latest drop"
+        subtitle=""
         products={featured}
         viewAllHref="/men"
       />

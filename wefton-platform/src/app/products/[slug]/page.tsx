@@ -2,11 +2,15 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getProductBySlug, getSimilarProducts } from '@/services/productService';
 import ProductDetailClient from '@/components/product/ProductDetailClient';
+import ProductDetailFallback from '@/components/product/ProductDetailFallback';
 import { collection, getDocs } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
+import type { Product } from '@/types';
 
 // ISR: revalidate product detail pages every 3600 seconds (1 hour)
 export const revalidate = 3600;
+// Allow dynamic params not pre-generated at build time
+export const dynamicParams = true;
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -66,14 +70,20 @@ export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
 
   let product = null;
-  let similar = [];
+  let similar: Product[] = [];
 
   try {
     product = await getProductBySlug(slug);
-    if (!product) notFound();
+    if (!product) {
+      // Server couldn't find the product — render client-side fallback
+      // which will try fetching from Firestore on the client
+      return <ProductDetailFallback slug={slug} />;
+    }
     similar = await getSimilarProducts(product.category, product.productId, 4);
-  } catch {
-    notFound();
+  } catch (error) {
+    console.error(`[ProductPage] Error loading product "${slug}":`, error);
+    // On server error, render client-side fallback instead of 404
+    return <ProductDetailFallback slug={slug} />;
   }
 
   return <ProductDetailClient product={product!} similar={similar} />;

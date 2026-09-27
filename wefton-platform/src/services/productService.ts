@@ -35,11 +35,23 @@ function requireDb() {
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   const db = requireDb();
+  // Primary: query by slug field
   const q = query(collection(db, PRODUCTS_COL), where('slug', '==', slug), limit(1));
   const snap = await getDocs(q);
-  if (snap.empty) return null;
-  const d = snap.docs[0];
-  return { productId: d.id, ...(d.data() as Omit<Product, 'productId'>) };
+  if (!snap.empty) {
+    const d = snap.docs[0];
+    return { productId: d.id, ...(d.data() as Omit<Product, 'productId'>) };
+  }
+  // Fallback: try document ID lookup
+  try {
+    const docSnap = await getDoc(doc(db, PRODUCTS_COL, slug));
+    if (docSnap.exists()) {
+      return { productId: docSnap.id, ...(docSnap.data() as Omit<Product, 'productId'>) };
+    }
+  } catch {
+    // ignore fallback errors
+  }
+  return null;
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
@@ -96,9 +108,8 @@ export async function getProductsByGender(
   if (filters.category?.length) {
     constraints.push(where('category', 'in', filters.category));
   }
-  if (filters.availability) {
-    constraints.push(where('inventory', '>', 0));
-  }
+  // Note: inventory/availability filtering moved to client-side below
+  // to avoid requiring complex composite indexes in Firestore
   if (filters.newArrivals) {
     constraints.push(where('newArrival', '==', true));
   }
@@ -130,6 +141,11 @@ export async function getProductsByGender(
     productId: d.id,
     ...(d.data() as Omit<Product, 'productId'>),
   }));
+
+  // Client-side filter: availability (inventory > 0)
+  if (filters.availability) {
+    products = products.filter((p) => p.inventory > 0);
+  }
 
   // Client-side filter: price range
   // Firestore doesn't support inequality filters on multiple fields in a compound query

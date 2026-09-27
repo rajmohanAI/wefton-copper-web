@@ -19,6 +19,7 @@ import {
   Copy,
   Check,
   Truck,
+  Phone,
 } from 'lucide-react';
 import { updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -27,6 +28,7 @@ import { getFirebaseAuth, getFirebaseDb, getFirebaseStorage } from '@/lib/fireba
 import { useAuthStore } from '@/store/authStore';
 import { useAuth } from '@/hooks/useAuth';
 import { getUserOrders } from '@/services/orderService';
+import { setupRecaptcha, sendOTP, verifyOTP } from '@/services/authService';
 import { formatPrice } from '@/lib/utils';
 import { addressSchema, type AddressFormData } from '@/lib/schemas';
 import Badge from '@/components/ui/Badge';
@@ -34,6 +36,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useAuthModalStore } from '@/store/authModalStore';
 import type { Order, Address } from '@/types';
+import type { ConfirmationResult } from 'firebase/auth';
 
 const ORDER_STATUS_VARIANT: Record<string, 'copper' | 'success' | 'warning' | 'error' | 'neutral' | 'blue' | 'purple'> = {
   placed: 'neutral',
@@ -58,6 +61,14 @@ export default function AccountClient() {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState('');
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // Phone update state
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneStep, setPhoneStep] = useState<'view' | 'edit' | 'otp'>('view');
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [phoneSaving, setPhoneSaving] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+  const [phoneConfirmation, setPhoneConfirmation] = useState<ConfirmationResult | null>(null);
 
   // Orders state
   const [orders, setOrders] = useState<Order[]>([]);
@@ -233,6 +244,64 @@ export default function AccountClient() {
     await logout();
     setUser(null);
     router.push('/');
+  };
+
+  // Phone update handlers
+  const handleSendPhoneOTP = async () => {
+    const cleaned = phoneNumber.replace(/\D/g, '');
+    if (cleaned.length !== 10) {
+      setPhoneError('Please enter a valid 10-digit phone number');
+      return;
+    }
+    setPhoneSaving(true);
+    setPhoneError('');
+    try {
+      const recaptchaVerifier = setupRecaptcha('recaptcha-container-profile');
+      const result = await sendOTP(`+91${cleaned}`, recaptchaVerifier);
+      setPhoneConfirmation(result);
+      setPhoneStep('otp');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to send OTP';
+      if (msg.includes('invalid-app-credential') || msg.includes('app-not-authorized')) {
+        setPhoneError('Phone authentication is not configured. Please ensure the domain is authorized in Firebase Console → Authentication → Settings → Authorized domains.');
+      } else {
+        setPhoneError(msg);
+      }
+    } finally {
+      setPhoneSaving(false);
+    }
+  };
+
+  const handleVerifyPhoneOTP = async () => {
+    if (!phoneConfirmation) {
+      setPhoneError('Session expired. Please resend OTP.');
+      return;
+    }
+    if (phoneOtp.length !== 6) {
+      setPhoneError('Please enter the 6-digit OTP');
+      return;
+    }
+    setPhoneSaving(true);
+    setPhoneError('');
+    try {
+      await verifyOTP(phoneConfirmation, phoneOtp);
+      // Update Firestore with new phone
+      const db = getFirebaseDb();
+      if (db && user) {
+        const cleaned = phoneNumber.replace(/\D/g, '');
+        const userRef = doc(db, 'users', user.uid);
+        await updateDoc(userRef, { phone: `+91${cleaned}` });
+        setUser({ ...user, phone: `+91${cleaned}` });
+      }
+      setPhoneStep('view');
+      setPhoneOtp('');
+      setPhoneNumber('');
+      setPhoneConfirmation(null);
+    } catch (e: unknown) {
+      setPhoneError(e instanceof Error ? e.message : 'Invalid OTP. Please try again.');
+    } finally {
+      setPhoneSaving(false);
+    }
   };
 
   // Address form handlers
@@ -525,7 +594,7 @@ export default function AccountClient() {
                     </div>
 
                     {/* Profile Fields */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                       <div>
                         <Input
                           label="Full Name"
@@ -544,14 +613,6 @@ export default function AccountClient() {
                       </div>
                       <div>
                         <p className="text-xs font-medium tracking-wider uppercase text-[var(--text-muted)] mb-1.5">
-                          Phone
-                        </p>
-                        <p className="h-11 flex items-center px-4 text-sm text-[var(--text-light)] bg-white/5 border border-white/10 rounded opacity-70">
-                          {user.phone || 'Not set'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium tracking-wider uppercase text-[var(--text-muted)] mb-1.5">
                           Member Since
                         </p>
                         <p className="h-11 flex items-center px-4 text-sm text-[var(--text-light)] bg-white/5 border border-white/10 rounded opacity-70">
@@ -560,6 +621,81 @@ export default function AccountClient() {
                             month: 'long',
                           })}
                         </p>
+                      </div>
+                      <div className="sm:col-span-3">
+                        <p className="text-xs font-medium tracking-wider uppercase text-[var(--text-muted)] mb-1.5">
+                          Phone
+                        </p>
+                        {phoneStep === 'otp' ? (
+                          <div className="space-y-3">
+                            <p className="text-xs text-[var(--text-muted)]">
+                              Enter the 6-digit OTP sent to +91 {phoneNumber}
+                            </p>
+                            <div className="flex items-center gap-3">
+                              <Input
+                                type="text"
+                                placeholder="Enter 6-digit OTP"
+                                maxLength={6}
+                                inputMode="numeric"
+                                className="!border-neutral-400"
+                                value={phoneOtp}
+                                onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                              />
+                              <Button
+                                variant="copper"
+                                size="sm"
+                                onClick={handleVerifyPhoneOTP}
+                                loading={phoneSaving}
+                                disabled={phoneSaving || phoneOtp.length !== 6}
+                              >
+                                Verify
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => { setPhoneStep('view'); setPhoneOtp(''); setPhoneError(''); }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                            {phoneError && <p className="text-xs text-red-400">{phoneError}</p>}
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center justify-center h-11 px-3 bg-white/5 border border-neutral-400 rounded text-sm text-[var(--text-muted)]">
+                                +91
+                              </div>
+                              <div className="flex-1">
+                                <Input
+                                  type="tel"
+                                  placeholder="10-digit mobile number"
+                                  maxLength={10}
+                                  inputMode="numeric"
+                                  className="!border-neutral-400"
+                                  value={phoneNumber || (user.phone?.replace('+91', '') || '')}
+                                  onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                />
+                              </div>
+                              <Button
+                                variant="copper"
+                                size="sm"
+                                onClick={handleSendPhoneOTP}
+                                loading={phoneSaving}
+                                disabled={phoneSaving || (phoneNumber || user.phone?.replace('+91', '') || '').length !== 10}
+                              >
+                                Send OTP
+                              </Button>
+                            </div>
+                            {phoneError && <p className="text-xs text-red-400">{phoneError}</p>}
+                            {user.phone && (
+                              <p className="text-xs text-emerald-500">
+                                ✓ Verified: {user.phone}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        <div id="recaptcha-container-profile" />
                       </div>
                     </div>
 

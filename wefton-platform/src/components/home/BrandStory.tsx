@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
-import { Shield, Leaf, Sprout, Sparkles, Hand } from 'lucide-react';
+import { Shield, Leaf, Shirt, Sparkles, Award } from 'lucide-react';
 
 /**
  * Five product differentiators that define the Wefton Copper brand.
@@ -17,15 +17,15 @@ const DIFFERENTIATORS = [
   },
   {
     icon: Leaf,
-    title: 'Plastic-Free Packaging',
+    title: 'Premium Packaging',
     description:
-      'Our packaging is entirely plastic-free. Repurpose the premium cover for storage or dispose responsibly — zero plastic touches your Wefton product.',
+      'Our packaging reflects the quality inside. Each garment arrives in a beautifully crafted box with tissue wrap, ensuring a luxurious unboxing experience worthy of the Wefton name.',
   },
   {
-    icon: Sprout,
-    title: 'Seed Bag Inclusion',
+    icon: Shirt,
+    title: '100% Premium Cotton',
     description:
-      'Each order includes a seed bag. Plant it, nurture it, and grow something beautiful — our way of giving back to the earth with every purchase.',
+      'Every Wefton garment is crafted from 100% premium cotton fabric — soft, breathable, and built to last. No blends, no compromises — pure comfort against your skin.',
   },
   {
     icon: Sparkles,
@@ -34,10 +34,10 @@ const DIFFERENTIATORS = [
       'An organic fabric freshener accompanies every garment. Keep your Wefton essentials smelling fresh naturally, without harsh chemicals or synthetic fragrances.',
   },
   {
-    icon: Hand,
-    title: 'Finger Brush',
+    icon: Award,
+    title: 'Promise of Quality',
     description:
-      'A complimentary finger brush for gentle fabric care. Maintain the Micro-French Terry texture and remove lint effortlessly between washes.',
+      'Each garment is crafted from handpicked, meticulously selected high-quality fabric — engineered for lasting comfort and a premium feel you can trust, wear after wear.',
   },
 ];
 
@@ -76,23 +76,23 @@ export default function BrandStory() {
         />
       </motion.div>
 
-      <div className="relative max-w-[1920px] mx-auto px-6">
+      <div className="relative max-w-[1280px] mx-auto px-4 md:px-8 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          className="flex flex-col items-center text-center mb-16"
         >
           <p className="text-xs tracking-[6px] uppercase text-[var(--copper-light)] mb-4">
-            The Wefton Difference
+            The Wefton Copper Difference
           </p>
-          <h2 className="text-4xl md:text-5xl font-light text-[var(--text-light)] max-w-2xl mx-auto leading-tight">
+          <h2 className="text-4xl md:text-5xl font-light text-[var(--text-light)] leading-tight text-center">
             More than a garment.
             <br />
             <span className="gradient-copper">An experience.</span>
           </h2>
-          <p className="mt-6 text-base text-[var(--text-muted)] max-w-xl mx-auto leading-relaxed">
+          <p className="mt-6 text-base text-[var(--text-muted)] leading-relaxed text-center">
             Every Wefton Copper product comes with five thoughtful extras that reflect our
             commitment to quality, sustainability, and care.
           </p>
@@ -148,7 +148,7 @@ export default function BrandStory() {
           <h3 className="text-2xl md:text-3xl font-light text-[var(--text-light)] mb-4">
             Copper-Stitched Craftsmanship
           </h3>
-          <p className="text-sm md:text-base text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm md:text-base text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed text-center">
             Every Wefton garment features signature copper-stitched seams — a hallmark of our
             dedication to durability and design. The reinforced copper threading strengthens
             structural points while adding a subtle metallic accent that distinguishes genuine
