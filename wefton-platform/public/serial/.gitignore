@@ -1,0 +1,2 @@
+# Generated barcode/serial ZIP archives are local artifacts — do not commit.
+*.zip
