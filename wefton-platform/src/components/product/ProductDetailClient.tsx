@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, type MouseEvent, type TouchEvent } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,7 +16,14 @@ import {
   Shield,
   Check,
   ZoomIn,
+  Sparkles,
 } from 'lucide-react';
+
+// Lazy-load the Try-On modal so MediaPipe/pose code stays out of the
+// initial product-page bundle for users who never open it.
+const TryOnModal = dynamic(() => import('@/components/product/tryon/TryOnModal'), {
+  ssr: false,
+});
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { formatPrice, getDiscountPercent } from '@/lib/utils';
@@ -74,6 +82,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const [tryOnOpen, setTryOnOpen] = useState(false);
 
   // Hover zoom state
   const [isZooming, setIsZooming] = useState(false);
@@ -172,6 +181,14 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
     } else {
       navigator.clipboard.writeText(window.location.href);
     }
+  };
+
+  const handleTryOn = () => {
+    if (!selectedSize && product.variants?.length > 0) {
+      alert('Please select a size');
+      return;
+    }
+    setTryOnOpen(true);
   };
 
   const prevImage = () =>
@@ -517,6 +534,17 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
               </button>
             </div>
 
+            {/* Try On */}
+            <Button
+              variant="outline"
+              size="lg"
+              fullWidth
+              onClick={handleTryOn}
+              disabled={currentInventory === 0}
+            >
+              <Sparkles size={16} /> Try On
+            </Button>
+
             {/* Delivery Info */}
             <div className="space-y-3 pt-2 border-t border-[var(--border-subtle)]">
               {[
@@ -563,6 +591,18 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
         {/* Similar Products — hidden if fewer than 2 */}
         <SimilarProducts products={similar} />
       </div>
+
+      {/* Virtual Try-On (lazy) */}
+      {tryOnOpen && (
+        <TryOnModal
+          open={tryOnOpen}
+          onOpenChange={setTryOnOpen}
+          product={product}
+          selectedSize={selectedSize}
+          selectedVariant={selectedVariant}
+          onAddToCart={handleAddToCart}
+        />
+      )}
     </div>
   );
 }
