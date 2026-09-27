@@ -72,10 +72,10 @@ export default function SerialGenClient() {
         return;
       }
 
-      // Read the ZIP as a Blob and trigger a download to the user's device.
+      // Read the PDF as a Blob and trigger a download to the user's device.
       const blob = await res.blob();
       const filename =
-        res.headers.get('X-Serial-Filename') || 'barcodes.zip';
+        res.headers.get('X-Serial-Filename') || 'barcodes.pdf';
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -105,8 +105,9 @@ export default function SerialGenClient() {
           <Barcode size={28} /> Serial / Barcode Generator
         </h1>
         <p className="text-sm text-[var(--text-muted)] mb-8">
-          Generate a batch of product barcodes. The barcodes are bundled into a ZIP that
-          downloads directly to your device.
+          Generate a batch of product barcodes laid out in sequence into a single, high-quality
+          PDF that downloads to your device — ready to send to print vendors for inkless thermal
+          sticker printing.
         </p>
 
         <div className="glass-card p-6 space-y-5">
@@ -156,7 +157,7 @@ export default function SerialGenClient() {
           )}
 
           <Button variant="copper" onClick={handleGenerate} loading={submitting} disabled={submitting || !validation.valid}>
-            {submitting ? 'Generating…' : 'Generate & Download to Device'}
+            {submitting ? 'Generating PDF…' : 'Generate & Download PDF'}
           </Button>
 
           {result && (
