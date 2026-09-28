@@ -34,11 +34,24 @@ async function loadImageFromBlob(blob: Blob): Promise<HTMLImageElement> {
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error('Failed to load image'));
     img.src = src;
   });
+}
+
+/**
+ * Loads the garment image via our same-origin proxy and returns it as an
+ * HTMLImageElement backed by an object URL. This avoids cross-origin/CORS
+ * failures and canvas tainting when the source is Firebase Storage.
+ */
+async function loadGarmentImage(garmentUrl: string): Promise<HTMLImageElement> {
+  const res = await fetch(`/api/tryon/garment?url=${encodeURIComponent(garmentUrl)}`);
+  if (!res.ok) {
+    throw new Error('Could not load the product image for Try-On.');
+  }
+  const blob = await res.blob();
+  return loadImageFromBlob(blob);
 }
 
 function canvasToObjectUrl(canvas: HTMLCanvasElement): Promise<string> {
@@ -72,9 +85,10 @@ export class OnDeviceCompositeProvider implements TryOnProvider {
     };
 
     // 1. Load the user's photo (in-memory) and the garment image.
+    //    The garment loads via a same-origin proxy to avoid CORS/tainting.
     const [personImg, garmentImg] = await Promise.all([
       loadImageFromBlob(input.photo),
-      loadImage(input.garmentImageUrl),
+      loadGarmentImage(input.garmentImageUrl),
     ]);
     throwIfAborted();
 
