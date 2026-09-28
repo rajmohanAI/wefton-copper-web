@@ -73,19 +73,10 @@ export function buildSerials(cfg: SerialConfig): string[] {
 }
 
 /**
- * Produces a filesystem-safe filename for a serial's barcode image.
- * Non-safe characters are replaced with '_' so affixes like "WC/01" don't
- * create nested paths.
+ * Builds a timestamped PDF filename for a batch.
  */
-export function serialToFilename(serial: string): string {
-  return serial.replace(/[^A-Za-z0-9._-]/g, '_') + '.png';
-}
-
-/**
- * Builds a timestamped ZIP filename for a batch.
- */
-export function buildZipName(cfg: SerialConfig): string {
+export function buildPdfName(cfg: SerialConfig): string {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const tag = `${cfg.prefix || 'serial'}${cfg.start}-${cfg.end}`.replace(/[^A-Za-z0-9._-]/g, '_');
-  return `barcodes_${tag}_${stamp}.zip`;
+  return `barcodes_${tag}_${stamp}.pdf`;
 }
