@@ -23,6 +23,8 @@ export interface Product {
   featured: boolean;
   bestseller: boolean;
   newArrival: boolean;
+  /** Optional clean cutout image URL used by the Try-On feature; falls back to primary image. */
+  tryOnImage?: string;
   createdAt: string;
   updatedAt?: string;
 }
