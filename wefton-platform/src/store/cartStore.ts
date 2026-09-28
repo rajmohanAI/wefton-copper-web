@@ -6,6 +6,7 @@ import { persist } from 'zustand/middleware';
 import type { CartItem } from '@/types';
 import { SHIPPING_COST, FREE_SHIPPING_THRESHOLD, TAX_RATE } from '@/config/brand';
 import { validateCoupon } from '@/services/couponService';
+import { trackAddToCart } from '@/lib/analytics';
 
 interface CartStore {
   items: CartItem[];
@@ -58,6 +59,14 @@ export const useCartStore = create<CartStore>()(
             };
           }
           return { items: [...state.items, { ...newItem, quantity: Math.min(newItem.quantity, newItem.inventory) }] };
+        });
+
+        // GA4: Track add_to_cart event
+        trackAddToCart({
+          item_id: newItem.productId,
+          item_name: newItem.title,
+          price: newItem.price,
+          quantity: newItem.quantity,
         });
       },
 

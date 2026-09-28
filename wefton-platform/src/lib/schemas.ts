@@ -20,7 +20,7 @@ export const addressSchema = z.object({
   state: z.string().min(1, 'State is required'),
   pincode: z
     .string()
-    .regex(/^\d{6}$/, 'PIN code must be exactly 6 digits'),
+    .regex(/^[1-9]\d{5}$/, 'Please enter a valid 6-digit Indian PIN code. We currently deliver only within India.'),
   country: z.string().min(1, 'Country is required'),
 });
 
@@ -119,3 +119,25 @@ export const productFormSchema = z.object({
 });
 
 export type ProductFormData = z.infer<typeof productFormSchema>;
+
+/**
+ * Coupon validation schema
+ * Validates coupon code (uppercase alphanumeric, max 20 chars),
+ * discount (integer 1–100%), active status, and optional expiry date.
+ * Requirements: 13.2, 13.3, 13.4
+ */
+export const couponSchema = z.object({
+  code: z.string()
+    .min(1, 'Code is required')
+    .max(20, 'Code must be 20 characters or less')
+    .transform(v => v.toUpperCase())
+    .refine(v => /^[A-Z0-9_-]+$/.test(v), 'Code must be alphanumeric'),
+  discount: z.number()
+    .int('Discount must be a whole number')
+    .min(1, 'Minimum discount is 1%')
+    .max(100, 'Maximum discount is 100%'),
+  active: z.boolean().default(true),
+  expiresAt: z.string().datetime().nullable().optional(),
+});
+
+export type CouponFormData = z.infer<typeof couponSchema>;

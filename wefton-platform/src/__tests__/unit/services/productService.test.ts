@@ -53,7 +53,7 @@ function mockProductDoc(id: string, data: Record<string, unknown>) {
 const sampleProduct = {
   title: 'Premium Navy Tee',
   slug: 'premium-navy-tee',
-  description: 'A premium micro-french terry tee',
+  description: 'A premium Cotton Fabric tee',
   shortDescription: 'Premium tee',
   category: 'tees',
   gender: 'men' as const,

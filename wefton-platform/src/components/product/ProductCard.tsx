@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 import { Heart, ShoppingBag, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
@@ -21,6 +20,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const [hovered, setHovered] = useState(false);
   const [adding, setAdding] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const { addItem, openCart } = useCartStore();
   const { toggle, has } = useWishlistStore();
@@ -34,12 +34,14 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const handlePrevImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setImageLoaded(false);
     setCurrentImageIndex((i) => (i - 1 + images.length) % images.length);
   };
 
   const handleNextImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setImageLoaded(false);
     setCurrentImageIndex((i) => (i + 1) % images.length);
   };
 
@@ -68,14 +70,19 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   };
 
   return (
-    <motion.article
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
+    <article
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className="group relative"
+      style={{ opacity: 1, transform: 'none' }}
     >
       <Link href={`/products/${product.slug}`} className="block">
         {/* Image Container */}
         <div className="relative overflow-hidden rounded-lg bg-[var(--bg-darker)] aspect-[3/4]">
+          {/* Shimmer loader */}
+          {!imageLoaded && (
+            <div className="absolute inset-0 bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+          )}
           {/* Current Image */}
           {currentImage && (
             <Image
@@ -83,10 +90,12 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
               alt={currentImage.alt || product.title}
               fill
               priority={priority}
-              className="object-cover transition-opacity duration-500"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 50vw"
-              quality={90}
+              className={cn('object-cover transition-opacity duration-500', imageLoaded ? 'opacity-100' : 'opacity-0')}
+              sizes="(max-width: 640px) 45vw, (max-width: 1024px) 33vw, 25vw"
+              quality={70}
+              loading={priority ? 'eager' : 'lazy'}
               key={currentImageIndex}
+              onLoad={() => setImageLoaded(true)}
             />
           )}
 
@@ -126,10 +135,11 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           )}
 
           {/* Hover gradient overlay */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: hovered ? 1 : 0 }}
-            className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"
+          <div
+            className={cn(
+              "absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-200",
+              hovered ? "opacity-100" : "opacity-0"
+            )}
           />
 
           {/* Out of Stock overlay */}
@@ -164,11 +174,11 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           </button>
 
           {/* Quick Actions on hover */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: hovered ? 1 : 0, y: hovered ? 0 : 10 }}
-            transition={{ duration: 0.2 }}
-            className="absolute bottom-3 left-3 right-3 flex gap-2 z-20"
+          <div
+            className={cn(
+              "absolute bottom-3 left-3 right-3 flex gap-2 z-20 transition-all duration-200",
+              hovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[10px]"
+            )}
           >
             <button
               onClick={handleAddToCart}
@@ -193,7 +203,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             >
               <Eye size={14} />
             </Link>
-          </motion.div>
+          </div>
         </div>
 
         {/* Product Info */}
@@ -243,6 +253,6 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           </div>
         </div>
       </Link>
-    </motion.article>
+    </article>
   );
 }

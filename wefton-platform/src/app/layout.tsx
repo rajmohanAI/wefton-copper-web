@@ -1,19 +1,26 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import '@/styles/globals.css';
 import AppProviders from '@/components/providers/AppProviders';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Wefton Copper | Premium Micro-French Terry',
+    default: 'Wefton Copper | Premium Cotton Fabric',
     template: '%s | Wefton Copper',
   },
   description:
-    'Wefton Copper — Premium Micro-French Terry essentials. Redefining the global standard for essential wear, starting from the thread up.',
+    'Wefton Copper — Premium Cotton Fabric essentials. Redefining the global standard for essential wear, starting from the thread up.',
   keywords: [
     'Wefton Copper',
     'premium t-shirts',
@@ -29,9 +36,9 @@ export const metadata: Metadata = {
     locale: 'en_IN',
     url: siteUrl,
     siteName: 'Wefton Copper',
-    title: 'Wefton Copper | Premium Micro-French Terry',
+    title: 'Wefton Copper | Premium Cotton Fabric',
     description:
-      'Premium Micro-French Terry essentials. Crafted for the discerning individual.',
+      'Premium Cotton Fabric essentials. Crafted for the discerning individual.',
     images: [
       {
         url: '/og-image.jpg',
@@ -43,8 +50,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Wefton Copper | Premium Micro-French Terry',
-    description: 'Premium Micro-French Terry essentials.',
+    title: 'Wefton Copper | Premium Cotton Fabric',
+    description: 'Premium Cotton Fabric essentials.',
     images: ['/og-image.jpg'],
   },
   robots: {
@@ -59,15 +66,15 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/favicon.png',
-    apple: '/favicon.png',
+    icon: '/Loo_png.png',
+    apple: '/Loo_png.png',
   },
   manifest: '/site.webmanifest',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body>
         <AppProviders>
           <Navbar />

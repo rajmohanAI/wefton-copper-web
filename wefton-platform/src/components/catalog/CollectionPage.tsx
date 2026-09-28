@@ -255,9 +255,9 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
   };
 
   return (
-    <div className="w-full max-w-[1920px] mx-auto min-h-screen pt-[var(--nav-height)]">
+    <div className="w-full min-h-screen pt-[var(--nav-height)]">
       {/* Page Header */}
-      <div className="w-full bg-[var(--bg-darker)] border-b border-[var(--border-subtle)] pt-12 pb-10 px-6">
+      <div className="w-full bg-[var(--bg-darker)] border-b border-[var(--border-subtle)] pt-12 pb-10 px-4 md:px-8">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -271,13 +271,13 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
           transition={{ delay: 0.1 }}
           className="mt-2 text-[var(--text-muted)]"
         >
-          {subtitle}
+          {/* {subtitle} — temporarily hidden */}
         </motion.p>
       </div>
 
       {/* Category Pills */}
       <div className="w-full border-b border-[var(--border-subtle)] bg-[var(--bg-dark)]">
-        <div className="w-full px-6 py-4 flex gap-2 overflow-x-auto no-scrollbar">
+        <div className="w-full px-4 md:px-8 py-5 min-h-[72px] flex items-center gap-2 overflow-x-auto no-scrollbar font-bold">
           <button
             onClick={() => setFilters((f) => ({ ...f, category: [] }))}
             className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs tracking-wider uppercase transition-colors ${
@@ -312,7 +312,7 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
       </div>
 
       {/* Main Content: Sidebar + Product Grid */}
-      <div className="flex w-full min-h-[calc(100vh-300px)] px-6 py-8">
+      <div className="flex w-full min-h-[calc(100vh-300px)] px-4 md:px-8 py-8">
         {/* Desktop Persistent FilterSidebar (≥ 1024px) */}
         <aside className="hidden lg:block w-[250px] shrink-0 pr-6 border-r border-[var(--border-subtle)]">
           <div className="sticky top-[calc(var(--nav-height)+2rem)] max-h-[calc(100vh-var(--nav-height)-4rem)] overflow-y-auto">
@@ -508,8 +508,7 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
               </div>
             ) : (
               <>
-                <motion.div
-                  layout
+                <div
                   className={
                     viewMode === 'grid'
                       ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6'
@@ -517,17 +516,15 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
                   }
                 >
                   {products.map((product, i) => (
-                    <motion.div
+                    <div
                       key={product.productId}
-                      layout
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: Math.min(i * 0.03, 0.3) }}
+                      className="animate-fade-in"
+                      style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
                     >
                       <ProductCard product={product} priority={i < 6} />
-                    </motion.div>
+                    </div>
                   ))}
-                </motion.div>
+                </div>
 
                 {/* Loading more indicator */}
                 {loadingMore && (

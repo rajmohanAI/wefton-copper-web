@@ -107,9 +107,29 @@ export async function resetPassword(email: string): Promise<void> {
 
 // ── Phone OTP ─────────────────────────────────────────────────
 
+let recaptchaVerifierInstance: RecaptchaVerifier | null = null;
+
 export function setupRecaptcha(containerId: string): RecaptchaVerifier {
   const auth = requireAuth();
-  return new RecaptchaVerifier(auth, containerId, { size: 'invisible' });
+
+  // Clear any existing reCAPTCHA instance to avoid "already rendered" error
+  if (recaptchaVerifierInstance) {
+    try {
+      recaptchaVerifierInstance.clear();
+    } catch {
+      // Ignore clear errors
+    }
+    recaptchaVerifierInstance = null;
+  }
+
+  // Also clear the container's innerHTML to remove leftover reCAPTCHA DOM
+  const container = document.getElementById(containerId);
+  if (container) {
+    container.innerHTML = '';
+  }
+
+  recaptchaVerifierInstance = new RecaptchaVerifier(auth, containerId, { size: 'invisible' });
+  return recaptchaVerifierInstance;
 }
 
 export async function sendOTP(
