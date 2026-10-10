@@ -41,8 +41,8 @@ export default function ReturnPolicyPage() {
           <section>
             <h2 className="text-lg font-medium text-[var(--text-light)] mb-3">How to Initiate a Return</h2>
             <ol className="list-decimal list-inside space-y-2">
-              <li>Log into your account and go to "My Orders"</li>
-              <li>Select the order and click "Request Return"</li>
+              <li>Log into your account and go to &ldquo;My Orders&rdquo;</li>
+              <li>Select the order and click &ldquo;Request Return&rdquo;</li>
               <li>Choose the items and reason for return</li>
               <li>Our team will review and approve within 1–2 business days</li>
               <li>A pickup will be scheduled at your address</li>

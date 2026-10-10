@@ -69,22 +69,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
 
-  let product = null;
+  let product: Product | null = null;
   let similar: Product[] = [];
 
   try {
     product = await getProductBySlug(slug);
-    if (!product) {
-      // Server couldn't find the product — render client-side fallback
-      // which will try fetching from Firestore on the client
-      return <ProductDetailFallback slug={slug} />;
+    if (product) {
+      similar = await getSimilarProducts(product.category, product.productId, 4);
     }
-    similar = await getSimilarProducts(product.category, product.productId, 4);
   } catch (error) {
     console.error(`[ProductPage] Error loading product "${slug}":`, error);
-    // On server error, render client-side fallback instead of 404
+    product = null;
+  }
+
+  // Server couldn't load the product (not found or error) — render the
+  // client-side fallback, which retries the fetch from Firestore in the browser.
+  if (!product) {
     return <ProductDetailFallback slug={slug} />;
   }
 
-  return <ProductDetailClient product={product!} similar={similar} />;
+  return <ProductDetailClient product={product} similar={similar} />;
 }

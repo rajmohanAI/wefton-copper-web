@@ -13,7 +13,7 @@ describe('Feature: wefton-copper-platform, Property 5: Address form validation',
    * - non-empty name
    * - 10-digit phone
    * - non-empty line1, city, state
-   * - 6-digit pincode
+   * - 6-digit pincode not starting with 0
    */
 
   // Arbitraries for valid address fields
@@ -22,7 +22,13 @@ describe('Feature: wefton-copper-platform, Property 5: Address form validation',
   const validLine1Arb = fc.string({ minLength: 1, maxLength: 200 }).filter((s) => s.trim().length > 0);
   const validCityArb = fc.string({ minLength: 1, maxLength: 100 }).filter((s) => s.trim().length > 0);
   const validStateArb = fc.string({ minLength: 1, maxLength: 100 }).filter((s) => s.trim().length > 0);
-  const validPincodeArb = fc.string({ minLength: 6, maxLength: 6, unit: fc.constantFrom('0', '1', '2', '3', '4', '5', '6', '7', '8', '9') });
+  // Indian PIN codes never start with 0 (addressSchema enforces /^[1-9]\d{5}$/)
+  const validPincodeArb = fc
+    .tuple(
+      fc.constantFrom('1', '2', '3', '4', '5', '6', '7', '8', '9'),
+      fc.string({ minLength: 5, maxLength: 5, unit: fc.constantFrom('0', '1', '2', '3', '4', '5', '6', '7', '8', '9') })
+    )
+    .map(([first, rest]) => first + rest);
   const validCountryArb = fc.string({ minLength: 1, maxLength: 50 }).filter((s) => s.trim().length > 0);
 
   it('Property 5: valid address inputs always pass validation', () => {
