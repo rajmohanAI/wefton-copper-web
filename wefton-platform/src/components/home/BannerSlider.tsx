@@ -61,7 +61,8 @@ export default function BannerSlider({ slides }: BannerSliderProps) {
         pagination={{ clickable: true }}
         navigation
         loop
-        className="w-full aspect-[16/7] md:aspect-[16/5]"
+        // Banners are 32:9; matching that ratio shows the whole image, uncropped.
+        className="w-full aspect-[32/9]"
       >
         {slides.map((slide, index) => (
           <SwiperSlide key={slide.id}>
