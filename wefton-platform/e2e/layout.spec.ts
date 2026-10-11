@@ -68,3 +68,17 @@ test('mobile menu opens and lists the collections', async ({ page, isMobile }) =
   await expect(menu.getByRole('link', { name: /men/i }).first()).toBeVisible();
   expect(await horizontalOverflow(page)).toBeNull();
 });
+
+test('home banner sits below the header and is shown uncropped', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'load' });
+  const headerBox = await page.locator('header').first().boundingBox();
+  const img = page.locator('.swiper-slide-active img').first();
+  await expect(img).toBeVisible();
+  await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(0);
+  const imgBox = await img.boundingBox();
+  expect(imgBox!.y, 'banner top vs header bottom').toBeGreaterThanOrEqual(headerBox!.y + headerBox!.height - 1);
+
+  // The slide box should match the image's own aspect ratio, so object-cover crops nothing.
+  const natural = await img.evaluate((el: HTMLImageElement) => el.naturalWidth / el.naturalHeight);
+  expect(Math.abs(imgBox!.width / imgBox!.height - natural) / natural).toBeLessThan(0.02);
+});
