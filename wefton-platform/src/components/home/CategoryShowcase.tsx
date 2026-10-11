@@ -121,7 +121,7 @@ export default function CategoryShowcase() {
   }, []);
 
   return (
-    <section className="py-20 px-4 md:px-8 lg:px-8 max-w-[1280px] mx-auto">
+    <div className="px-4 md:px-8 max-w-[1280px] mx-auto">
       {/* Section Header */}
       <div className="text-center mb-12">
         <p className="text-xs tracking-[4px] uppercase text-[var(--copper-light)] mb-3">
@@ -138,6 +138,6 @@ export default function CategoryShowcase() {
           <CategoryTileCard key={tile.id} tile={tile} />
         ))}
       </div>
-    </section>
+    </div>
   );
 }

@@ -96,7 +96,7 @@ export default function HomePage() {
       />
 
       {/* Homepage sections — Fuaark-inspired layout with bold typography and generous spacing */}
-      <div className="space-y-16 md:space-y-24">
+      <div>
 
         {/* 1. Banner Slider — full-width hero with promotional slides */}
         <section aria-label="Hero banner">
@@ -129,12 +129,12 @@ export default function HomePage() {
         </section>
 
         {/* 4. Brand Story — differentiators and craftsmanship */}
-        <section aria-label="Brand story" className="py-16 md:py-24">
+        <section aria-label="Brand story">
           <BrandStory />
         </section>
 
         {/* 5. Testimonials — customer reviews carousel */}
-        <section aria-label="Customer testimonials" className="py-16 md:py-24">
+        <section aria-label="Customer testimonials">
           <TestimonialsSection />
         </section>
 

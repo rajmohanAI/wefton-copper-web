@@ -59,7 +59,7 @@ export default function BrandStory() {
   return (
     <section
       ref={ref}
-      className="relative py-24 overflow-hidden bg-[var(--bg-darker)]"
+      className="relative py-16 md:py-24 overflow-hidden bg-[var(--bg-darker)]"
     >
       {/* Background copper gradient */}
       <motion.div

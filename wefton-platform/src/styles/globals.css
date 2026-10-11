@@ -1,237 +1,165 @@
 @import "tailwindcss";
+/* Third-party CSS goes into a layer too, so Tailwind utilities can override it. */
+@import "swiper/css" layer(components);
+@import "swiper/css/pagination" layer(components);
+@import "swiper/css/navigation" layer(components);
 
 /* ============================================================
    Wefton Copper — Global Design System
+   ------------------------------------------------------------
+   Every style rule below lives in a cascade layer. Tailwind 4 puts
+   its utilities in @layer utilities; any UNLAYERED rule beats every
+   layered rule regardless of specificity, so an unlayered reset
+   silently zeroes px-*, py-*, m*-* and space-y-* site-wide.
+   Stylelint (`npm run lint:css`) rejects unlayered style rules.
    ============================================================ */
 
-:root {
-  /* Light Theme Colors — warm neutral, not harsh white */
-  --bg-dark: #e8e4e0;
-  --bg-darker: #f0ece8;
-  --bg-card: rgba(0, 0, 0, 0.03);
-  --copper-light: #9a4e1f;
-  --copper-main: #7a3d18;
-  --copper-dark: #5c2e12;
-  --copper-glow: rgba(184, 94, 38, 0.1);
-  --copper-glow-strong: rgba(184, 94, 38, 0.25);
-  --text-light: #111111;
-  --text-muted: #3d3d3d;
-  --text-faint: #6b6b6b;
-  --border-subtle: rgba(0, 0, 0, 0.1);
-  --border-copper: rgba(184, 94, 38, 0.4);
-  --glass-bg: rgba(240, 236, 232, 0.9);
-  --glass-border: rgba(0, 0, 0, 0.08);
+@layer base {
+  :root {
+    /* Light Theme Colors — warm neutral, not harsh white */
+    --bg-dark: #e8e4e0;
+    --bg-darker: #f0ece8;
+    --bg-card: rgba(0, 0, 0, 0.03);
+    --copper-light: #9a4e1f;
+    --copper-main: #7a3d18;
+    --copper-dark: #5c2e12;
+    --copper-glow: rgba(184, 94, 38, 0.1);
+    --copper-glow-strong: rgba(184, 94, 38, 0.25);
+    --text-light: #111111;
+    --text-muted: #3d3d3d;
+    --text-faint: #6b6b6b;
+    --border-subtle: rgba(0, 0, 0, 0.1);
+    --border-copper: rgba(184, 94, 38, 0.4);
+    --glass-bg: rgba(240, 236, 232, 0.9);
+    --glass-border: rgba(0, 0, 0, 0.08);
 
-  /* Spacing */
-  --nav-height: 90px;
+    /* Spacing */
+    --nav-height: 90px;
 
-  /* Transitions */
-  --ease-luxury: cubic-bezier(0.165, 0.84, 0.44, 1);
-  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    /* Transitions */
+    --ease-luxury: cubic-bezier(0.165, 0.84, 0.44, 1);
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Dark Theme — applied via next-themes class="dark" on <html> */
+  :root.dark,
+  .dark {
+    --bg-dark: #0f1115;
+    --bg-darker: #08090a;
+    --bg-card: rgba(255, 255, 255, 0.02);
+    --copper-light: #d68f64;
+    --copper-main: #b85e26;
+    --copper-dark: #8a4419;
+    --copper-glow: rgba(184, 94, 38, 0.15);
+    --copper-glow-strong: rgba(184, 94, 38, 0.35);
+    --text-light: #e0e4e8;
+    --text-muted: #8b929a;
+    --text-faint: #4a5058;
+    --border-subtle: rgba(255, 255, 255, 0.05);
+    --border-copper: rgba(184, 94, 38, 0.3);
+    --glass-bg: rgba(15, 17, 21, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.06);
+  }
+
+  /* Tailwind preflight already resets margin/padding/box-sizing. */
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    font-family: var(--font-inter, 'Inter'), 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-darker);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--copper-main);
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: var(--copper-main);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--copper-light);
+    outline-offset: 2px;
+  }
 }
 
-/* Dark Theme — applied via next-themes class="dark" on <html> */
-:root.dark,
-.dark {
-  --bg-dark: #0f1115;
-  --bg-darker: #08090a;
-  --bg-card: rgba(255, 255, 255, 0.02);
-  --copper-light: #d68f64;
-  --copper-main: #b85e26;
-  --copper-dark: #8a4419;
-  --copper-glow: rgba(184, 94, 38, 0.15);
-  --copper-glow-strong: rgba(184, 94, 38, 0.35);
-  --text-light: #e0e4e8;
-  --text-muted: #8b929a;
-  --text-faint: #4a5058;
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --border-copper: rgba(184, 94, 38, 0.3);
-  --glass-bg: rgba(15, 17, 21, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.06);
+/* ── Components (utilities still override these) ─────────── */
+
+@layer components {
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+  }
+
+  .copper-glow {
+    box-shadow: 0 0 20px var(--copper-glow), 0 0 40px var(--copper-glow);
+  }
+
+  .gradient-copper {
+    background: linear-gradient(135deg, var(--copper-light), var(--copper-main));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.03) 25%,
+      rgba(255, 255, 255, 0.07) 50%,
+      rgba(255, 255, 255, 0.03) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out both;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-/* ── Reset & Base ─────────────────────────────────────────── */
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  padding: 0;
-}
-
-/* Reset margins but preserve Tailwind's mx-auto centering */
-*:where(:not([class*="mx-auto"])) {
-  margin: 0;
-}
-
-html {
-  scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  background-color: var(--bg-dark);
-  color: var(--text-light);
-  font-family: var(--font-inter, 'Inter'), 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  line-height: 1.6;
-  overflow-x: hidden;
-}
-
-/* ── Scrollbar ────────────────────────────────────────────── */
-
-::-webkit-scrollbar {
-  width: 4px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-darker);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--copper-main);
-  border-radius: 2px;
-}
-
-/* ── Selection ────────────────────────────────────────────── */
-
-::selection {
-  background: var(--copper-main);
-  color: #fff;
-}
-
-/* ── Focus ────────────────────────────────────────────────── */
-
-:focus-visible {
-  outline: 2px solid var(--copper-light);
-  outline-offset: 2px;
-}
-
-/* ── Typography ───────────────────────────────────────────── */
-
-.font-display {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-weight: 300;
-  letter-spacing: 0.05em;
-}
-
-.text-copper {
-  color: var(--copper-light);
-}
-
-.text-copper-main {
-  color: var(--copper-main);
-}
-
-/* ── Glassmorphism ────────────────────────────────────────── */
-
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-}
-
-.glass-card {
-  background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-}
-
-/* ── Copper Glow ──────────────────────────────────────────── */
-
-.copper-glow {
-  box-shadow: 0 0 20px var(--copper-glow), 0 0 40px var(--copper-glow);
-}
-
-.copper-glow-text {
-  text-shadow: 0 0 20px var(--copper-glow-strong);
-}
-
-/* ── Gradient Text ────────────────────────────────────────── */
-
-.gradient-copper {
-  background: linear-gradient(135deg, var(--copper-light), var(--copper-main));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* ── Animations ───────────────────────────────────────────── */
+/* ── Keyframes ────────────────────────────────────────────── */
 
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
 
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.03) 25%,
-    rgba(255, 255, 255, 0.07) 50%,
-    rgba(255, 255, 255, 0.03) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-}
-
-.float {
-  animation: float 3s ease-in-out infinite;
-}
-
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.4s ease-out both;
-}
-
-@keyframes pulse-copper {
-  0%, 100% { box-shadow: 0 0 0 0 var(--copper-glow); }
-  50% { box-shadow: 0 0 0 8px transparent; }
-}
-
-
-
-/* ── Utility ──────────────────────────────────────────────── */
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* ── Centering Fix ────────────────────────────────────────── */
-/* Scoped fix: ensure block-level elements with mx-auto center properly */
-/* Does NOT apply display:block to avoid breaking flex/grid children */
-
-section.mx-auto,
-div.mx-auto,
-nav.mx-auto,
-main.mx-auto {
-  margin-left: auto !important;
-  margin-right: auto !important;
 }
