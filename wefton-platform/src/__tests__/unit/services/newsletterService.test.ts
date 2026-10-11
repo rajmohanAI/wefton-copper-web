@@ -5,23 +5,28 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { subscribeNewsletter } from '@/services/newsletterService';
 
 // Mock firebase/firestore
-vi.mock('firebase/firestore', () => ({
-  collection: vi.fn(() => 'mock-collection-ref'),
-  addDoc: vi.fn(() => Promise.resolve({ id: 'mock-doc-id' })),
-  getDocs: vi.fn(),
-  query: vi.fn(() => 'mock-query'),
-  where: vi.fn(() => 'mock-where'),
-  serverTimestamp: vi.fn(() => 'mock-server-timestamp'),
-}));
+vi.mock('firebase/firestore', () => {
+  class FirestoreError extends Error {
+    constructor(public code: string, message: string) {
+      super(message);
+    }
+  }
+  return {
+    doc: vi.fn((_db: unknown, col: string, id: string) => `${col}/${id}`),
+    setDoc: vi.fn(() => Promise.resolve()),
+    serverTimestamp: vi.fn(() => 'mock-server-timestamp'),
+    FirestoreError,
+  };
+});
 
 // Mock firebase lazy getter
 vi.mock('@/lib/firebase', () => ({
   getFirebaseDb: vi.fn(() => 'mock-db'),
 }));
 
-import { getDocs } from 'firebase/firestore';
+import { setDoc, FirestoreError } from 'firebase/firestore';
 
-const mockGetDocs = vi.mocked(getDocs);
+const mockSetDoc = vi.mocked(setDoc);
 
 describe('newsletterService', () => {
   beforeEach(() => {
@@ -30,11 +35,10 @@ describe('newsletterService', () => {
 
   describe('subscribeNewsletter', () => {
     it('should return already subscribed message when email exists', async () => {
-      // Simulate existing subscriber
-      mockGetDocs.mockResolvedValueOnce({
-        empty: false,
-        docs: [{ id: 'existing-doc', data: () => ({ email: 'test@example.com' }) }],
-      } as any);
+      // Rules deny overwriting an existing subscriber doc
+      mockSetDoc.mockRejectedValueOnce(
+        new (FirestoreError as any)('permission-denied', 'Missing or insufficient permissions.')
+      );
 
       const result = await subscribeNewsletter('test@example.com');
 
@@ -44,19 +48,23 @@ describe('newsletterService', () => {
       });
     });
 
-    it('should subscribe new email and return success', async () => {
-      // Simulate no existing subscriber
-      mockGetDocs.mockResolvedValueOnce({
-        empty: true,
-        docs: [],
-      } as any);
+    it('should subscribe new email keyed by the normalised address', async () => {
+      const result = await subscribeNewsletter('  New@Example.com ');
 
-      const result = await subscribeNewsletter('new@example.com');
-
+      expect(mockSetDoc).toHaveBeenCalledWith('newsletter_subscribers/new@example.com', {
+        email: 'new@example.com',
+        subscribedAt: 'mock-server-timestamp',
+      });
       expect(result).toEqual({
         success: true,
         message: 'Successfully subscribed!',
       });
+    });
+
+    it('should rethrow other Firestore errors', async () => {
+      mockSetDoc.mockRejectedValueOnce(new (FirestoreError as any)('unavailable', 'offline'));
+
+      await expect(subscribeNewsletter('test@example.com')).rejects.toThrow('offline');
     });
 
     it('should throw when Firebase is not configured', async () => {
