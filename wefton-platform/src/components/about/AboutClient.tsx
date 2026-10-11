@@ -159,7 +159,7 @@ export default function AboutClient() {
       </section>
 
       {/* ─── Brand Timeline ─── */}
-      <section className="py-20 px-4 md:px-8 max-w-4xl mx-auto">
+      <section className="py-20 px-4 md:px-8 max-w-4xl mx-auto overflow-x-clip">
         <h2 className="text-3xl font-light text-[var(--text-light)] text-center mb-16">
           Our <span className="gradient-copper">Journey</span>
         </h2>
