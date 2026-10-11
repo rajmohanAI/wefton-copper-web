@@ -37,7 +37,7 @@ graph TB
     end
 
     subgraph Hosting["Deployment"]
-        Vercel["Vercel (Frontend)"]
+        AppHosting["Firebase App Hosting"]
     end
 
     Pages --> Components
@@ -47,7 +47,7 @@ graph TB
     Services --> Firestore
     Services --> Storage
     Stores -->|persist| LocalStorage["localStorage"]
-    Vercel --> Pages
+    AppHosting --> Pages
 ```
 
 ### Rendering Strategy
@@ -68,7 +68,7 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant C as Customer Browser
-    participant N as Next.js (Vercel)
+    participant N as Next.js (Firebase App Hosting)
     participant FS as Firestore
     participant ST as Firebase Storage
     participant AU as Firebase Auth
