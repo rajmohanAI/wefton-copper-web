@@ -9,6 +9,9 @@ import TestimonialsSection from '@/components/home/TestimonialsSection';
 import FeaturedProductsServer from '@/components/home/FeaturedProductsServer';
 import NewsletterForm from '@/components/layout/NewsletterForm';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import Container from '@/components/layout/Container';
+import Section from '@/components/layout/Section';
+import ProductGrid from '@/components/catalog/ProductGrid';
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
 
@@ -52,7 +55,7 @@ const BANNER_SLIDES: BannerSlide[] = [
     subheading: '',
     ctaText: '',
     ctaHref: '/women',
-    imageUrl: '/banners/hero-women-collection2.jpg',
+    imageUrl: '/banners/hero-women-collection2.png',
     imageAlt: "Women's Collection Banner — 1920x600",
   },
   {
@@ -95,7 +98,7 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
       />
 
-      {/* Homepage sections — Fuaark-inspired layout with bold typography and generous spacing */}
+      {/* Homepage sections — order per V2 spec Req 7.5. <Section> owns vertical rhythm. */}
       <div>
 
         {/* 1. Banner Slider — full-width hero with promotional slides */}
@@ -104,29 +107,29 @@ export default function HomePage() {
         </section>
 
         {/* 2. Category Showcase — shop by category grid */}
-        <section aria-label="Shop by category" className="py-16 md:py-24">
+        <Section aria-label="Shop by category">
           <CategoryShowcase />
-        </section>
+        </Section>
 
         {/* 3. Featured Products — server-side fetched with skeleton fallback */}
-        <section aria-label="Featured products" className="py-16 md:py-24">
+        <Section aria-label="Featured products">
           <Suspense
             fallback={
-              <div className="px-4 md:px-8 max-w-[1280px] mx-auto">
+              <Container>
                 <div className="text-center mb-12">
                   <SkeletonLoader variant="text-block" className="max-w-xs mx-auto" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <ProductGrid>
                   {Array.from({ length: 8 }).map((_, i) => (
                     <SkeletonLoader key={i} variant="product-card" />
                   ))}
-                </div>
-              </div>
+                </ProductGrid>
+              </Container>
             }
           >
             <FeaturedProductsServer />
           </Suspense>
-        </section>
+        </Section>
 
         {/* 4. Brand Story — differentiators and craftsmanship */}
         <section aria-label="Brand story">

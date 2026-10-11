@@ -1,47 +1,12 @@
-import ProductCard from '@/components/product/ProductCard';
-import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
-import type { Product } from '@/types';
-
-interface ProductGridProps {
-  products: Product[];
-  loading?: boolean;
-  skeletonCount?: number;
-}
+import type { ComponentPropsWithoutRef } from 'react';
+import { cn } from '@/lib/utils';
 
 /**
- * Responsive CSS Grid layout for product cards.
- * - 1 column at mobile (375px)
- * - 2 columns at tablet (768px / sm breakpoint)
- * - 3–4 columns at desktop (1024px+)
- * - Uses auto-fill with minmax(280px, 1fr) for fluid responsiveness
- * - No animations — immediate visibility only
- * - Shows skeleton loaders during loading, transitions directly to content
+ * ProductGrid — CSS grid for product cards (V2 spec, Req 3.3/3.4).
+ * 2 columns on phones, then `repeat(auto-fill, minmax(min(100%, 280px), 1fr))`
+ * from 768px up. Cards are spaced with `gap` only; the `.product-grid`
+ * rule lives in src/styles/globals.css.
  */
-export default function ProductGrid({ products, loading, skeletonCount = 8 }: ProductGridProps) {
-  const gridClassName =
-    'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr';
-
-  if (loading) {
-    return (
-      <div
-        className={gridClassName}
-        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
-      >
-        {Array.from({ length: skeletonCount }).map((_, i) => (
-          <SkeletonLoader key={i} variant="product-card" />
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={gridClassName}
-      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
-    >
-      {products.map((product, i) => (
-        <ProductCard key={product.productId} product={product} priority={i < 4} />
-      ))}
-    </div>
-  );
+export default function ProductGrid({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
+  return <div className={cn('product-grid', className)} {...props} />;
 }
