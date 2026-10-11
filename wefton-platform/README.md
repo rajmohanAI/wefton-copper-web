@@ -235,6 +235,21 @@ npm run lint:css    # Stylelint: no unlayered CSS (see src/styles/globals.css)
 npm test            # Vitest unit + property tests
 ```
 
+A second job, **Playwright Layout Checks**, builds the app and runs
+`npm run test:e2e` against `next start`. It loads the main pages (home, men,
+women, new arrivals, bestsellers, about, size guide) at a desktop (1440px) and
+a mobile (Pixel 7) viewport and checks that the header, main content and footer
+render, that the page has no horizontal overflow, and that the right navigation
+shows for each width. Firestore is not configured in CI, so the checks cover the
+page shell rather than product data.
+
+To run them locally:
+
+```bash
+npx playwright install chromium   # once
+npm run build && npm run test:e2e
+```
+
 ---
 
 ## Brand Colors
