@@ -217,17 +217,19 @@ export default function Navbar() {
                             className="group flex flex-col items-center gap-2.5 p-3 rounded-xl hover:bg-white/8 transition-all duration-200 w-[120px]"
                           >
                             <div className="w-[96px] h-[96px] rounded-xl overflow-hidden border border-white/10 relative bg-gradient-to-br from-[var(--bg-darker)] to-[var(--bg-card)] shadow-inner">
-                              <Image
-                                src={item.thumbnail}
-                                alt={item.name}
-                                fill
-                                className="object-cover group-hover:scale-110 transition-transform duration-300"
-                                sizes="96px"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                }}
-                              />
+                              {item.thumbnail && (
+                                <Image
+                                  src={item.thumbnail}
+                                  alt={item.name}
+                                  fill
+                                  className="object-cover group-hover:scale-110 transition-transform duration-300"
+                                  sizes="96px"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
+                                />
+                              )}
                               {/* Fallback initial when image fails */}
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <span className="text-lg font-light text-[var(--copper-light)]/60">{item.name.charAt(0)}</span>

@@ -4,10 +4,13 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getCategoriesByGender } from '@/services/categoryService';
+import Container from '@/components/layout/Container';
 
 /**
  * CategoryShowcase — displays product category tiles on the homepage.
- * Uses local product images from /public folder (referenced in brand.ts).
+ * Tiles come from Firestore categories (same source as the menu). Until
+ * they arrive, skeleton tiles hold the space; a tile with no image yet
+ * shows a plain placeholder rather than a fallback photo (V2 spec, Req 7.9).
  * Each tile links to the filtered collection page.
  */
 
@@ -19,20 +22,19 @@ interface CategoryTile {
   image: string;
 }
 
-// Static fallback tiles — used for SSR/first paint and when Firestore
-// categories are unavailable. Only categories with actual seeded products.
+// Static fallback tiles — used when Firestore categories are unavailable.
+// No images: these only keep the section usable.
 const CATEGORY_TILES: CategoryTile[] = [
-  // Men's (5 products that exist in Firestore)
-  { id: 'men-premium-tee', name: 'Premium Tee', slug: 'premium-tee', gender: 'men', image: '/men_product_01.png' },
-  { id: 'men-oversized-tee', name: 'Oversized Tee', slug: 'oversized-tee', gender: 'men', image: '/men_product_03.png' },
-  { id: 'men-premium-polo', name: 'Premium Polo', slug: 'premium-polo', gender: 'men', image: '/men_product_02.png' },
-  { id: 'men-hoodies', name: 'Full Sleeved Tee', slug: 'full-sleeved-tee', gender: 'men', image: '/men_product_04.png' },
-  { id: 'men-active-wear', name: 'Active Wear', slug: 'active-wear', gender: 'men', image: '/men_product_05.png' },
-
-  // Women's (1 product that exists in Firestore)
-  { id: 'women-premium-tee', name: 'Premium Tee', slug: 'premium-tee', gender: 'women', image: '/women_product_01.png' },
-  { id: 'women-active-wear', name: 'Active Wear', slug: 'active-wear', gender: 'women', image: '/women_product_02.png' },
+  { id: 'men-premium-tee', name: 'Premium Tee', slug: 'premium-tee', gender: 'men', image: '' },
+  { id: 'men-oversized-tee', name: 'Oversized Tee', slug: 'oversized-tee', gender: 'men', image: '' },
+  { id: 'men-premium-polo', name: 'Premium Polo', slug: 'premium-polo', gender: 'men', image: '' },
+  { id: 'men-full-sleeved-tee', name: 'Full Sleeved Tee', slug: 'full-sleeved-tee', gender: 'men', image: '' },
+  { id: 'men-active-wear', name: 'Active Wear', slug: 'active-wear', gender: 'men', image: '' },
+  { id: 'women-premium-tee', name: 'Premium Tee', slug: 'premium-tee', gender: 'women', image: '' },
+  { id: 'women-active-wear', name: 'Active Wear', slug: 'active-wear', gender: 'women', image: '' },
 ];
+
+const SKELETON_COUNT = 8;
 
 function CategoryTileCard({ tile }: { tile: CategoryTile }) {
   const [imageError, setImageError] = useState(false);
@@ -44,7 +46,7 @@ function CategoryTileCard({ tile }: { tile: CategoryTile }) {
       className="group relative block overflow-hidden rounded-xl aspect-[3/4] bg-[var(--bg-darker)]"
     >
       {/* Category Image */}
-      {imageError ? (
+      {imageError || !tile.image ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--bg-darker)] border border-[var(--border-subtle)]">
           <div className="w-12 h-12 rounded-full bg-[var(--copper-main)]/20 flex items-center justify-center mb-3">
             <span className="text-lg font-semibold text-[var(--copper-light)]">W</span>
@@ -82,7 +84,7 @@ function CategoryTileCard({ tile }: { tile: CategoryTile }) {
 }
 
 export default function CategoryShowcase() {
-  const [tiles, setTiles] = useState<CategoryTile[]>(CATEGORY_TILES);
+  const [tiles, setTiles] = useState<CategoryTile[] | null>(null);
 
   // Hydrate tiles from Firestore categories so the homepage showcase
   // reflects the same categories as the menu. Falls back to static.
@@ -110,10 +112,10 @@ export default function CategoryShowcase() {
             image: c.thumbnail,
           })),
         ];
-        if (next.length) setTiles(next);
+        setTiles(next.length ? next : CATEGORY_TILES);
       })
       .catch(() => {
-        /* keep static fallback */
+        if (!cancelled) setTiles(CATEGORY_TILES);
       });
     return () => {
       cancelled = true;
@@ -121,7 +123,7 @@ export default function CategoryShowcase() {
   }, []);
 
   return (
-    <div className="px-4 md:px-8 max-w-[1280px] mx-auto">
+    <Container>
       {/* Section Header */}
       <div className="text-center mb-12">
         <p className="text-xs tracking-[4px] uppercase text-[var(--copper-light)] mb-3">
@@ -134,10 +136,16 @@ export default function CategoryShowcase() {
 
       {/* Category Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-        {tiles.map((tile) => (
-          <CategoryTileCard key={tile.id} tile={tile} />
-        ))}
+        {tiles
+          ? tiles.map((tile) => <CategoryTileCard key={tile.id} tile={tile} />)
+          : Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+              <div
+                key={i}
+                aria-hidden
+                className="skeleton rounded-xl aspect-[3/4] bg-[var(--bg-darker)]"
+              />
+            ))}
       </div>
-    </div>
+    </Container>
   );
 }
