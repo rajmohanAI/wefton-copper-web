@@ -151,11 +151,11 @@ export default function CheckoutClient() {
 
   // Handle screenshot upload and advance to Step 3
   const handleUploadScreenshot = async () => {
-    if (!selectedFile || !paymentReference.trim() || !orderId) return;
+    if (!selectedFile || !paymentReference.trim() || !orderId || !user?.uid) return;
     setUploading(true);
     setError('');
     try {
-      await uploadPaymentScreenshot(orderId, selectedFile, paymentReference.trim());
+      await uploadPaymentScreenshot(orderId, user.uid, selectedFile, paymentReference.trim());
       setConfirmedItems([...items]);
 
       // GA4: Track purchase event after successful checkout

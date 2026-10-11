@@ -56,7 +56,7 @@ In the [Firebase Console](https://console.firebase.google.com):
 1. **Authentication** → Enable: Google, Facebook, Phone, Email/Password
 2. **Firestore** → Create database in production mode
 3. **Storage** → Enable Firebase Storage
-4. Deploy security rules:
+4. Deploy security rules (run from `wefton-platform/`, the only folder with a `firebase.json`):
 
 ```bash
 npm install -g firebase-tools

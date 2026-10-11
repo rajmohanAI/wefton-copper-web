@@ -80,6 +80,7 @@ export async function createOrder(
 
 export async function uploadPaymentScreenshot(
   orderId: string,
+  userId: string,
   file: File,
   reference: string
 ): Promise<void> {
@@ -91,7 +92,12 @@ export async function uploadPaymentScreenshot(
   await uploadBytes(storageRef, file);
   const url = await getDownloadURL(storageRef);
 
-  const q = query(collection(db, ORDERS_COL), where('orderId', '==', orderId));
+  // The userId filter is required: security rules only let a user query their own orders.
+  const q = query(
+    collection(db, ORDERS_COL),
+    where('orderId', '==', orderId),
+    where('userId', '==', userId)
+  );
   const snap = await getDocs(q);
   if (!snap.empty) {
     await updateDoc(snap.docs[0].ref, {
