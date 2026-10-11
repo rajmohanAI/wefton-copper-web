@@ -222,9 +222,11 @@ export default function TestimonialsSection() {
           <AnimatePresence mode="wait">
             <motion.div
               key={current}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              // Cross-fade only: a sideways offset pushed the card past the
+              // edge of phone screens on every slide change.
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.4 }}
               className="glass-card p-8 md:p-12 text-center"
               role="group"

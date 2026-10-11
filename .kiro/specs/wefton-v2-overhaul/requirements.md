@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Wefton Copper V2 Overhaul defines the complete UI/UX redesign, e-commerce module additions, and performance improvements for the Wefton Copper e-commerce platform. The overhaul transitions from a canvas-driven hero with Framer Motion animations to a Fuaark-inspired static layout with a banner slider, rem-based typography, skeleton loaders, and a dark/light theme switcher. New e-commerce modules include inventory auto-decrement, order email notifications via Resend, a return/refund workflow, legal pages, admin coupon CRUD, and GA4 integration. The tech stack evolves to Next.js 16, TypeScript, Tailwind CSS 4, Firebase, Zustand, Swiper (banner slider), and next-themes.
+Wefton Copper V2 Overhaul defines the complete UI/UX redesign, e-commerce module additions, and performance improvements for the Wefton Copper e-commerce platform. The overhaul transitions from a canvas-driven hero with Framer Motion animations to a subtle premium static layout with a banner slider, rem-based typography, skeleton loaders, and a dark/light theme switcher. New e-commerce modules include inventory auto-decrement, order email notifications via Resend, a return/refund workflow, legal pages, admin coupon CRUD, and GA4 integration. The tech stack evolves to Next.js 16, TypeScript, Tailwind CSS 4, Firebase, Zustand, Swiper (banner slider), and next-themes.
 
 ---
 
@@ -25,7 +25,9 @@ Wefton Copper V2 Overhaul defines the complete UI/UX redesign, e-commerce module
 - **Breakpoint_Tablet**: Viewport width of 768px, the tablet layout threshold.
 - **Breakpoint_Desktop**: Viewport width of 1024px and above, the desktop layout threshold.
 - **Rem_Typography**: Font sizing system using rem units relative to a root font-size of 16px, replacing all viewport-width (vw) based font declarations.
-- **Fuaark_Section**: A content section following Fuaark-inspired design patterns: bold typography, generous whitespace, full-width image banners with overlaid text, and clean card layouts.
+- **Premium_Section**: A content section following the subtle premium design direction: light display typography, generous whitespace, a quiet warm-neutral palette and square-cornered cards. Built from the Container and Section layout primitives.
+- **Container**: The layout primitive that alone sets content max-width and horizontal gutters.
+- **Section**: The layout primitive that alone sets vertical section rhythm.
 - **Placeholder_Image_Area**: A styled container with descriptive text indicating where product/banner imagery will be placed, used during development and content population phases.
 - **Resend_API**: The email delivery service used for transactional order notifications via a Next.js API route.
 - **Swiper**: The touch-enabled slider library used for the homepage banner carousel.
@@ -74,8 +76,8 @@ Wefton Copper V2 Overhaul defines the complete UI/UX redesign, e-commerce module
 
 1. THE Platform SHALL remove all Framer Motion animation wrappers from the Product_Grid and ProductCard components.
 2. THE Product_Grid SHALL render product cards using CSS Grid with immediate visibility and no entrance animations, fade-ins, or stagger delays.
-3. THE Product_Grid SHALL display 1 column at Breakpoint_Mobile (375px), 2 columns at Breakpoint_Tablet (768px), and 3 or 4 columns at Breakpoint_Desktop (1024px+).
-4. THE Product_Grid SHALL maintain consistent card heights within each row using CSS Grid `auto-fill` with a minimum column width of 280px.
+3. THE Product_Grid SHALL display 2 columns below Breakpoint_Tablet (including Breakpoint_Mobile, 375px), and from Breakpoint_Tablet (768px) upward SHALL fit as many columns as the available width allows (typically 2 at tablet, 3 or 4 at Breakpoint_Desktop).
+4. FROM Breakpoint_Tablet upward, THE Product_Grid SHALL use `grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr))`, and SHALL space cards with `gap`, not child margins, so card heights stay consistent within each row.
 5. WHEN product data loads, THE Product_Grid SHALL transition from Skeleton_Loader placeholders directly to rendered product cards without intermediate animation states.
 
 ---
@@ -125,17 +127,23 @@ Wefton Copper V2 Overhaul defines the complete UI/UX redesign, e-commerce module
 
 ---
 
-### Requirement 7: Fuaark-Inspired Section Design
+### Requirement 7: Subtle Premium Section Design
 
-**User Story:** As a Customer, I want a bold, modern visual presentation inspired by premium streetwear brands, so that the shopping experience feels curated and high-quality.
+_Amended 2026-10-11: replaces the original "Fuaark-inspired bold" direction, approved by the owner._
+
+**User Story:** As a Customer, I want a calm, understated visual presentation, so that the shopping experience feels curated, premium and easy to browse.
 
 #### Acceptance Criteria
 
-1. THE Platform SHALL implement Fuaark_Section components with: bold heading typography (text-3xl to text-5xl), generous vertical spacing (py-16 to py-24), full-width image containers with overlaid text, and clean card layouts with consistent border-radius.
-2. THE Platform SHALL structure homepage sections in this order: Banner_Slider, Category Showcase, Featured Products, Brand Story, Testimonials, and Newsletter.
-3. EACH Fuaark_Section SHALL use placeholder image areas containing descriptive text (e.g., "Men's Collection Banner — 1920x600") indicating the intended content for each image slot.
-4. THE Platform SHALL apply consistent section spacing of 4rem (mobile) to 6rem (desktop) between all homepage Fuaark_Sections.
-5. THE Platform SHALL use a maximum of two font families: one for headings and one for body text, defined in the Tailwind CSS 4 theme configuration.
+1. THE Platform SHALL define these colour tokens in the Tailwind CSS 4 theme, with light as the default theme and a dark counterpart for each: canvas `#F7F5F2`, surface `#FFFFFF`, ink `#1A1A1A`, ink-muted `#6B6661`, line `#E4DFD8`, copper `#8C4A22`. Copper SHALL be used sparingly, as an accent only.
+2. THE Platform SHALL use a maximum of two font families: a light serif for display headings (e.g. Cormorant Garamond via `next/font`) and Inter for body text, on a rem scale. Headings SHALL NOT be bold, and uppercase SHALL be used only for small labels.
+3. THE Platform SHALL use a 4px spacing base, Section vertical spacing of 64px (mobile) and 96px (desktop), and Container gutters of 16px, 32px and 48px as the viewport widens. Spacing between siblings SHALL use `gap`, not child margins.
+4. THE Container component SHALL be the only place that sets content max-width and horizontal gutters, and THE Section component SHALL be the only place that sets vertical section rhythm.
+5. THE Platform SHALL structure homepage sections in this order: Banner_Slider, Category Showcase, Featured Products, Brand Story, Testimonials, and Newsletter.
+6. THE header SHALL be a three-column grid with the logo on one line and only search, account and bag icons.
+7. Product cards SHALL have square corners, no gradient overlays or shadows, at most one quiet text badge, and SHALL show a struck-through compare price instead of "% OFF" badges. Product images SHALL use `aspect-ratio: 3/4`.
+8. Swiper controls SHALL be restyled to match the palette, and no content SHALL be hidden behind in-view animations.
+9. WHEN an image slot has no image yet, THE Platform SHALL show a plain placeholder instead of a fallback photo.
 
 ---
 

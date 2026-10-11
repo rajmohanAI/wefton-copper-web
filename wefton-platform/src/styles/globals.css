@@ -14,8 +14,39 @@
    Stylelint (`npm run lint:css`) rejects unlayered style rules.
    ============================================================ */
 
+/* ── Subtle premium design tokens (V2 spec, Req 7) ────────────
+   Defined here so components can start using them (bg-canvas,
+   text-ink, border-line, font-display, ...). The colour values
+   live in --wc-* variables below so dark mode can swap them.
+   ──────────────────────────────────────────────────────────── */
+@theme inline {
+  --color-canvas: var(--wc-canvas);
+  --color-surface: var(--wc-surface);
+  --color-ink: var(--wc-ink);
+  --color-ink-muted: var(--wc-ink-muted);
+  --color-line: var(--wc-line);
+  --color-copper: var(--wc-copper);
+
+  /* Light serif for display (loaded in Phase 3); Inter for body. */
+  --font-display: var(--font-cormorant, 'Cormorant Garamond'), Georgia, 'Times New Roman', serif;
+  --font-body: var(--font-inter, 'Inter'), 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+@theme {
+  /* 4px spacing base (Tailwind's default, stated explicitly). */
+  --spacing: 0.25rem;
+}
+
 @layer base {
   :root {
+    /* Subtle premium palette — light (default) */
+    --wc-canvas: #f7f5f2;
+    --wc-surface: #ffffff;
+    --wc-ink: #1a1a1a;
+    --wc-ink-muted: #6b6661;
+    --wc-line: #e4dfd8;
+    --wc-copper: #8c4a22;
+
     /* Light Theme Colors — warm neutral, not harsh white */
     --bg-dark: #e8e4e0;
     --bg-darker: #f0ece8;
@@ -44,6 +75,14 @@
   /* Dark Theme — applied via next-themes class="dark" on <html> */
   :root.dark,
   .dark {
+    /* Subtle premium palette — dark */
+    --wc-canvas: #141311;
+    --wc-surface: #1c1b19;
+    --wc-ink: #ece8e3;
+    --wc-ink-muted: #a39d96;
+    --wc-line: #2e2b28;
+    --wc-copper: #c27a4c;
+
     --bg-dark: #0f1115;
     --bg-darker: #08090a;
     --bg-card: rgba(255, 255, 255, 0.02);
@@ -149,6 +188,25 @@
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* ── Layout primitives (see src/components/layout/) ─────────── */
+
+@layer components {
+  /* <ProductGrid>: 2 columns on phones, then as many 280px+ columns
+     as fit. Spacing comes from gap only (V2 spec, Req 3.3/3.4). */
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .product-grid {
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+      gap: 1.5rem;
+    }
   }
 }
 

@@ -11,6 +11,7 @@ import { getProductsByGender } from '@/services/productService';
 import { MEN_CATEGORIES, WOMEN_CATEGORIES } from '@/config/brand';
 import type { Product, FilterState } from '@/types';
 import Button from '@/components/ui/Button';
+import Container from '@/components/layout/Container';
 
 interface CollectionPageProps {
   gender: 'men' | 'women';
@@ -257,7 +258,7 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
   return (
     <div className="w-full min-h-screen pt-[var(--nav-height)]">
       {/* Page Header */}
-      <div className="w-full bg-[var(--bg-darker)] border-b border-[var(--border-subtle)] pt-12 pb-10 px-4 md:px-8">
+      <Container size="full" className="bg-[var(--bg-darker)] border-b border-[var(--border-subtle)] pt-12 pb-10">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -273,11 +274,11 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
         >
           {/* {subtitle} — temporarily hidden */}
         </motion.p>
-      </div>
+      </Container>
 
       {/* Category Pills */}
       <div className="w-full border-b border-[var(--border-subtle)] bg-[var(--bg-dark)]">
-        <div className="w-full px-4 md:px-8 py-5 min-h-[72px] flex items-center gap-2 overflow-x-auto no-scrollbar font-bold">
+        <Container size="full" className="py-5 min-h-[72px] flex items-center gap-2 overflow-x-auto no-scrollbar font-bold">
           <button
             onClick={() => setFilters((f) => ({ ...f, category: [] }))}
             className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs tracking-wider uppercase transition-colors ${
@@ -308,11 +309,11 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
               {cat.name}
             </button>
           ))}
-        </div>
+        </Container>
       </div>
 
       {/* Main Content: Sidebar + Product Grid */}
-      <div className="flex w-full min-h-[calc(100vh-300px)] px-4 md:px-8 py-8">
+      <Container size="full" className="flex min-h-[calc(100vh-300px)] py-8">
         {/* Desktop Persistent FilterSidebar (≥ 1024px) */}
         <aside className="hidden lg:block w-[250px] shrink-0 pr-6 border-r border-[var(--border-subtle)]">
           <div className="sticky top-[calc(var(--nav-height)+2rem)] max-h-[calc(100vh-var(--nav-height)-4rem)] overflow-y-auto">
@@ -483,11 +484,7 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
             {/* Product Grid / List */}
             {loading ? (
               <div
-                className={
-                  viewMode === 'grid'
-                    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6'
-                    : 'grid grid-cols-1 gap-4'
-                }
+                className={viewMode === 'grid' ? 'product-grid' : 'grid grid-cols-1 gap-4'}
               >
                 {Array.from({ length: 12 }).map((_, i) => (
                   <ProductCardSkeleton key={i} />
@@ -509,11 +506,7 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
             ) : (
               <>
                 <div
-                  className={
-                    viewMode === 'grid'
-                      ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6'
-                      : 'grid grid-cols-1 gap-4'
-                  }
+                  className={viewMode === 'grid' ? 'product-grid' : 'grid grid-cols-1 gap-4'}
                 >
                   {products.map((product, i) => (
                     <div
@@ -538,7 +531,7 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
               </>
             )}
           </div>
-        </div>
+        </Container>
 
       {/* Mobile Filter Drawer (< 1024px) */}
       <FilterSidebar

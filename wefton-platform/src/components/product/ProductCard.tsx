@@ -213,7 +213,8 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           </h3>
           <p className="text-xs text-[var(--text-muted)] mt-0.5 capitalize">{product.category}</p>
 
-          <div className="flex items-center justify-between mt-2">
+          {/* Wraps so price + rating fit a 2-column phone grid */}
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mt-2">
             {/* Price display */}
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-[var(--copper-light)]">
