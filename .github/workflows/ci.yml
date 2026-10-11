@@ -4,11 +4,15 @@ on:
   pull_request:
     branches:
       - main
-      - dev
+      - feature/dev
+      - feature/qa
+      - feature/pp
   push:
     branches:
       - main
-      - dev
+      - feature/dev
+      - feature/qa
+      - feature/pp
 
 concurrency:
   group: ci-${{ github.ref }}

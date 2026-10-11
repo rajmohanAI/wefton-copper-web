@@ -1,0 +1,28 @@
+name: Main Source Guard
+
+# Only feature/pp (pre-prod) may be merged into main.
+# Make "Only feature/pp may merge into main" a required status check on main
+# (Settings → Rules → Rulesets) so GitHub blocks PRs from any other branch.
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, reopened, synchronize, edited]
+
+jobs:
+  guard:
+    name: Only feature/pp may merge into main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check source branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
+        run: |
+          if [ "$HEAD_REPO" != "$BASE_REPO" ] || [ "$HEAD_REF" != "feature/pp" ]; then
+            echo "::error::PRs into main must come from feature/pp in this repository (got $HEAD_REPO:$HEAD_REF)."
+            exit 1
+          fi
+          echo "Source branch is feature/pp."
