@@ -153,11 +153,21 @@ export default function Navbar() {
         className={cn(
           'top-0 left-0 right-0 z-50 transition-all duration-500',
           pathname === '/' ? 'fixed' : 'sticky -mb-[1px]',
-          scrolled
-            ? 'glass border-b border-[var(--glass-border)] py-5'
-            : 'bg-[var(--bg-dark)]/80 backdrop-blur-sm py-7'
+          scrolled ? 'py-5' : 'py-7'
         )}
       >
+        {/* Header backdrop lives on its own layer: a backdrop-filter on the
+            header itself would stop the mega menu's glass from blurring the
+            page underneath it. */}
+        <div
+          aria-hidden
+          className={cn(
+            'absolute inset-0 -z-10 transition-all duration-500',
+            scrolled
+              ? 'glass border-b border-[var(--glass-border)]'
+              : 'bg-[var(--bg-dark)]/80 backdrop-blur-sm'
+          )}
+        />
         <nav className="w-full min-h-[48px] px-[0.5cm] flex items-center justify-between">
           {/* Logo */}
           <Link
@@ -172,7 +182,6 @@ export default function Navbar() {
             {navLinks.map((link) => (
               <li
                 key={link.label}
-                className="relative"
                 onMouseEnter={() => link.dropdown && handleDropdownEnter(link.label)}
                 onMouseLeave={() => link.dropdown && handleDropdownLeave()}
               >
@@ -197,26 +206,21 @@ export default function Navbar() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.97 }}
                       transition={{ duration: 0.12, ease: [0.2, 0, 0, 1] }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-4 z-50 w-[min(95vw,1400px)] p-5 rounded-2xl border border-white/10 shadow-[0_8px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(20,22,28,0.85) 0%, rgba(30,32,40,0.75) 100%)',
-                        backdropFilter: 'blur(24px) saturate(1.5)',
-                        WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-                      }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 w-[min(95vw,1400px)] p-5 rounded-2xl glass-menu before:absolute before:inset-x-0 before:-top-8 before:h-8 before:content-['']"
                       onMouseEnter={() => handleDropdownEnter(link.label)}
                       onMouseLeave={handleDropdownLeave}
                     >
                       {/* Inner glow effect */}
-                      <div className="absolute inset-0 rounded-2xl opacity-30 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(214,143,100,0.15) 0%, transparent 60%)' }} />
-                      
+                      <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(214,143,100,0.12) 0%, transparent 60%)' }} />
+
                       <div className="relative flex flex-wrap justify-center gap-4">
                         {link.dropdown.map((item) => (
                           <Link
                             key={item.id}
                             href={`${link.href}?category=${item.slug}`}
-                            className="group flex flex-col items-center gap-2.5 p-3 rounded-xl hover:bg-white/8 transition-all duration-200 w-[120px]"
+                            className="group flex flex-col items-center gap-2.5 p-3 rounded-xl hover:bg-white/60 hover:shadow-[0_4px_16px_rgba(60,40,25,0.08)] transition-all duration-200 w-[120px]"
                           >
-                            <div className="w-[96px] h-[96px] rounded-xl overflow-hidden border border-white/10 relative bg-gradient-to-br from-[var(--bg-darker)] to-[var(--bg-card)] shadow-inner">
+                            <div className="w-[96px] h-[96px] rounded-xl overflow-hidden border border-white/80 relative bg-gradient-to-br from-[#f7f5f2] to-[#ece8e3] shadow-[0_1px_3px_rgba(60,40,25,0.08)]">
                               {item.thumbnail && (
                                 <Image
                                   src={item.thumbnail}
@@ -232,10 +236,10 @@ export default function Navbar() {
                               )}
                               {/* Fallback initial when image fails */}
                               <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="text-lg font-light text-[var(--copper-light)]/60">{item.name.charAt(0)}</span>
+                                <span className="text-lg font-light text-[#8c4a22]/60">{item.name.charAt(0)}</span>
                               </div>
                             </div>
-                            <span className="text-xs text-center leading-tight text-white font-bold group-hover:text-[var(--copper-light)] transition-colors">
+                            <span className="text-xs text-center leading-tight font-semibold text-[var(--glass-menu-ink)] group-hover:text-[var(--glass-menu-ink-hover)] transition-colors">
                               {item.name}
                             </span>
                           </Link>

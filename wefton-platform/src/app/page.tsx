@@ -101,8 +101,10 @@ export default function HomePage() {
       {/* Homepage sections — order per V2 spec Req 7.5. <Section> owns vertical rhythm. */}
       <div>
 
-        {/* 1. Banner Slider — full-width hero with promotional slides */}
-        <section aria-label="Hero banner">
+        {/* 1. Banner Slider — full-width hero with promotional slides.
+            The homepage header is `fixed` (see Navbar), so pad the hero by its
+            un-scrolled height (48px nav + py-7) to keep the banner below it. */}
+        <section aria-label="Hero banner" className="pt-[calc(48px+3.5rem)]">
           <BannerSlider slides={BANNER_SLIDES} />
         </section>
 
