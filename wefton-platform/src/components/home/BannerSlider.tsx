@@ -3,10 +3,9 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
 import Image from 'next/image';
+import bannerLoader from '@/lib/bannerLoader';
 
-import 'swiper/css';
-import 'swiper/css/pagination';
-import 'swiper/css/navigation';
+// Swiper CSS is imported (layered) in src/styles/globals.css
 
 export interface BannerSlide {
   id: string;
@@ -68,6 +67,7 @@ export default function BannerSlider({ slides }: BannerSliderProps) {
           <SwiperSlide key={slide.id}>
             <div className="relative w-full h-full">
               <Image
+                loader={bannerLoader}
                 src={slide.imageUrl}
                 alt={slide.imageAlt}
                 fill

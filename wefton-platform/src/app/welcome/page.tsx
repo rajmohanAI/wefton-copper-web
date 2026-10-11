@@ -28,14 +28,21 @@ export default function WelcomePage() {
               href={`/${product.gender}?category=${product.slug}`}
               className="group relative block overflow-hidden rounded-lg aspect-[3/4] bg-[#ece8e3]"
             >
-              <Image
-                src={product.thumbnail}
-                alt={product.name}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                sizes="(max-width: 640px) 50vw, 25vw"
-                quality={70}
-              />
+              {product.thumbnail ? (
+                <Image
+                  src={product.thumbnail}
+                  alt={product.name}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 640px) 50vw, 25vw"
+                  quality={70}
+                />
+              ) : (
+                // No photo yet: plain placeholder (V2 spec, Req 7.9).
+                <div aria-hidden className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-2xl font-light text-[#B87333]/60">{product.name.charAt(0)}</span>
+                </div>
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-3">
                 <p className="text-xs font-medium text-white">{product.name}</p>

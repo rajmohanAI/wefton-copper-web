@@ -23,25 +23,28 @@ export const BRAND = {
   },
 } as const;
 
+// `thumbnail` is intentionally empty: the old PNG fallbacks were 2–7 MB
+// each. Category images come from Firestore; empty means "show a
+// placeholder" (V2 spec, Req 7.9).
 export const MEN_CATEGORIES = [
-  { id: 'premium-tee', name: 'Premium Tee', slug: 'premium-tee', thumbnail: '/men_product_01.png' },
-  { id: 'premium-polo', name: 'Premium Polo', slug: 'premium-polo', thumbnail: '/men_product_02.png' },
-  { id: 'oversized-tee', name: 'Oversized Tee', slug: 'oversized-tee', thumbnail: '/men_product_03.png' },
-  { id: 'full-sleeved-tee', name: 'Full Sleeved Tee', slug: 'full-sleeved-tee', thumbnail: '/men_product_04.png' },
-  { id: 'active-wear', name: 'Active Wear', slug: 'active-wear', thumbnail: '/men_product_05.png' },
-  { id: 'shorts', name: 'Shorts', slug: 'shorts', thumbnail: '/men_product_08.png' },
-  { id: 'joggers', name: 'Joggers', slug: 'joggers', thumbnail: '/men_product_06.png' },
-  { id: 'cargos', name: 'Cargos', slug: 'cargos', thumbnail: '/men_product_02.png' },
-  { id: 'casual-shirts', name: 'Casual Shirts', slug: 'casual-shirts', thumbnail: '/men_product_10.png' },
-  { id: 'co-ords', name: 'Co-Ords', slug: 'co-ords', thumbnail: '/men_product_09.png' },
-  { id: 'hoodies', name: 'Hoodies', slug: 'hoodies', thumbnail: '/men_product_09.png' },
-  { id: 'sun-jackets', name: 'Sun-Jackets', slug: 'sun-jackets', thumbnail: '/men_product_07.png' },
-  { id: 'shaper-vest', name: 'Shaper Vest', slug: 'shaper-vest', thumbnail: '/men_product_01.png' },
+  { id: 'premium-tee', name: 'Premium Tee', slug: 'premium-tee', thumbnail: '' },
+  { id: 'premium-polo', name: 'Premium Polo', slug: 'premium-polo', thumbnail: '' },
+  { id: 'oversized-tee', name: 'Oversized Tee', slug: 'oversized-tee', thumbnail: '' },
+  { id: 'full-sleeved-tee', name: 'Full Sleeved Tee', slug: 'full-sleeved-tee', thumbnail: '' },
+  { id: 'active-wear', name: 'Active Wear', slug: 'active-wear', thumbnail: '' },
+  { id: 'shorts', name: 'Shorts', slug: 'shorts', thumbnail: '' },
+  { id: 'joggers', name: 'Joggers', slug: 'joggers', thumbnail: '' },
+  { id: 'cargos', name: 'Cargos', slug: 'cargos', thumbnail: '' },
+  { id: 'casual-shirts', name: 'Casual Shirts', slug: 'casual-shirts', thumbnail: '' },
+  { id: 'co-ords', name: 'Co-Ords', slug: 'co-ords', thumbnail: '' },
+  { id: 'hoodies', name: 'Hoodies', slug: 'hoodies', thumbnail: '' },
+  { id: 'sun-jackets', name: 'Sun-Jackets', slug: 'sun-jackets', thumbnail: '' },
+  { id: 'shaper-vest', name: 'Shaper Vest', slug: 'shaper-vest', thumbnail: '' },
 ] as const;
 
 export const WOMEN_CATEGORIES = [
-  { id: 'premium-tee', name: 'Premium Tee', slug: 'premium-tee', thumbnail: '/women_product_01.png' },
-  { id: 'active-wear', name: 'Active Wear Tshirt', slug: 'active-wear', thumbnail: '/women_product_02.png' },
+  { id: 'premium-tee', name: 'Premium Tee', slug: 'premium-tee', thumbnail: '' },
+  { id: 'active-wear', name: 'Active Wear Tshirt', slug: 'active-wear', thumbnail: '' },
 ] as const;
 
 export const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'] as const;

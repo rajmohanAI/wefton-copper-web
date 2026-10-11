@@ -5,6 +5,8 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
 import { ProductCardSkeleton } from '@/components/ui/Skeleton';
 import type { Product } from '@/types';
+import Container from '@/components/layout/Container';
+import ProductGrid from '@/components/catalog/ProductGrid';
 
 interface FeaturedProductsProps {
   title?: string;
@@ -30,7 +32,7 @@ export default function FeaturedProducts({
   viewAllHref,
 }: FeaturedProductsProps) {
   return (
-    <section className="py-20 px-4 md:px-8 lg:px-8 max-w-[1280px] mx-auto">
+    <Container>
       {/* Header */}
       <div
         className="text-center mb-12"
@@ -62,13 +64,11 @@ export default function FeaturedProducts({
 
       {/* Loading state */}
       {loading && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <ProductGrid>
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} style={{ opacity: 1, transform: 'none' }}>
-              <ProductCardSkeleton />
-            </div>
+            <ProductCardSkeleton key={i} />
           ))}
-        </div>
+        </ProductGrid>
       )}
 
       {/* "Coming Soon" placeholder when no featured products exist */}
@@ -91,13 +91,11 @@ export default function FeaturedProducts({
 
       {/* Product Grid — immediate visibility, no animations */}
       {!loading && products.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <ProductGrid>
           {products.map((product, i) => (
-            <div key={product.productId} style={{ opacity: 1, transform: 'none' }}>
-              <ProductCard product={product} priority={i < 4} />
-            </div>
+            <ProductCard key={product.productId} product={product} priority={i < 4} />
           ))}
-        </div>
+        </ProductGrid>
       )}
 
       {/* Mobile View All */}
@@ -111,6 +109,6 @@ export default function FeaturedProducts({
           </Link>
         </div>
       )}
-    </section>
+    </Container>
   );
 }

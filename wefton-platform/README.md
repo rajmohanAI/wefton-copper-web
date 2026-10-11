@@ -1,6 +1,6 @@
 # Wefton Copper — Premium E-Commerce Platform
 
-A production-grade luxury e-commerce platform built with Next.js 15, Firebase, and Framer Motion.
+A production-grade luxury e-commerce platform built with Next.js 16, Firebase and Tailwind CSS 4.
 
 ---
 
@@ -8,14 +8,14 @@ A production-grade luxury e-commerce platform built with Next.js 15, Firebase, a
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 15 (App Router) |
+| Framework | Next.js 16 (App Router) |
 | Language | TypeScript |
-| Styling | Tailwind CSS + CSS Variables |
+| Styling | Tailwind CSS 4 + CSS Variables |
 | Animations | Framer Motion |
 | State | Zustand (persist middleware) |
 | Backend | Firebase (Auth, Firestore, Storage) |
 | Forms | React Hook Form + Zod |
-| Deployment | Vercel (frontend) + Firebase (backend) |
+| Deployment | Firebase App Hosting + Firebase (Auth, Firestore, Storage) |
 
 ---
 
@@ -56,7 +56,7 @@ In the [Firebase Console](https://console.firebase.google.com):
 1. **Authentication** → Enable: Google, Facebook, Phone, Email/Password
 2. **Firestore** → Create database in production mode
 3. **Storage** → Enable Firebase Storage
-4. Deploy security rules:
+4. Deploy security rules (run from `wefton-platform/`, the only folder with a `firebase.json`):
 
 ```bash
 npm install -g firebase-tools
@@ -204,22 +204,51 @@ Features:
 
 ## Deployment
 
-### Vercel (Recommended)
+The site runs on **Firebase App Hosting** (project `weflive-58678`). App Hosting
+builds and deploys from GitHub on its own; there is no deploy workflow.
+Build/runtime settings and public env vars live in `apphosting.yaml`.
 
-1. Push to GitHub
-2. Import project in [Vercel](https://vercel.com)
-3. Add all `NEXT_PUBLIC_FIREBASE_*` environment variables
-4. Deploy
+### Branches and environments
 
-### GitHub Actions
+Changes are promoted one environment at a time:
 
-CI/CD is configured in `.github/workflows/deploy.yml`.
+| Branch | Environment | URL |
+|---|---|---|
+| `feature/dev` | Development | dev.weftoncopper.com |
+| `feature/qa` | QA / testing | qa.weftoncopper.com |
+| `feature/pp` | Pre-production | pp.weftoncopper.com |
+| `main` | Production | www.weftoncopper.com |
 
-Add these secrets to your GitHub repository:
-- `NEXT_PUBLIC_FIREBASE_*` — all Firebase env vars
-- `VERCEL_TOKEN` — from Vercel account settings
-- `VERCEL_ORG_ID` — from Vercel project settings
-- `VERCEL_PROJECT_ID` — from Vercel project settings
+Work happens on short-lived branches merged into `feature/dev` by pull request.
+`main` only accepts pull requests from `feature/pp` (enforced by the
+"Main Source Guard" workflow plus a ruleset on `main`).
+
+### CI
+
+`.github/workflows/ci.yml` (repo root) runs on pull requests and pushes to the
+branches above, from the `wefton-platform/` directory:
+
+```bash
+npm run typecheck   # tsc --noEmit
+npm run lint        # ESLint
+npm run lint:css    # Stylelint: no unlayered CSS (see src/styles/globals.css)
+npm test            # Vitest unit + property tests
+```
+
+A second job, **Playwright Layout Checks**, builds the app and runs
+`npm run test:e2e` against `next start`. It loads the main pages (home, men,
+women, new arrivals, bestsellers, about, size guide) at a desktop (1440px) and
+a mobile (Pixel 7) viewport and checks that the header, main content and footer
+render, that the page has no horizontal overflow, and that the right navigation
+shows for each width. Firestore is not configured in CI, so the checks cover the
+page shell rather than product data.
+
+To run them locally:
+
+```bash
+npx playwright install chromium   # once
+npm run build && npm run test:e2e
+```
 
 ---
 

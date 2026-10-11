@@ -68,8 +68,10 @@ function MilestoneItem({
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
-      animate={inView ? { opacity: 1, x: 0 } : {}}
+      // Slide in vertically: a sideways offset made the page wider than
+      // phone screens until each item was scrolled into view.
+      initial={{ opacity: 0, y: 16 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.7, delay: index * 0.1 }}
       className="flex gap-6 md:gap-8 items-start"
     >

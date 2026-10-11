@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - feature/dev
+      - feature/qa
+      - feature/pp
+  push:
+    branches:
+      - main
+      - feature/dev
+      - feature/qa
+      - feature/pp
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Type Check, Lint & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wefton-platform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: wefton-platform/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Lint CSS (no unlayered rules)
+        run: npm run lint:css
+
+      - name: Test
+        run: npm test
+
+  e2e:
+    name: Playwright Layout Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wefton-platform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: wefton-platform/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build
+        run: npm run build
+
+      - name: Run layout checks
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            wefton-platform/playwright-report/
+            wefton-platform/test-results/
+          retention-days: 7

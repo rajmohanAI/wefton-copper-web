@@ -33,7 +33,7 @@ export default function ShippingPolicyPage() {
 
           <section>
             <h2 className="text-lg font-medium text-[var(--text-light)] mb-3">Order Tracking</h2>
-            <p>Once your order is shipped, you will receive a tracking link via email and SMS. You can also track your order from your account page under "My Orders".</p>
+            <p>Once your order is shipped, you will receive a tracking link via email and SMS. You can also track your order from your account page under &ldquo;My Orders&rdquo;.</p>
           </section>
 
           <section>
