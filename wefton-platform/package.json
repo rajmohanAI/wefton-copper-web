@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "test:coverage": "vitest --run --coverage"
+    "test:coverage": "vitest --run --coverage",
+    "test:layout": "playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -50,6 +51,7 @@
     "zustand": "^5.0.13"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/papaparse": "^5.3.14",
