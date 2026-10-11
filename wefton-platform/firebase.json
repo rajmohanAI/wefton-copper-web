@@ -43,28 +43,6 @@
   "apphosting": [
     {
       "backendId": "wefton-copper-web",
-      "rootDir": "/wefton-platform",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "functions"
-      ]
-    },
-    {
-      "backendId": "wefton-copper-web",
-      "rootDir": "C:\\Users\\hi\\Raj\\Wefton\\WeftonKRDev\\wefton-copper\\wefton-platform",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "functions"
-      ]
-    },
-    {
-      "backendId": "wefton-copper-web",
       "rootDir": ".",
       "ignore": [
         "node_modules",

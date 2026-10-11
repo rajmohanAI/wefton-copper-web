@@ -1,14 +1,7 @@
 // ============================================================
 // Wefton Copper — Newsletter Service (Firestore)
 // ============================================================
-import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  serverTimestamp,
-} from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, FirestoreError } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 
 const NEWSLETTER_COL = 'newsletter_subscribers';
@@ -21,7 +14,9 @@ function requireDb() {
 
 /**
  * Subscribes an email to the newsletter.
- * Checks for duplicates before writing to Firestore.
+ * The doc id is the normalised email. Security rules allow creating a new
+ * subscriber but not overwriting one, so a duplicate shows up as
+ * permission-denied (subscribers are not readable from the client).
  *
  * @param email - The email address to subscribe
  * @returns An object with success status and message
@@ -30,20 +25,19 @@ export async function subscribeNewsletter(
   email: string
 ): Promise<{ success: boolean; message: string }> {
   const db = requireDb();
+  const normalised = email.trim().toLowerCase();
 
-  // Check if email already exists in newsletter_subscribers
-  const q = query(collection(db, NEWSLETTER_COL), where('email', '==', email));
-  const snap = await getDocs(q);
-
-  if (!snap.empty) {
-    return { success: false, message: 'You are already subscribed' };
+  try {
+    await setDoc(doc(db, NEWSLETTER_COL, normalised), {
+      email: normalised,
+      subscribedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    if (err instanceof FirestoreError && err.code === 'permission-denied') {
+      return { success: false, message: 'You are already subscribed' };
+    }
+    throw err;
   }
-
-  // Write new subscriber document
-  await addDoc(collection(db, NEWSLETTER_COL), {
-    email,
-    subscribedAt: serverTimestamp(),
-  });
 
   return { success: true, message: 'Successfully subscribed!' };
 }

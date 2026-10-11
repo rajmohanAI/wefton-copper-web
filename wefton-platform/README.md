@@ -56,7 +56,7 @@ In the [Firebase Console](https://console.firebase.google.com):
 1. **Authentication** → Enable: Google, Facebook, Phone, Email/Password
 2. **Firestore** → Create database in production mode
 3. **Storage** → Enable Firebase Storage
-4. Deploy security rules:
+4. Deploy security rules (run from `wefton-platform/`, the only folder with a `firebase.json`):
 
 ```bash
 npm install -g firebase-tools
@@ -233,6 +233,27 @@ npm run typecheck   # tsc --noEmit
 npm run lint        # ESLint
 npm run lint:css    # Stylelint: no unlayered CSS (see src/styles/globals.css)
 npm test            # Vitest unit + property tests
+```
+
+A second job, **Playwright Layout Checks**, builds the app with the public
+Firebase config from `apphosting.yaml` (so pages render real Firestore data) and
+runs `npm run test:e2e` against `next start`. It loads the main pages (home, men,
+women, new arrivals, bestsellers, about, vision, size guide, shipping, checkout)
+and the first product page at **375, 768, 1024 and 1440 px**, and checks that:
+
+- the header, main content and footer render;
+- the right navigation shows for the width (menu button below 1024 px);
+- the page is no wider than the viewport, measured on load and after scrolling
+  through, with `overflow-x: hidden` switched off so clipped overflow still fails.
+
+A full-page screenshot of every page at every width is attached to the
+`playwright-report` artifact for visual review.
+
+To run them locally:
+
+```bash
+npx playwright install chromium   # once
+npm run build && npm run test:e2e
 ```
 
 ---

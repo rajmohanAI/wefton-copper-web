@@ -19,7 +19,12 @@ service cloud.firestore {
     // ── Users ─────────────────────────────────────────────────
     // Authenticated owner read/write only (Requirement 37.1)
     match /users/{uid} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      // New profiles always start as a regular user, and a user can never
+      // change their own role (otherwise anyone could make themselves admin).
+      allow create: if isOwner(uid) && request.resource.data.role == 'user';
+      allow update: if isOwner(uid) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']);
     }
 
     // ── Products ──────────────────────────────────────────────
@@ -27,6 +32,15 @@ service cloud.firestore {
     match /products/{productId} {
       allow read: if true;
       allow write: if isAdmin();
+      // addReview() updates the rating summary in the same transaction that
+      // creates the review, so signed-in users may bump only these two fields.
+      allow update: if isAuthenticated() &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['ratings', 'reviewsCount']) &&
+        request.resource.data.reviewsCount == resource.data.get('reviewsCount', 0) + 1 &&
+        request.resource.data.ratings is number &&
+        request.resource.data.ratings >= 0 &&
+        request.resource.data.ratings <= 5;
     }
 
     // ── Orders ────────────────────────────────────────────────
@@ -37,6 +51,12 @@ service cloud.firestore {
       allow read: if isAuthenticated() &&
         (resource.data.userId == request.auth.uid || isAdmin());
       allow update: if isAdmin();
+      // Owner attaches the payment screenshot after placing the order.
+      allow update: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['paymentStatus', 'paymentScreenshot', 'paymentReference']) &&
+        request.resource.data.paymentStatus == 'uploaded';
     }
 
     // ── Reviews ───────────────────────────────────────────────
@@ -44,7 +64,14 @@ service cloud.firestore {
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isAuthenticated() &&
-        request.resource.data.userId == request.auth.uid;
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.rating is int &&
+        request.resource.data.rating >= 1 &&
+        request.resource.data.rating <= 5;
+      // "Helpful" button: anyone may add exactly one to the counter.
+      allow update: if request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['helpful']) &&
+        request.resource.data.helpful == resource.data.get('helpful', 0) + 1;
     }
 
     // ── Coupons ───────────────────────────────────────────────
@@ -55,14 +82,25 @@ service cloud.firestore {
     }
 
     // ── Newsletter Subscribers ────────────────────────────────
-    // Authenticated create, admin read (Requirement 37.1–37.6)
-    match /newsletter_subscribers/{docId} {
-      allow create: if isAuthenticated();
+    // Anyone may subscribe (the footer form works signed out). The doc id is
+    // the lowercased email, so a repeat signup is an update and is denied;
+    // subscribers can't be listed or read except by admins.
+    match /newsletter_subscribers/{email} {
+      allow create: if request.resource.data.keys().hasOnly(['email', 'subscribedAt']) &&
+        request.resource.data.email == email &&
+        email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$') &&
+        request.resource.data.subscribedAt == request.time;
       allow read: if isAdmin();
     }
 
     // ── Categories ────────────────────────────────────────────
     match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Search config (trending terms) ────────────────────────
+    match /search_config/{docId} {
       allow read: if true;
       allow write: if isAdmin();
     }

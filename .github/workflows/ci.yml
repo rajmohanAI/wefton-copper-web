@@ -52,8 +52,8 @@ jobs:
       - name: Test
         run: npm test
 
-  layout:
-    name: Layout checks (Playwright)
+  e2e:
+    name: Playwright Layout Checks
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -73,7 +73,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Chromium
+      - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
       # The public Firebase web config lives in apphosting.yaml; reuse it so the
@@ -84,13 +84,17 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Layout checks (375 / 768 / 1024 / 1440)
-        run: npm run test:layout
+      - name: Run layout checks
+        run: npm run test:e2e
 
-      - name: Upload report and screenshots
+      # Always upload: the report holds a full-page screenshot of every page
+      # at every width for visual review, not just failure traces.
+      - name: Upload Playwright report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: wefton-platform/playwright-report/
+          path: |
+            wefton-platform/playwright-report/
+            wefton-platform/test-results/
           retention-days: 14

@@ -1,42 +1,55 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Layout checks: every key page at the four supported widths must render
- * without horizontal overflow. Runs against a production build
- * (`npm run build` first); see e2e/layout.spec.ts.
+ * Layout checks for the storefront at the four supported widths
+ * (V2 spec Req 4: 375 / 768 / 1024 / 1440). Runs against a production
+ * build: `npm run build` first. See e2e/layout.spec.ts.
  */
-const PORT = Number(process.env.E2E_PORT ?? 3200);
+const PORT = Number(process.env.E2E_PORT ?? 3100);
+const baseURL = `http://127.0.0.1:${PORT}`;
 
-const VIEWPORTS = [
-  { name: 'mobile-375', width: 375, height: 812 },
-  { name: 'tablet-768', width: 768, height: 1024 },
-  { name: 'laptop-1024', width: 1024, height: 768 },
-  { name: 'desktop-1440', width: 1440, height: 900 },
-];
+// Set PLAYWRIGHT_CHROMIUM_PATH to use a preinstalled Chromium instead of
+// the one `npx playwright install` downloads.
+const launchOptions = process.env.PLAYWRIGHT_CHROMIUM_PATH
+  ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH }
+  : {};
+
+const desktop = devices['Desktop Chrome'];
 
 export default defineConfig({
   testDir: './e2e',
-  outputDir: './test-results',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: 0,
+  retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 2 : undefined,
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   timeout: 90_000,
+  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: `http://localhost:${PORT}`,
-    // Use a preinstalled Chromium when provided (e.g. sandboxed environments).
-    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_PATH
-      ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH }
-      : undefined,
+    baseURL,
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
   },
-  projects: VIEWPORTS.map(({ name, width, height }) => ({
-    name,
-    use: { ...devices['Desktop Chrome'], viewport: { width, height } },
-  })),
+  projects: [
+    {
+      name: 'mobile-375',
+      use: { ...desktop, viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true, launchOptions },
+    },
+    {
+      name: 'tablet-768',
+      use: { ...desktop, viewport: { width: 768, height: 1024 }, hasTouch: true, launchOptions },
+    },
+    {
+      name: 'laptop-1024',
+      use: { ...desktop, viewport: { width: 1024, height: 768 }, launchOptions },
+    },
+    {
+      name: 'desktop-1440',
+      use: { ...desktop, viewport: { width: 1440, height: 900 }, launchOptions },
+    },
+  ],
   webServer: {
     command: `npx next start -p ${PORT}`,
-    url: `http://localhost:${PORT}`,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
