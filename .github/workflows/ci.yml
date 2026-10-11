@@ -46,5 +46,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Lint CSS (no unlayered rules)
+        run: npm run lint:css
+
       - name: Test
         run: npm test
