@@ -46,8 +46,12 @@ service cloud.firestore {
     // ── Orders ────────────────────────────────────────────────
     // Authenticated create with userId == auth.uid, owner read, admin read/update all (Requirements 37.2, 37.3, 37.4)
     match /orders/{orderId} {
+      // New orders start unpaid; only the server (Admin SDK) records a
+      // verified online payment or the Razorpay order/payment ids.
       allow create: if isAuthenticated() &&
-        request.resource.data.userId == request.auth.uid;
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.paymentStatus == 'pending' &&
+        !request.resource.data.keys().hasAny(['razorpayOrderId', 'razorpayAmount', 'razorpayPaymentId']);
       allow read: if isAuthenticated() &&
         (resource.data.userId == request.auth.uid || isAdmin());
       allow update: if isAdmin();

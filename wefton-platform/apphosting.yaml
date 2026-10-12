@@ -68,3 +68,16 @@ env:
     availability:
       - BUILD
       - RUNTIME
+
+  # ── Razorpay (IDFC FIRST Bank payment gateway) ──────────────
+  # Both keys live in Cloud Secret Manager, never in this file. Create them
+  # first (README → "Online payments (Razorpay)"), then uncomment. A rollout
+  # fails if a referenced secret does not exist yet.
+  # - variable: RAZORPAY_KEY_ID
+  #   secret: RAZORPAY_KEY_ID
+  #   availability:
+  #     - RUNTIME
+  # - variable: RAZORPAY_KEY_SECRET
+  #   secret: RAZORPAY_KEY_SECRET
+  #   availability:
+  #     - RUNTIME
