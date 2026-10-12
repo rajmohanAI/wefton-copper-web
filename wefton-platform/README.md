@@ -235,13 +235,19 @@ npm run lint:css    # Stylelint: no unlayered CSS (see src/styles/globals.css)
 npm test            # Vitest unit + property tests
 ```
 
-A second job, **Playwright Layout Checks**, builds the app and runs
-`npm run test:e2e` against `next start`. It loads the main pages (home, men,
-women, new arrivals, bestsellers, about, size guide) at a desktop (1440px) and
-a mobile (Pixel 7) viewport and checks that the header, main content and footer
-render, that the page has no horizontal overflow, and that the right navigation
-shows for each width. Firestore is not configured in CI, so the checks cover the
-page shell rather than product data.
+A second job, **Playwright Layout Checks**, builds the app with the public
+Firebase config from `apphosting.yaml` (so pages render real Firestore data) and
+runs `npm run test:e2e` against `next start`. It loads the main pages (home, men,
+women, new arrivals, bestsellers, about, vision, size guide, shipping, checkout)
+and the first product page at **375, 768, 1024 and 1440 px**, and checks that:
+
+- the header, main content and footer render;
+- the right navigation shows for the width (menu button below 1024 px);
+- the page is no wider than the viewport, measured on load and after scrolling
+  through, with `overflow-x: hidden` switched off so clipped overflow still fails.
+
+A full-page screenshot of every page at every width is attached to the
+`playwright-report` artifact for visual review.
 
 To run them locally:
 
