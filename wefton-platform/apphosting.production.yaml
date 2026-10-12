@@ -1,0 +1,18 @@
+# Overrides for the App Hosting backend whose environment name is
+# "production" (Firebase console → App Hosting → backend → Settings →
+# Environment). Merged on top of apphosting.yaml.
+#
+# Razorpay (IDFC FIRST Bank payment gateway). Only the secret NAMES live
+# here; the values are in Cloud Secret Manager. Create them before this
+# file reaches the production backend, or its rollout fails:
+#   firebase apphosting:secrets:set RAZORPAY_KEY_ID
+#   firebase apphosting:secrets:set RAZORPAY_KEY_SECRET
+env:
+  - variable: RAZORPAY_KEY_ID
+    secret: RAZORPAY_KEY_ID
+    availability:
+      - RUNTIME
+  - variable: RAZORPAY_KEY_SECRET
+    secret: RAZORPAY_KEY_SECRET
+    availability:
+      - RUNTIME

@@ -277,27 +277,34 @@ stops customers from creating an order that is already paid.
 ### Entering the keys
 
 Get the **Key Id** and **Key Secret** from Razorpay Dashboard → Account &
-Settings → API Keys. Use test keys (`rzp_test_…`) on dev/qa/pp and live keys
-only on production.
+Settings → API Keys. Use live keys only on production; test keys (`rzp_test_…`)
+everywhere else.
 
 **Local development:** put them in `wefton-platform/.env.local` (see
 `.env.example`). Never commit that file. The Admin SDK also needs
 `GOOGLE_APPLICATION_CREDENTIALS` pointing at a service-account key file.
 
-**Firebase App Hosting:** store both as secrets, then uncomment the Razorpay
-block at the bottom of `apphosting.yaml`:
+**Firebase App Hosting (production only):** the keys are never committed.
+`apphosting.production.yaml` lists only the secret names, and App Hosting
+applies it only to the backend whose environment name is `production`
+(Firebase console → App Hosting → backend → Settings → Environment). Dev, qa
+and pp get no keys, so they offer the UPI QR only.
+
+Before this file first reaches `main`, create the secrets (each command
+prompts for the value, so it never lands in a file or shell history) and
+let the production backend read them:
 
 ```bash
 cd wefton-platform
 firebase apphosting:secrets:set RAZORPAY_KEY_ID
 firebase apphosting:secrets:set RAZORPAY_KEY_SECRET
-firebase apphosting:secrets:grantaccess RAZORPAY_KEY_ID,RAZORPAY_KEY_SECRET --backend wefton-copper-web
+firebase apphosting:secrets:grantaccess RAZORPAY_KEY_ID,RAZORPAY_KEY_SECRET --backend <production-backend-id>
 ```
 
-Each command prompts for the value, so the secret never lands in the repo or
-shell history. To use test keys on one environment and live keys on another,
-create differently named secrets and reference them from an
-`apphosting.<environment>.yaml` override.
+To rotate a key later, run `secrets:set` again and roll out the backend; no
+code change is needed. To test payments on dev, create secrets with
+Razorpay test keys (e.g. `RAZORPAY_TEST_KEY_ID`) and reference them from an
+`apphosting.<dev-environment>.yaml` the same way.
 
 ### Before going live
 
