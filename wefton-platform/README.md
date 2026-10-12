@@ -34,7 +34,7 @@ npm install
 Copy the example env file and fill in your Firebase project credentials:
 
 ```bash
-cp .env.local.example .env.local
+cp .env.example .env.local
 ```
 
 Edit `.env.local`:
@@ -249,6 +249,70 @@ To run them locally:
 npx playwright install chromium   # once
 npm run build && npm run test:e2e
 ```
+
+---
+
+## Online payments (Razorpay)
+
+Checkout offers **Pay online** through Razorpay Standard Checkout, the payment
+gateway provided by IDFC FIRST Bank. The UPI QR + screenshot flow stays as the
+fallback. Until both keys below are set, the Pay online option is hidden and
+checkout works exactly as before.
+
+How it works ([Razorpay guide](https://razorpay.com/docs/payments/payment-gateway/web-integration/standard/build-integration/)):
+
+1. The browser creates the Firestore order as before, then calls
+   `POST /api/payments/razorpay/order` with the user's Firebase ID token.
+   The server re-prices the order from the catalog and coupon, and creates a
+   Razorpay order for that amount (in paise).
+2. The browser opens Razorpay Checkout (`checkout.js`) with that order id and
+   the public key id returned by the server.
+3. On success, `POST /api/payments/razorpay/verify` checks the HMAC-SHA256
+   signature with the key secret and marks the order `paymentStatus: verified`,
+   `orderStatus: confirmed`, `paymentMethod: razorpay`.
+
+Only the server writes those fields (Firebase Admin SDK); `firestore.rules`
+stops customers from creating an order that is already paid.
+
+### Entering the keys
+
+Get the **Key Id** and **Key Secret** from Razorpay Dashboard → Account &
+Settings → API Keys. Use live keys only on production; test keys (`rzp_test_…`)
+everywhere else.
+
+**Local development:** put them in `wefton-platform/.env.local` (see
+`.env.example`). Never commit that file. The Admin SDK also needs
+`GOOGLE_APPLICATION_CREDENTIALS` pointing at a service-account key file.
+
+**Firebase App Hosting (production only):** the keys are never committed.
+`apphosting.production.yaml` lists only the secret names, and App Hosting
+applies it only to the backend whose environment name is `production`
+(Firebase console → App Hosting → backend → Settings → Environment). Dev, qa
+and pp get no keys, so they offer the UPI QR only.
+
+Before this file first reaches `main`, create the secrets (each command
+prompts for the value, so it never lands in a file or shell history) and
+let the production backend read them:
+
+```bash
+cd wefton-platform
+firebase apphosting:secrets:set RAZORPAY_KEY_ID
+firebase apphosting:secrets:set RAZORPAY_KEY_SECRET
+firebase apphosting:secrets:grantaccess RAZORPAY_KEY_ID,RAZORPAY_KEY_SECRET --backend <production-backend-id>
+```
+
+To rotate a key later, run `secrets:set` again and roll out the backend; no
+code change is needed. To test payments on dev, create secrets with
+Razorpay test keys (e.g. `RAZORPAY_TEST_KEY_ID`) and reference them from an
+`apphosting.<dev-environment>.yaml` the same way.
+
+### Before going live
+
+- Deploy the updated Firestore rules: `firebase deploy --only firestore:rules`.
+- Razorpay Dashboard → Account & Settings → Payment capture: set **automatic**
+  capture, otherwise authorized payments are refunded after a few days.
+- Do a test-mode payment on dev with Razorpay's test cards/UPI before adding
+  live keys.
 
 ---
 
