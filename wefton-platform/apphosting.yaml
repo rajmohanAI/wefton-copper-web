@@ -68,3 +68,7 @@ env:
     availability:
       - BUILD
       - RUNTIME
+
+  # Razorpay keys are NOT set here: apphosting.production.yaml adds them for
+  # the production backend only, from Cloud Secret Manager. Other backends
+  # have no keys, so checkout offers the UPI QR only.

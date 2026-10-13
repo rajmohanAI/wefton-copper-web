@@ -5,6 +5,13 @@
 // swappable so a future paid AI provider can replace the free on-device one
 // without touching the UI or the privacy model.
 
+/**
+ * Master switch for the Try-On feature. While false, the product page hides
+ * the Try On button and modal, and /api/tryon/garment returns 404.
+ * Set to true to bring the feature back.
+ */
+export const TRYON_ENABLED = false;
+
 export type TryOnProviderId = 'on-device';
 
 /** Which Try-On provider is active. V1 = free, on-device composite. */
