@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { TRYON_ENABLED } from '@/config/tryon';
 
 // Runs server-side so the browser fetches the garment image same-origin,
 // avoiding cross-origin/CORS and canvas-tainting problems when compositing
@@ -21,6 +22,10 @@ const ALLOWED_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/g
  * Try-On canvas can use it without CORS restrictions.
  */
 export async function GET(request: NextRequest) {
+  if (!TRYON_ENABLED) {
+    return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  }
+
   const raw = request.nextUrl.searchParams.get('url');
   if (!raw) {
     return NextResponse.json({ error: 'Missing url parameter.' }, { status: 400 });

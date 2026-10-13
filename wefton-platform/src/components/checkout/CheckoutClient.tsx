@@ -9,7 +9,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { lookupPincode } from '@/lib/pincode';
-import { MapPin, CreditCard, CheckCircle, Check, Upload, AlertCircle } from 'lucide-react';
+import { MapPin, CreditCard, CheckCircle, Check, Upload, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useAuth } from '@/hooks/useAuth';
 import { getFirebaseDb } from '@/lib/firebase';
@@ -17,6 +17,13 @@ import { addressSchema, fileUploadSchema, type AddressFormData } from '@/lib/sch
 import { createOrder, uploadPaymentScreenshot } from '@/services/orderService';
 import { formatPrice } from '@/lib/utils';
 import { trackPurchase } from '@/lib/analytics';
+import { loadRazorpayCheckout, openRazorpayCheckout } from '@/lib/razorpay/checkout';
+import {
+  isOnlinePaymentEnabled,
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+} from '@/services/onlinePaymentService';
+import { BRAND } from '@/config/brand';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import type { Address } from '@/types';
@@ -31,7 +38,7 @@ const STEPS = [
 
 export default function CheckoutClient() {
   const router = useRouter();
-  const { items, getSubtotal, getShipping, getTax, getTotal, discount, clearCart } =
+  const { items, getSubtotal, getShipping, getTax, getTotal, discount, couponCode, clearCart } =
     useCartStore();
   const { user } = useAuth();
   const [step, setStep] = useState<Step>('address');
@@ -54,6 +61,25 @@ export default function CheckoutClient() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const orderCreationRef = useRef(false);
+
+  // Online payment (Razorpay Standard Checkout) — offered only once the
+  // server has keys configured; the UPI QR flow stays as the fallback.
+  const [onlineEnabled, setOnlineEnabled] = useState(false);
+  const [payingOnline, setPayingOnline] = useState(false);
+  const [paidOnline, setPaidOnline] = useState(false);
+  const [onlineError, setOnlineError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    isOnlinePaymentEnabled().then((enabled) => {
+      if (cancelled) return;
+      setOnlineEnabled(enabled);
+      if (enabled) void loadRazorpayCheckout();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Saved addresses from user profile
   const savedAddresses: Address[] = user?.addresses ?? [];
@@ -97,7 +123,8 @@ export default function CheckoutClient() {
         user?.uid || 'guest',
         items,
         confirmedAddress,
-        discount
+        discount,
+        couponCode
       );
       setOrderId(order.orderId);
       setOrderTotal(order.total);
@@ -149,6 +176,82 @@ export default function CheckoutClient() {
     setSelectedFile(file);
   };
 
+  // Record the purchase and advance to Step 3
+  const completeCheckout = () => {
+    setConfirmedItems([...items]);
+
+    // GA4: Track purchase event after successful checkout
+    trackPurchase({
+      transaction_id: orderId,
+      value: orderTotal,
+      shipping: getShipping(),
+      items: items.map((item) => ({
+        item_id: item.productId,
+        item_name: item.title,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+    });
+
+    clearCart();
+    setStep('confirmation');
+  };
+
+  // Pay online: the server creates the Razorpay order, Checkout collects the
+  // payment, and the server verifies the signature before we confirm.
+  const handlePayOnline = async () => {
+    if (!orderId || payingOnline) return;
+    setPayingOnline(true);
+    setOnlineError('');
+    try {
+      const loaded = await loadRazorpayCheckout();
+      if (!loaded) throw new Error('Could not load the payment window. Check your connection and try again.');
+      const rzpOrder = await createRazorpayOrder(orderId);
+
+      openRazorpayCheckout(
+        {
+          key: rzpOrder.keyId,
+          amount: rzpOrder.amount,
+          currency: rzpOrder.currency,
+          name: BRAND.name,
+          description: `Order ${orderId}`,
+          image: '/favicon.png',
+          order_id: rzpOrder.razorpayOrderId,
+          prefill: {
+            name: confirmedAddress?.name || user?.name || '',
+            email: user?.email || '',
+            contact: confirmedAddress?.phone || user?.phone || '',
+          },
+          notes: { orderId },
+          theme: { color: '#b85e26' },
+          handler: async (response) => {
+            setPayingOnline(true);
+            try {
+              await verifyRazorpayPayment(orderId, response);
+              setPaidOnline(true);
+              completeCheckout();
+            } catch (e: unknown) {
+              setOnlineError(
+                `${e instanceof Error ? e.message : 'We could not confirm your payment.'} ` +
+                  `If money was debited, contact us with payment ID ${response.razorpay_payment_id}.`
+              );
+            } finally {
+              setPayingOnline(false);
+            }
+          },
+          modal: { ondismiss: () => setPayingOnline(false) },
+        },
+        (failure) => {
+          setOnlineError(failure.error?.description || 'Payment failed. Please try again.');
+          setPayingOnline(false);
+        }
+      );
+    } catch (e: unknown) {
+      setOnlineError(e instanceof Error ? e.message : 'Could not start online payment');
+      setPayingOnline(false);
+    }
+  };
+
   // Handle screenshot upload and advance to Step 3
   const handleUploadScreenshot = async () => {
     if (!selectedFile || !paymentReference.trim() || !orderId || !user?.uid) return;
@@ -156,23 +259,7 @@ export default function CheckoutClient() {
     setError('');
     try {
       await uploadPaymentScreenshot(orderId, user.uid, selectedFile, paymentReference.trim());
-      setConfirmedItems([...items]);
-
-      // GA4: Track purchase event after successful checkout
-      trackPurchase({
-        transaction_id: orderId,
-        value: orderTotal,
-        shipping: getShipping(),
-        items: items.map((item) => ({
-          item_id: item.productId,
-          item_name: item.title,
-          price: item.price,
-          quantity: item.quantity,
-        })),
-      });
-
-      clearCart();
-      setStep('confirmation');
+      completeCheckout();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Upload failed. Please try again.');
     } finally {
@@ -546,6 +633,41 @@ export default function CheckoutClient() {
                     </div>
                   ) : orderCreated ? (
                     <div className="flex flex-col items-center gap-6">
+                      {onlineEnabled && (
+                        <div className="w-full space-y-4">
+                          <div className="w-full bg-white/5 border border-white/10 rounded-lg p-5 text-center space-y-3">
+                            <p className="text-sm font-medium text-[var(--text-light)] flex items-center justify-center gap-2">
+                              <ShieldCheck size={16} className="text-[var(--copper-light)]" />
+                              Pay online
+                            </p>
+                            <p className="text-xs text-[var(--text-muted)]">
+                              Cards, UPI, netbanking and wallets, processed securely by Razorpay
+                            </p>
+                            <Button
+                              variant="copper"
+                              size="lg"
+                              fullWidth
+                              onClick={handlePayOnline}
+                              loading={payingOnline}
+                              disabled={payingOnline}
+                            >
+                              Pay {formatPrice(orderTotal)} securely
+                            </Button>
+                            {onlineError && (
+                              <div className="p-3 rounded bg-red-500/10 border border-red-500/20 text-xs text-red-400 flex items-center gap-2 text-left">
+                                <AlertCircle size={14} className="shrink-0" />
+                                {onlineError}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+                            <span className="h-px flex-1 bg-white/10" />
+                            or pay by UPI QR
+                            <span className="h-px flex-1 bg-white/10" />
+                          </div>
+                        </div>
+                      )}
+
                       {/* QR Code Image */}
                       <div className="w-52 h-52 bg-white rounded-xl flex items-center justify-center overflow-hidden p-2">
                         <Image
@@ -752,7 +874,9 @@ export default function CheckoutClient() {
                     transition={{ delay: 0.5 }}
                     className="text-sm text-[var(--text-muted)]"
                   >
-                    Thank you for your order. We&apos;ll verify your payment and confirm shortly.
+                    {paidOnline
+                      ? 'Thank you for your order. Your payment is confirmed.'
+                      : <>Thank you for your order. We&apos;ll verify your payment and confirm shortly.</>}
                   </motion.p>
                 </div>
 
