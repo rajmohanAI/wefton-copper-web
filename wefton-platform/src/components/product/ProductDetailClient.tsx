@@ -23,6 +23,7 @@ import {
 const TryOnModal = dynamic(() => import('@/components/product/tryon/TryOnModal'), {
   ssr: false,
 });
+import { TRYON_ENABLED } from '@/config/tryon';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { formatPrice, getDiscountPercent } from '@/lib/utils';
@@ -539,15 +540,17 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
             </div>
 
             {/* Try On */}
-            <Button
-              variant="outline"
-              size="lg"
-              fullWidth
-              onClick={handleTryOn}
-              disabled={currentInventory === 0}
-            >
-              <Sparkles size={16} /> Try On
-            </Button>
+            {TRYON_ENABLED && (
+              <Button
+                variant="outline"
+                size="lg"
+                fullWidth
+                onClick={handleTryOn}
+                disabled={currentInventory === 0}
+              >
+                <Sparkles size={16} /> Try On
+              </Button>
+            )}
 
             {/* Delivery Info */}
             <div className="space-y-3 pt-2 border-t border-[var(--border-subtle)]">
@@ -597,7 +600,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
       </div>
 
       {/* Virtual Try-On (lazy) */}
-      {tryOnOpen && (
+      {TRYON_ENABLED && tryOnOpen && (
         <TryOnModal
           open={tryOnOpen}
           onOpenChange={setTryOnOpen}
