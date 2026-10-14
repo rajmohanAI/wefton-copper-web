@@ -107,6 +107,11 @@ export interface Order {
   paymentMethod: 'qr' | 'razorpay' | 'stripe' | 'cod';
   paymentReference?: string;
   paymentScreenshot?: string;
+  couponCode?: string;
+  /** Set server-side when a Razorpay order is created for this order. */
+  razorpayOrderId?: string;
+  /** Set server-side once the Razorpay payment signature is verified. */
+  razorpayPaymentId?: string;
   trackingNumber?: string;
   createdAt: string;
   updatedAt?: string;
@@ -120,6 +125,7 @@ export interface OrderItem {
   quantity: number;
   size?: string;
   color?: string;
+  variantId?: string;
 }
 
 export interface User {

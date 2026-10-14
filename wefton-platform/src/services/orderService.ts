@@ -17,7 +17,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirebaseDb, getFirebaseStorage } from '@/lib/firebase';
 import type { Order, CartItem, Address } from '@/types';
 import { generateOrderId } from '@/lib/utils';
-import { SHIPPING_COST, FREE_SHIPPING_THRESHOLD, TAX_RATE } from '@/config/brand';
+import { computeOrderTotals } from '@/lib/orderPricing';
 
 const ORDERS_COL = 'orders';
 
@@ -31,14 +31,11 @@ export async function createOrder(
   userId: string,
   items: CartItem[],
   shippingAddress: Address,
-  discount = 0
+  discount = 0,
+  couponCode = ''
 ): Promise<Order> {
   const db = requireDb();
-  const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
-  const discountAmount = (subtotal * discount) / 100;
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
-  const taxes = Math.round((subtotal - discountAmount) * TAX_RATE);
-  const total = subtotal - discountAmount + shipping + taxes;
+  const { subtotal, shipping, taxes, total } = computeOrderTotals(items, discount);
 
   const orderData = {
     orderId: generateOrderId(),
@@ -51,7 +48,11 @@ export async function createOrder(
       quantity: i.quantity,
       size: i.size || '',
       color: i.color || '',
+      // Lets the payment server re-price the line from the catalog.
+      variantId: i.variantId || '',
     })),
+    // Kept so the payment server can re-check the discount.
+    couponCode: discount > 0 ? couponCode : '',
     subtotal,
     shipping,
     taxes,
