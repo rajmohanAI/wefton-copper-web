@@ -21,6 +21,17 @@ export interface RazorpayFailureResponse {
   };
 }
 
+/** Methods the payment step offers; Checkout opens on the one picked. */
+export type PaymentMethodChoice = 'upi' | 'card' | 'netbanking';
+
+interface RazorpayDisplayConfig {
+  display: {
+    blocks: Record<string, { name: string; instruments: { method: string }[] }>;
+    sequence: string[];
+    preferences: { show_default_blocks: boolean };
+  };
+}
+
 export interface RazorpayCheckoutOptions {
   key: string;
   amount: number;
@@ -33,6 +44,7 @@ export interface RazorpayCheckoutOptions {
   prefill?: { name?: string; email?: string; contact?: string };
   notes?: Record<string, string>;
   theme?: { color?: string };
+  config?: RazorpayDisplayConfig;
   modal?: { ondismiss?: () => void };
 }
 
@@ -45,6 +57,30 @@ declare global {
   interface Window {
     Razorpay?: new (options: RazorpayCheckoutOptions) => RazorpayInstance;
   }
+}
+
+const METHOD_BLOCK_NAMES: Record<PaymentMethodChoice, string> = {
+  upi: 'Pay using UPI',
+  card: 'Pay using credit or debit card',
+  netbanking: 'Pay using netbanking',
+};
+
+/**
+ * Checkout display config that lists the chosen method first. The other
+ * methods enabled on the account stay available below it, so the customer
+ * can still switch inside Checkout.
+ * Docs: https://razorpay.com/docs/payments/payment-gateway/web-integration/standard/configure-payment-methods/
+ */
+export function displayConfigFor(method: PaymentMethodChoice): RazorpayDisplayConfig {
+  return {
+    display: {
+      blocks: {
+        chosen: { name: METHOD_BLOCK_NAMES[method], instruments: [{ method }] },
+      },
+      sequence: ['block.chosen'],
+      preferences: { show_default_blocks: true },
+    },
+  };
 }
 
 let scriptPromise: Promise<boolean> | null = null;

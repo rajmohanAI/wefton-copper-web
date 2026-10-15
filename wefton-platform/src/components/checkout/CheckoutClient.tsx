@@ -9,7 +9,17 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { lookupPincode } from '@/lib/pincode';
-import { MapPin, CreditCard, CheckCircle, Check, Upload, AlertCircle, ShieldCheck } from 'lucide-react';
+import {
+  MapPin,
+  CreditCard,
+  CheckCircle,
+  Check,
+  Upload,
+  AlertCircle,
+  ShieldCheck,
+  Smartphone,
+  Landmark,
+} from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useAuth } from '@/hooks/useAuth';
 import { getFirebaseDb } from '@/lib/firebase';
@@ -17,7 +27,12 @@ import { addressSchema, fileUploadSchema, type AddressFormData } from '@/lib/sch
 import { createOrder, uploadPaymentScreenshot } from '@/services/orderService';
 import { formatPrice } from '@/lib/utils';
 import { trackPurchase } from '@/lib/analytics';
-import { loadRazorpayCheckout, openRazorpayCheckout } from '@/lib/razorpay/checkout';
+import {
+  displayConfigFor,
+  loadRazorpayCheckout,
+  openRazorpayCheckout,
+  type PaymentMethodChoice,
+} from '@/lib/razorpay/checkout';
 import {
   isOnlinePaymentEnabled,
   createRazorpayOrder,
@@ -29,6 +44,17 @@ import Input from '@/components/ui/Input';
 import type { Address } from '@/types';
 
 type Step = 'address' | 'payment' | 'confirmation';
+
+const PAYMENT_METHODS: {
+  id: PaymentMethodChoice;
+  label: string;
+  hint: string;
+  icon: typeof CreditCard;
+}[] = [
+  { id: 'upi', label: 'UPI', hint: 'Google Pay, PhonePe, Paytm or any UPI app', icon: Smartphone },
+  { id: 'card', label: 'Credit / Debit card', hint: 'Visa, Mastercard, RuPay', icon: CreditCard },
+  { id: 'netbanking', label: 'Netbanking', hint: 'All major Indian banks', icon: Landmark },
+];
 
 const STEPS = [
   { id: 'address' as const, label: 'Address', icon: MapPin },
@@ -62,9 +88,12 @@ export default function CheckoutClient() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const orderCreationRef = useRef(false);
 
-  // Online payment (Razorpay Standard Checkout) — offered only once the
-  // server has keys configured; the UPI QR flow stays as the fallback.
-  const [onlineEnabled, setOnlineEnabled] = useState(false);
+  // Online payment through the IDFC FIRST Bank gateway (Razorpay Standard
+  // Checkout). When the server has keys it replaces the static UPI QR; the
+  // QR flow is only shown where no keys are configured.
+  const [onlineStatus, setOnlineStatus] = useState<'checking' | 'enabled' | 'disabled'>('checking');
+  const onlineEnabled = onlineStatus === 'enabled';
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodChoice>('upi');
   const [payingOnline, setPayingOnline] = useState(false);
   const [paidOnline, setPaidOnline] = useState(false);
   const [onlineError, setOnlineError] = useState('');
@@ -73,7 +102,7 @@ export default function CheckoutClient() {
     let cancelled = false;
     isOnlinePaymentEnabled().then((enabled) => {
       if (cancelled) return;
-      setOnlineEnabled(enabled);
+      setOnlineStatus(enabled ? 'enabled' : 'disabled');
       if (enabled) void loadRazorpayCheckout();
     });
     return () => {
@@ -224,6 +253,7 @@ export default function CheckoutClient() {
           },
           notes: { orderId },
           theme: { color: '#b85e26' },
+          config: displayConfigFor(paymentMethod),
           handler: async (response) => {
             setPayingOnline(true);
             try {
@@ -616,58 +646,86 @@ export default function CheckoutClient() {
                   )}
                 </div>
 
-                {/* QR Payment */}
+                {/* Payment */}
                 <div className="glass-card p-8">
                   <h2 className="text-lg font-light text-[var(--text-light)] mb-2 flex items-center gap-2">
                     <CreditCard size={18} className="text-[var(--copper-light)]" />
-                    UPI Payment
+                    {onlineStatus === 'disabled' ? 'UPI Payment' : 'Payment'}
                   </h2>
                   <p className="text-xs text-[var(--text-muted)] mb-6">
-                    Scan the QR code below to complete your payment via UPI
+                    {onlineStatus === 'disabled'
+                      ? 'Scan the QR code below to complete your payment via UPI'
+                      : 'Choose how you would like to pay'}
                   </p>
 
-                  {orderCreating ? (
+                  {orderCreating || (orderCreated && onlineStatus === 'checking') ? (
                     <div className="flex flex-col items-center gap-4 py-8">
                       <span className="h-8 w-8 rounded-full border-2 border-[var(--copper-light)] border-t-transparent animate-spin" />
-                      <p className="text-sm text-[var(--text-muted)]">Creating your order…</p>
+                      <p className="text-sm text-[var(--text-muted)]">
+                        {orderCreating ? 'Creating your order…' : 'Loading payment options…'}
+                      </p>
                     </div>
-                  ) : orderCreated ? (
-                    <div className="flex flex-col items-center gap-6">
-                      {onlineEnabled && (
-                        <div className="w-full space-y-4">
-                          <div className="w-full bg-white/5 border border-white/10 rounded-lg p-5 text-center space-y-3">
-                            <p className="text-sm font-medium text-[var(--text-light)] flex items-center justify-center gap-2">
-                              <ShieldCheck size={16} className="text-[var(--copper-light)]" />
-                              Pay online
-                            </p>
-                            <p className="text-xs text-[var(--text-muted)]">
-                              Cards, UPI, netbanking and wallets, processed securely by Razorpay
-                            </p>
-                            <Button
-                              variant="copper"
-                              size="lg"
-                              fullWidth
-                              onClick={handlePayOnline}
-                              loading={payingOnline}
+                  ) : orderCreated && onlineEnabled ? (
+                    <div className="space-y-5">
+                      <div role="radiogroup" aria-label="Payment method" className="space-y-3">
+                        {PAYMENT_METHODS.map(({ id, label, hint, icon: Icon }) => {
+                          const selected = paymentMethod === id;
+                          return (
+                            <button
+                              key={id}
+                              type="button"
+                              role="radio"
+                              aria-checked={selected}
+                              onClick={() => setPaymentMethod(id)}
                               disabled={payingOnline}
+                              className={`w-full flex items-center gap-4 p-4 rounded-lg border text-left transition-colors ${
+                                selected
+                                  ? 'border-[var(--copper-main)] bg-[var(--copper-main)]/10'
+                                  : 'border-white/10 bg-white/5 hover:border-white/20'
+                              }`}
                             >
-                              Pay {formatPrice(orderTotal)} securely
-                            </Button>
-                            {onlineError && (
-                              <div className="p-3 rounded bg-red-500/10 border border-red-500/20 text-xs text-red-400 flex items-center gap-2 text-left">
-                                <AlertCircle size={14} className="shrink-0" />
-                                {onlineError}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
-                            <span className="h-px flex-1 bg-white/10" />
-                            or pay by UPI QR
-                            <span className="h-px flex-1 bg-white/10" />
-                          </div>
+                              <span
+                                className={`h-4 w-4 shrink-0 rounded-full border-2 flex items-center justify-center ${
+                                  selected ? 'border-[var(--copper-light)]' : 'border-[var(--text-muted)]'
+                                }`}
+                              >
+                                {selected && <span className="h-2 w-2 rounded-full bg-[var(--copper-light)]" />}
+                              </span>
+                              <Icon size={20} className="shrink-0 text-[var(--copper-light)]" />
+                              <span className="min-w-0">
+                                <span className="block text-sm font-medium text-[var(--text-light)]">{label}</span>
+                                <span className="block text-xs text-[var(--text-muted)]">{hint}</span>
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <Button
+                        variant="copper"
+                        size="lg"
+                        fullWidth
+                        onClick={handlePayOnline}
+                        loading={payingOnline}
+                        disabled={payingOnline}
+                      >
+                        Pay {formatPrice(orderTotal)}
+                      </Button>
+
+                      {onlineError && (
+                        <div className="p-3 rounded bg-red-500/10 border border-red-500/20 text-xs text-red-400 flex items-center gap-2 text-left">
+                          <AlertCircle size={14} className="shrink-0" />
+                          {onlineError}
                         </div>
                       )}
 
+                      <p className="text-[11px] text-[var(--text-muted)] flex items-center justify-center gap-1.5 text-center">
+                        <ShieldCheck size={13} className="shrink-0 text-[var(--copper-light)]" />
+                        Secured by IDFC FIRST Bank payment gateway · Order {orderId}
+                      </p>
+                    </div>
+                  ) : orderCreated ? (
+                    <div className="flex flex-col items-center gap-6">
                       {/* QR Code Image */}
                       <div className="w-52 h-52 bg-white rounded-xl flex items-center justify-center overflow-hidden p-2">
                         <Image
