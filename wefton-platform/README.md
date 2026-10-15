@@ -254,10 +254,12 @@ npm run build && npm run test:e2e
 
 ## Online payments (Razorpay)
 
-Checkout offers **Pay online** through Razorpay Standard Checkout, the payment
-gateway provided by IDFC FIRST Bank. The UPI QR + screenshot flow stays as the
-fallback. Until both keys below are set, the Pay online option is hidden and
-checkout works exactly as before.
+Checkout takes payment through Razorpay Standard Checkout, the payment gateway
+provided by IDFC FIRST Bank. The payment step lists **UPI**, **Credit / Debit
+card** and **Netbanking**; Checkout opens on the method the customer picked
+(via `config.display`) with the account's other methods below it. On a backend
+with both keys below, this replaces the static UPI QR. A backend without keys
+falls back to the UPI QR + screenshot flow.
 
 How it works ([Razorpay guide](https://razorpay.com/docs/payments/payment-gateway/web-integration/standard/build-integration/)):
 
@@ -288,7 +290,7 @@ everywhere else.
 `apphosting.production.yaml` lists only the secret names, and App Hosting
 applies it only to the backend whose environment name is `production`
 (Firebase console → App Hosting → backend → Settings → Environment). Dev, qa
-and pp get no keys, so they offer the UPI QR only.
+and pp get no keys, so they fall back to the UPI QR.
 
 Before this file first reaches `main`, create the secrets (each command
 prompts for the value, so it never lands in a file or shell history) and
