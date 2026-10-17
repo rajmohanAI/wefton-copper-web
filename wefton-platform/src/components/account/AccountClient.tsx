@@ -29,7 +29,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useAuth } from '@/hooks/useAuth';
 import { getUserOrders } from '@/services/orderService';
 import { setupRecaptcha, sendOTP, verifyOTP } from '@/services/authService';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, toDate } from '@/lib/utils';
 import { addressSchema, type AddressFormData } from '@/lib/schemas';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -44,6 +44,7 @@ const ORDER_STATUS_VARIANT: Record<string, 'copper' | 'success' | 'warning' | 'e
   processing: 'warning',
   shipped: 'purple',
   delivered: 'success',
+  closed: 'success',
   cancelled: 'error',
 };
 
@@ -114,7 +115,7 @@ export default function AccountClient() {
         .then((fetchedOrders) => {
           // Sort by createdAt descending
           const sorted = [...fetchedOrders].sort(
-            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            (a, b) => (toDate(b.createdAt)?.getTime() ?? 0) - (toDate(a.createdAt)?.getTime() ?? 0)
           );
           setOrders(sorted);
         })
@@ -769,7 +770,7 @@ export default function AccountClient() {
                                 <div>
                                   <p className="text-xs text-[var(--text-muted)]">Date</p>
                                   <p className="text-sm text-[var(--text-light)]">
-                                    {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                                    {(toDate(order.createdAt) ?? new Date()).toLocaleDateString('en-IN', {
                                       day: 'numeric',
                                       month: 'short',
                                       year: 'numeric',
@@ -781,8 +782,8 @@ export default function AccountClient() {
                                 <Badge variant={ORDER_STATUS_VARIANT[order.orderStatus] || 'neutral'}>
                                   {order.orderStatus}
                                 </Badge>
-                                <Badge variant={order.paymentStatus === 'verified' ? 'success' : order.paymentStatus === 'failed' || order.paymentStatus === 'refunded' ? 'error' : 'warning'}>
-                                  {order.paymentStatus}
+                                <Badge variant={order.paymentStatus === 'verified' ? 'success' : order.paymentStatus === 'failed' || order.paymentStatus === 'refunded' || order.paymentStatus === 'refund_due' ? 'error' : 'warning'}>
+                                  {order.paymentStatus.replace('_', ' ')}
                                 </Badge>
                               </div>
                             </div>
