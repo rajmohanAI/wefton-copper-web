@@ -16,3 +16,9 @@ env:
     secret: RAZORPAY_KEY_SECRET
     availability:
       - RUNTIME
+  # Order emails (Resend). Created with:
+  #   firebase apphosting:secrets:set RESEND_API_KEY
+  - variable: RESEND_API_KEY
+    secret: RESEND_API_KEY
+    availability:
+      - RUNTIME
