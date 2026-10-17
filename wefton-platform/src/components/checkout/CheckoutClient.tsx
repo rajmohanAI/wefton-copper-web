@@ -419,16 +419,18 @@ export default function CheckoutClient() {
                     <h3 className="text-sm font-medium tracking-wider uppercase text-[var(--text-light)] mb-4">
                       Saved Addresses
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div role="radiogroup" aria-label="Saved addresses" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {savedAddresses.map((addr) => (
                         <button
                           key={addr.addressId}
                           type="button"
+                          role="radio"
+                          aria-checked={selectedAddressId === addr.addressId}
                           onClick={() => handleSelectSavedAddress(addr)}
                           className={`text-left p-4 rounded-lg border transition-all duration-200 ${
                             selectedAddressId === addr.addressId
-                              ? 'border-[var(--copper-main)] bg-[var(--copper-main)]/5'
-                              : 'border-white/10 bg-white/5 hover:border-white/20'
+                              ? 'border-[var(--copper-main)] ring-1 ring-[var(--copper-main)] bg-[var(--copper-main)]/10'
+                              : 'border-[var(--text-muted)]/30 bg-[var(--bg-card)] hover:border-[var(--copper-main)]/60'
                           }`}
                         >
                           <div className="flex items-start justify-between">
@@ -444,11 +446,18 @@ export default function CheckoutClient() {
                                 {addr.line2 ? `, ${addr.line2}` : ''}, {addr.city},{' '}
                                 {addr.state} — {addr.pincode}
                               </p>
+                              {selectedAddressId === addr.addressId && (
+                                <p className="text-xs font-medium text-[var(--copper-light)] mt-2">
+                                  Delivering to this address
+                                </p>
+                              )}
                             </div>
-                            {selectedAddressId === addr.addressId && (
+                            {selectedAddressId === addr.addressId ? (
                               <div className="w-5 h-5 rounded-full bg-[var(--copper-main)] flex items-center justify-center flex-shrink-0 ml-2">
                                 <Check size={12} className="text-white" />
                               </div>
+                            ) : (
+                              <div className="w-5 h-5 rounded-full border-2 border-[var(--text-muted)] flex-shrink-0 ml-2" />
                             )}
                           </div>
                         </button>
@@ -555,7 +564,7 @@ export default function CheckoutClient() {
                             onChange={(e) => setSaveAddress(e.target.checked)}
                             className="sr-only peer"
                           />
-                          <div className="w-5 h-5 rounded border border-white/20 bg-white/5 peer-checked:bg-[var(--copper-main)] peer-checked:border-[var(--copper-main)] transition-all flex items-center justify-center">
+                          <div className="w-5 h-5 rounded border-2 border-[var(--text-muted)] bg-[var(--bg-card)] peer-checked:bg-[var(--copper-main)] peer-checked:border-[var(--copper-main)] peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--copper-main)]/50 transition-all flex items-center justify-center">
                             {saveAddress && (
                               <Check size={12} className="text-white" />
                             )}
@@ -577,7 +586,7 @@ export default function CheckoutClient() {
                           className="sr-only peer"
                           aria-required="true"
                         />
-                        <div className="w-5 h-5 rounded border border-white/20 bg-white/5 peer-checked:bg-[var(--copper-main)] peer-checked:border-[var(--copper-main)] transition-all flex items-center justify-center">
+                        <div className="w-5 h-5 rounded border-2 border-[var(--text-muted)] bg-[var(--bg-card)] peer-checked:bg-[var(--copper-main)] peer-checked:border-[var(--copper-main)] peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--copper-main)]/50 transition-all flex items-center justify-center">
                           {tosAccepted && (
                             <Check size={12} className="text-white" />
                           )}
@@ -680,8 +689,8 @@ export default function CheckoutClient() {
                               disabled={payingOnline}
                               className={`w-full flex items-center gap-4 p-4 rounded-lg border text-left transition-colors ${
                                 selected
-                                  ? 'border-[var(--copper-main)] bg-[var(--copper-main)]/10'
-                                  : 'border-white/10 bg-white/5 hover:border-white/20'
+                                  ? 'border-[var(--copper-main)] ring-1 ring-[var(--copper-main)] bg-[var(--copper-main)]/10'
+                                  : 'border-[var(--text-muted)]/30 bg-[var(--bg-card)] hover:border-[var(--copper-main)]/60'
                               }`}
                             >
                               <span
