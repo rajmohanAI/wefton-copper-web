@@ -12,10 +12,11 @@ import {
   where,
   orderBy,
   serverTimestamp,
+  arrayUnion,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getFirebaseDb, getFirebaseStorage } from '@/lib/firebase';
-import type { Order, CartItem, Address } from '@/types';
+import { getFirebaseAuth, getFirebaseDb, getFirebaseStorage } from '@/lib/firebase';
+import type { Order, CartItem, Address, OrderStatusEvent } from '@/types';
 import { generateOrderId } from '@/lib/utils';
 import { computeOrderTotals } from '@/lib/orderPricing';
 
@@ -32,7 +33,8 @@ export async function createOrder(
   items: CartItem[],
   shippingAddress: Address,
   discount = 0,
-  couponCode = ''
+  couponCode = '',
+  customerEmail = ''
 ): Promise<Order> {
   const db = requireDb();
   const { subtotal, shipping, taxes, total } = computeOrderTotals(items, discount);
@@ -72,6 +74,12 @@ export async function createOrder(
       isDefault: shippingAddress.isDefault || false,
     },
     paymentMethod: 'qr' as const,
+    // Takes part in the placed / reminder / auto-cancel emails (see orderLifecycleServer).
+    lifecycleVersion: 1,
+    customerEmail,
+    customerName: shippingAddress.name || '',
+    customerPhone: shippingAddress.phone || '',
+    itemCount: items.reduce((n, i) => n + i.quantity, 0),
     createdAt: serverTimestamp(),
   };
 
@@ -137,13 +145,38 @@ export async function getAllOrders(): Promise<Order[]> {
 export async function updateOrderStatus(
   docId: string,
   orderStatus: Order['orderStatus'],
-  paymentStatus?: Order['paymentStatus']
+  paymentStatus?: Order['paymentStatus'],
+  extra: Record<string, unknown> = {}
 ): Promise<void> {
   const db = requireDb();
+  const at = new Date().toISOString();
+  const event: OrderStatusEvent = { status: orderStatus, at, by: 'admin' };
   const updates: Record<string, unknown> = {
+    ...extra,
     orderStatus,
+    statusUpdatedAt: at,
+    statusHistory: arrayUnion(event),
     updatedAt: serverTimestamp(),
   };
+  if (orderStatus === 'closed') updates.closedAt = at;
   if (paymentStatus) updates.paymentStatus = paymentStatus;
   await updateDoc(doc(db, ORDERS_COL, docId), updates);
+}
+
+/**
+ * Tells the server the customer has paid (UPI screenshot uploaded) so it
+ * can send the order emails. Best effort: the daily job catches misses.
+ */
+export async function notifyOrderPlaced(orderId: string): Promise<void> {
+  try {
+    const token = await getFirebaseAuth()?.currentUser?.getIdToken();
+    if (!token) return;
+    await fetch('/api/orders/placed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ orderId }),
+    });
+  } catch (error) {
+    console.warn('[Orders] Could not report the placed order:', error);
+  }
 }

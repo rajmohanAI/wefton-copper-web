@@ -22,6 +22,12 @@ vi.mock('@/services/razorpayPaymentService', async () => {
   };
 });
 
+const notifyOrderPlaced = vi.fn().mockResolvedValue(true);
+vi.mock('@/lib/firebaseAdmin', () => ({ getAdminDb: () => ({}) }));
+vi.mock('@/services/orderLifecycleServer', () => ({
+  notifyOrderPlaced: (...a: unknown[]) => notifyOrderPlaced(...a),
+}));
+
 import { POST as orderPOST } from '@/app/api/payments/razorpay/order/route';
 import { POST as verifyPOST } from '@/app/api/payments/razorpay/verify/route';
 import { PaymentError } from '@/services/razorpayPaymentService';
@@ -90,5 +96,13 @@ describe('POST /api/payments/razorpay/verify', () => {
       razorpay_payment_id: 'pay_x',
       razorpay_signature: 'sig',
     });
+    expect(notifyOrderPlaced).toHaveBeenCalledWith({}, 'user-1', 'WC-1');
+  });
+
+  it('still succeeds when the order emails fail', async () => {
+    confirmRazorpayPayment.mockResolvedValue(undefined);
+    notifyOrderPlaced.mockRejectedValueOnce(new Error('smtp down'));
+    const res = await verifyPOST(req(body));
+    expect(res.status).toBe(200);
   });
 });
