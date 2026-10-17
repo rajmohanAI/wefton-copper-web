@@ -1,0 +1,41 @@
+name: Daily order checks
+
+# Once a day at 10:00 IST: reminds the shop about orders still open after
+# 5 days and cancels orders with no status update for 10 days (see
+# wefton-platform/src/services/orderLifecycleServer.ts).
+# Needs the repository secret CRON_SECRET, with the same value as the
+# CRON_SECRET secret on the App Hosting backend.
+
+on:
+  schedule:
+    - cron: '30 4 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: daily-order-checks
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: Run order checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call the order-checks endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://weftoncopper.com' }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::warning::CRON_SECRET is not set; skipping."
+            exit 0
+          fi
+          status=$(curl -sS -o response.json -w '%{http_code}' --max-time 120 \
+            -X POST -H "Authorization: Bearer $CRON_SECRET" \
+            "$SITE_URL/api/cron/order-checks")
+          cat response.json; echo
+          if [ "$status" != "200" ]; then
+            echo "::error::Order checks returned HTTP $status"
+            exit 1
+          fi

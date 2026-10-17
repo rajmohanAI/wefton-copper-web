@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
     start: Number(body.start),
     end: Number(body.end),
     increment: Number(body.increment),
+    padWidth: body.padWidth === undefined || body.padWidth === null ? undefined : Number(body.padWidth),
   };
 
   const validation = validateSerialConfig(cfg);

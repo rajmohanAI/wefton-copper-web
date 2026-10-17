@@ -17,7 +17,7 @@ interface Props {
 
 const MODES: { key: ImportMode; label: string; hint: string }[] = [
   { key: 'update-stock', label: 'Update Stock', hint: 'Adjust inventory on existing products by SKU' },
-  { key: 'create-products', label: 'Create Products', hint: 'Add new products from a file' },
+  { key: 'create-products', label: 'Create Products', hint: 'One row per colour and size. Product IDs and SKUs are generated for you.' },
 ];
 
 export default function BulkImportModal({ open, onOpenChange, onSuccess }: Props) {
@@ -61,8 +61,8 @@ export default function BulkImportModal({ open, onOpenChange, onSuccess }: Props
     <Dialog.Root open={open} onOpenChange={handleClose}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
-        <Dialog.Content className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[780px] md:max-h-[90vh] bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg shadow-xl z-50 flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)]">
+        <Dialog.Content className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[780px] md:max-h-[90vh] bg-[var(--wc-surface)] text-[var(--text-light)] border border-[var(--wc-line)] rounded-lg shadow-xl z-50 flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--wc-line)]">
             <Dialog.Title className="text-lg font-light text-[var(--text-light)] flex items-center gap-2">
               <FileSpreadsheet size={18} className="text-[var(--copper-light)]" /> Bulk Import
             </Dialog.Title>
@@ -86,8 +86,8 @@ export default function BulkImportModal({ open, onOpenChange, onSuccess }: Props
                         onClick={() => setMode(m.key)}
                         className={`text-left p-4 rounded border transition-colors ${
                           mode === m.key
-                            ? 'border-[var(--copper-main)] bg-white/5'
-                            : 'border-white/10 hover:border-white/20'
+                            ? 'border-[var(--copper-main)] bg-[var(--wc-canvas)]'
+                            : 'border-[var(--wc-line)] hover:border-[var(--copper-main)]'
                         }`}
                       >
                         <p className="text-sm text-[var(--text-light)]">{m.label}</p>
@@ -103,9 +103,9 @@ export default function BulkImportModal({ open, onOpenChange, onSuccess }: Props
                     onClick={() => downloadTemplate(mode)}
                     className="inline-flex items-center gap-1.5 text-xs text-[var(--copper-light)] hover:text-[var(--copper-main)] transition-colors"
                   >
-                    <Download size={13} /> Download {mode === 'update-stock' ? 'stock' : 'products'} template (CSV)
+                    <Download size={13} /> Download sample {mode === 'update-stock' ? 'stock update' : 'products'} file (CSV)
                   </button>
-                  <label className="flex items-center gap-2 px-4 py-6 border border-dashed border-white/20 rounded cursor-pointer hover:border-[var(--copper-main)]/50 transition-colors justify-center">
+                  <label className="flex items-center gap-2 px-4 py-6 border border-dashed border-[var(--wc-line)] rounded cursor-pointer hover:border-[var(--copper-main)] transition-colors justify-center">
                     <Upload size={16} className="text-[var(--text-muted)]" />
                     <span className="text-sm text-[var(--text-muted)]">
                       {phase === 'parsing' ? 'Reading file…' : 'Select a .csv or .xlsx file'}
@@ -120,7 +120,7 @@ export default function BulkImportModal({ open, onOpenChange, onSuccess }: Props
                     />
                   </label>
                   {error && (
-                    <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded px-3 py-2 flex items-start gap-2">
+                    <p className="text-sm text-red-700 dark:text-red-300 bg-red-500/10 border border-red-500/20 rounded px-3 py-2 flex items-start gap-2">
                       <AlertCircle size={15} className="mt-0.5 flex-shrink-0" /> {error}
                     </p>
                   )}
@@ -137,20 +137,20 @@ export default function BulkImportModal({ open, onOpenChange, onSuccess }: Props
                 </div>
 
                 {outcome.missingColumns.length > 0 ? (
-                  <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded px-3 py-2">
+                  <p className="text-sm text-red-700 dark:text-red-300 bg-red-500/10 border border-red-500/20 rounded px-3 py-2">
                     Missing required column(s): {outcome.missingColumns.join(', ')}. Download the template for the correct headers.
                   </p>
                 ) : (
                   <>
                     <ImportPreviewTable outcome={outcome} />
                     {outcome.errors > 0 && outcome.applicable > 0 && (
-                      <p className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded px-3 py-2">
+                      <p className="text-xs text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded px-3 py-2">
                         {outcome.errors} row(s) have errors and will be skipped. {outcome.applicable} valid row(s) will be committed.
                       </p>
                     )}
                     {progress && (
                       <div className="space-y-1">
-                        <div className="h-1.5 bg-white/10 rounded overflow-hidden">
+                        <div className="h-1.5 bg-[var(--wc-line)] rounded overflow-hidden">
                           <div className="h-full bg-[var(--copper-main)] transition-all" style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 0}%` }} />
                         </div>
                         <p className="text-[10px] text-[var(--text-muted)]">{progress.done} of {progress.total} processed</p>
@@ -182,7 +182,7 @@ export default function BulkImportModal({ open, onOpenChange, onSuccess }: Props
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border-subtle)]">
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--wc-line)]">
             {phase === 'previewed' && outcome && (
               <>
                 <Button variant="ghost" onClick={reset}>Start Over</Button>

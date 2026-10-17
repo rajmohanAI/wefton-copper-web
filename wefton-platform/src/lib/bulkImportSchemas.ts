@@ -75,8 +75,9 @@ export const productRowSchema = z.object({
       }
       return n;
     }),
-  sku: z.string().min(1, 'SKU is required'),
   inventory: intNonNeg('Inventory'),
+  color: z.string().optional(),
+  size: z.string().optional(),
   description: z.string().optional(),
   shortDescription: z.string().optional(),
   subcategory: z.string().optional(),
@@ -89,18 +90,6 @@ export const productRowSchema = z.object({
 
 export type ProductRowInput = z.input<typeof productRowSchema>;
 export type ProductRow = z.infer<typeof productRowSchema>;
-
-// ── Variant fragment (only validated when variant columns present) ─
-
-export const variantRowSchema = z.object({
-  size: z.string().optional(),
-  color: z.string().optional(),
-  colorHex: z.string().optional(),
-  inventory: intNonNeg('Variant inventory'),
-  sku: z.string().optional(),
-});
-
-export type VariantRow = z.infer<typeof variantRowSchema>;
 
 /**
  * Flattens Zod issues into a single human-readable message per row.

@@ -11,6 +11,7 @@ import {
   type CommitResult,
 } from '@/services/bulkImportService';
 import type { ImportMode } from '@/lib/bulkImportTemplates';
+import { fetchColors } from '@/services/catalogAdminService';
 
 export type ImportPhase =
   | 'idle'
@@ -60,7 +61,7 @@ export function useBulkImport() {
       const outcome =
         mode === 'update-stock'
           ? await validateStockRows(rows, products)
-          : await validateProductRows(rows, products);
+          : await validateProductRows(rows, products, await fetchColors());
       setState((s) => ({ ...s, phase: 'previewed', outcome }));
     } catch (e) {
       setState((s) => ({ ...s, phase: 'error', error: e instanceof Error ? e.message : 'Failed to read the file.' }));

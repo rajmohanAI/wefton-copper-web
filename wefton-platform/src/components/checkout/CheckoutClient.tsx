@@ -24,7 +24,7 @@ import { useCartStore } from '@/store/cartStore';
 import { useAuth } from '@/hooks/useAuth';
 import { getFirebaseDb } from '@/lib/firebase';
 import { addressSchema, fileUploadSchema, type AddressFormData } from '@/lib/schemas';
-import { createOrder, uploadPaymentScreenshot } from '@/services/orderService';
+import { createOrder, uploadPaymentScreenshot, notifyOrderPlaced } from '@/services/orderService';
 import { formatPrice } from '@/lib/utils';
 import { trackPurchase } from '@/lib/analytics';
 import {
@@ -153,7 +153,8 @@ export default function CheckoutClient() {
         items,
         confirmedAddress,
         discount,
-        couponCode
+        couponCode,
+        user?.email || ''
       );
       setOrderId(order.orderId);
       setOrderTotal(order.total);
@@ -289,6 +290,7 @@ export default function CheckoutClient() {
     setError('');
     try {
       await uploadPaymentScreenshot(orderId, user.uid, selectedFile, paymentReference.trim());
+      void notifyOrderPlaced(orderId);
       completeCheckout();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Upload failed. Please try again.');

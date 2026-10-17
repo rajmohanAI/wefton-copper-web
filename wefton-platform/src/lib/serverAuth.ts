@@ -4,7 +4,7 @@
 // `Authorization: Bearer <token>`; this checks it with the Admin SDK.
 // ============================================================
 import type { NextRequest } from 'next/server';
-import { getAdminAuth } from '@/lib/firebaseAdmin';
+import { getAdminAuth, getAdminDb } from '@/lib/firebaseAdmin';
 
 /** Returns the caller's uid, or null when the token is missing or invalid. */
 export async function getRequestUid(request: NextRequest): Promise<string | null> {
@@ -17,4 +17,12 @@ export async function getRequestUid(request: NextRequest): Promise<string | null
   } catch {
     return null;
   }
+}
+
+/** Returns the caller's uid when they are signed in as an admin, else null. */
+export async function getRequestAdminUid(request: NextRequest): Promise<string | null> {
+  const uid = await getRequestUid(request);
+  if (!uid) return null;
+  const snap = await getAdminDb().collection('users').doc(uid).get();
+  return snap.exists && snap.get('role') === 'admin' ? uid : null;
 }

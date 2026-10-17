@@ -15,26 +15,24 @@ export const STOCK_COLUMNS = {
 };
 
 // ── Create Products mode ──────────────────────────────────────
-// One row per product. Variants may be supplied as additional rows
-// sharing the same `slug` (or `sku`) using the variant* columns.
+// One row per variant (colour × size). Rows with the same title and
+// gender (or the same slug) become one product. Product ID and SKUs are
+// generated on import from the colour list and the size table.
 export const PRODUCT_COLUMNS = {
-  required: ['title', 'category', 'gender', 'price', 'sku', 'inventory'] as const,
+  required: ['title', 'gender', 'category', 'price', 'inventory'] as const,
   optional: [
+    'color',
+    'size',
     'slug',
+    'compareprice',
     'description',
     'shortdescription',
     'subcategory',
-    'compareprice',
     'tags',
     'featured',
     'bestseller',
     'newarrival',
     'images',
-    'variantsize',
-    'variantcolor',
-    'variantcolorhex',
-    'variantinventory',
-    'variantsku',
   ] as const,
 };
 
@@ -48,63 +46,79 @@ export function allColumns(mode: ImportMode): string[] {
     : [...PRODUCT_COLUMNS.required, ...PRODUCT_COLUMNS.optional];
 }
 
+export const PRODUCT_TEMPLATE_HEADERS = [
+  'title',
+  'gender',
+  'category',
+  'color',
+  'size',
+  'inventory',
+  'price',
+  'compareprice',
+  'slug',
+  'description',
+  'shortdescription',
+  'tags',
+  'featured',
+  'bestseller',
+  'newarrival',
+  'images',
+] as const;
+
+// Table 1.1 from the product spec: one Crew Neck T-shirt in two colours,
+// for men and for women, 20 pieces per variant.
+const SAMPLE_VARIANTS: [string, string, string][] = [
+  ['men', 'Olive Green', 'M'],
+  ['men', 'Olive Green', 'L'],
+  ['men', 'Olive Green', 'XL'],
+  ['men', 'Deep Blue', 'M'],
+  ['men', 'Deep Blue', 'L'],
+  ['men', 'Deep Blue', 'XL'],
+  ['women', 'Olive Green', 'S'],
+  ['women', 'Olive Green', 'M'],
+  ['women', 'Olive Green', 'L'],
+  ['women', 'Deep Blue', 'S'],
+  ['women', 'Deep Blue', 'M'],
+  ['women', 'Deep Blue', 'L'],
+];
+
+const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+
 /**
- * Builds a sample CSV string (headers + one example row) for the given mode.
+ * Builds a sample CSV string (headers + example rows) for the given mode.
  */
 export function buildTemplateCsv(mode: ImportMode): string {
   if (mode === 'update-stock') {
     const headers = ['sku', 'inventory', 'mode'];
-    const example = ['WC-PT-001-M-NV', '25', 'set'];
-    return `${headers.join(',')}\n${example.join(',')}\n`;
+    const rows = [
+      ['WCP001M0103', '20', 'set'],
+      ['WCP001M0104', '5', 'delta'],
+    ];
+    return [headers, ...rows].map((r) => r.join(',')).join('\n') + '\n';
   }
 
-  const headers = [
-    'title',
-    'slug',
-    'category',
-    'gender',
-    'price',
-    'compareprice',
-    'sku',
-    'inventory',
-    'shortdescription',
-    'description',
-    'tags',
-    'featured',
-    'bestseller',
-    'newarrival',
-    'images',
-    'variantsize',
-    'variantcolor',
-    'variantcolorhex',
-    'variantinventory',
-    'variantsku',
-  ];
-  const example = [
-    'Premium Navy Tee',
-    'premium-navy-tee',
-    'premium-tee',
-    'men',
-    '1299',
-    '1599',
-    'WC-PT-001',
-    '45',
-    'Signature cotton tee in deep navy',
-    'Full length product description goes here.',
-    'premium|navy|tee',
-    'true',
-    'false',
-    'false',
-    'https://example.com/img1.jpg|https://example.com/img2.jpg',
-    'M',
-    'Navy',
-    '#1B2838',
-    '15',
-    'WC-PT-001-M-NV',
-  ];
-  // Wrap fields containing commas in quotes for CSV safety.
-  const esc = (v: string) => (v.includes(',') || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v);
-  return `${headers.join(',')}\n${example.map(esc).join(',')}\n`;
+  const rows = SAMPLE_VARIANTS.map(([gender, color, size]) => {
+    const row: Record<(typeof PRODUCT_TEMPLATE_HEADERS)[number], string> = {
+      title: 'Crew Neck T-shirt',
+      gender,
+      category: 'premium-tee',
+      color,
+      size,
+      inventory: '20',
+      price: '799',
+      compareprice: '999',
+      slug: `crew-neck-t-shirt-${gender}`,
+      description: 'Premium lightweight cotton crew neck T-shirt. Breathable, soft and made to last.',
+      shortdescription: '',
+      tags: 'cotton|crew neck|essentials',
+      featured: 'false',
+      bestseller: 'false',
+      newarrival: 'true',
+      images: '',
+    };
+    return PRODUCT_TEMPLATE_HEADERS.map((h) => esc(row[h]));
+  });
+  return [PRODUCT_TEMPLATE_HEADERS.join(','), ...rows.map((r) => r.join(','))].join('\n') + '\n';
 }
 
 /**
@@ -116,7 +130,7 @@ export function downloadTemplate(mode: ImportMode): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = mode === 'update-stock' ? 'wefton-stock-template.csv' : 'wefton-products-template.csv';
+  a.download = mode === 'update-stock' ? 'wefton-stock-template.csv' : 'sample-products.csv';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

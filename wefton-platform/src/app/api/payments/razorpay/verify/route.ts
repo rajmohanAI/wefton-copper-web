@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRequestUid } from '@/lib/serverAuth';
 import { PaymentError, confirmRazorpayPayment } from '@/services/razorpayPaymentService';
+import { getAdminDb } from '@/lib/firebaseAdmin';
+import { notifyOrderPlaced } from '@/services/orderLifecycleServer';
 
 const FIELDS = ['orderId', 'razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature'] as const;
 
@@ -27,6 +29,11 @@ export async function POST(request: NextRequest) {
       razorpay_payment_id: values.razorpay_payment_id,
       razorpay_signature: values.razorpay_signature,
     });
+    // The payment is recorded; a failed email must not fail checkout (the
+    // daily job retries anything that didn't go out).
+    await notifyOrderPlaced(getAdminDb(), uid, values.orderId).catch((error) =>
+      console.error(`[Orders] Placed emails for ${values.orderId} failed:`, error)
+    );
     return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof PaymentError) {

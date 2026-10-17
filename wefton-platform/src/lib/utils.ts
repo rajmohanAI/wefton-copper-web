@@ -33,6 +33,24 @@ export function getDiscountPercent(price: number, comparePrice: number): number 
   return Math.round(((comparePrice - price) / comparePrice) * 100);
 }
 
+/**
+ * Converts a stored date (Firestore Timestamp, {seconds}, ISO string,
+ * epoch ms or Date) to a Date; null when missing or unreadable.
+ */
+export function toDate(value: unknown): Date | null {
+  if (!value) return null;
+  let d: Date | null = null;
+  if (value instanceof Date) d = value;
+  else if (typeof value === 'string' || typeof value === 'number') d = new Date(value);
+  else if (typeof value === 'object') {
+    const v = value as { toDate?: () => Date; seconds?: number; _seconds?: number };
+    if (typeof v.toDate === 'function') d = v.toDate();
+    else if (typeof v.seconds === 'number') d = new Date(v.seconds * 1000);
+    else if (typeof v._seconds === 'number') d = new Date(v._seconds * 1000);
+  }
+  return d && !Number.isNaN(d.getTime()) ? d : null;
+}
+
 export function generateOrderId(): string {
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
