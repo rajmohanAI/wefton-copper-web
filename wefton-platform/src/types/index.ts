@@ -103,8 +103,8 @@ export interface Order {
   shipping: number;
   taxes: number;
   total: number;
-  paymentStatus: 'pending' | 'uploaded' | 'verified' | 'failed' | 'refunded';
-  orderStatus: 'placed' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  paymentStatus: 'pending' | 'uploaded' | 'verified' | 'failed' | 'refund_due' | 'refunded';
+  orderStatus: 'placed' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'closed' | 'cancelled';
   shippingAddress: Address;
   paymentMethod: 'qr' | 'razorpay' | 'stripe' | 'cod';
   paymentReference?: string;
@@ -117,6 +117,37 @@ export interface Order {
   trackingNumber?: string;
   createdAt: string;
   updatedAt?: string;
+
+  // ── Order lifecycle (orders created from v2 of checkout on) ──
+  /** 1 on orders that take part in the placed / reminder / auto-cancel emails. */
+  lifecycleVersion?: number;
+  customerEmail?: string;
+  customerName?: string;
+  customerPhone?: string;
+  /** Total quantity across all lines. */
+  itemCount?: number;
+  /** When payment succeeded or the UPI screenshot was uploaded; starts the 5/10-day clock. */
+  placedAt?: string;
+  /** Last time the order status changed. */
+  statusUpdatedAt?: string;
+  closedAt?: string;
+  autoCancelledAt?: string;
+  statusHistory?: OrderStatusEvent[];
+  notifications?: OrderNotifications;
+}
+
+export interface OrderStatusEvent {
+  status: Order['orderStatus'];
+  at: string; // ISO
+  by: 'customer' | 'admin' | 'system';
+  note?: string;
+}
+
+export interface OrderNotifications {
+  placedSentAt?: string; // shop alert
+  confirmationSentAt?: string; // customer confirmation
+  delaySentAt?: string;
+  cancelSentAt?: string;
 }
 
 export interface OrderItem {
@@ -128,6 +159,9 @@ export interface OrderItem {
   size?: string;
   color?: string;
   variantId?: string;
+  /** Product ID (WCPM001) and variant SKU, filled in when the order is placed. */
+  productCode?: string;
+  sku?: string;
 }
 
 export interface User {

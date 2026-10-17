@@ -163,9 +163,11 @@ export default function ProductFormModal({
   // Colour master
   useEffect(() => {
     if (!open) return;
-    setColorsError('');
     fetchColors()
-      .then(setColors)
+      .then((list) => {
+        setColors(list);
+        setColorsError('');
+      })
       .catch((e: unknown) => setColorsError(e instanceof Error ? e.message : 'Could not load the colour list'));
   }, [open]);
 
@@ -175,13 +177,6 @@ export default function ProductFormModal({
       setSlug(slugify(title));
     }
   }, [title, slugManuallyEdited]);
-
-  // Auto-fill the short description from the description
-  useEffect(() => {
-    if (!shortManuallyEdited) {
-      setShortDescription(autoShortDescription(description));
-    }
-  }, [description, shortManuallyEdited]);
 
   const categories = gender === 'women' ? WOMEN_CATEGORIES : MEN_CATEGORIES;
 
@@ -475,7 +470,11 @@ export default function ProductFormModal({
                 <textarea
                   id="product-description"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    // Short description follows the description until edited by hand.
+                    if (!shortManuallyEdited) setShortDescription(autoShortDescription(e.target.value));
+                  }}
                   rows={4}
                   className={cn('w-full text-sm p-3', ADMIN_FIELD)}
                   placeholder="Full product description..."
