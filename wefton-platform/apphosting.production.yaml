@@ -22,3 +22,10 @@ env:
     secret: RESEND_API_KEY
     availability:
       - RUNTIME
+  # Shared with the "Daily order checks" GitHub Actions schedule, which
+  # calls /api/cron/order-checks. Created with:
+  #   firebase apphosting:secrets:set CRON_SECRET
+  - variable: CRON_SECRET
+    secret: CRON_SECRET
+    availability:
+      - RUNTIME
