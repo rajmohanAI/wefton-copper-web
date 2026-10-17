@@ -111,7 +111,8 @@ export const productFormSchema = z.object({
   price: z.number().positive('Price must be positive'),
   comparePrice: z.number().positive('Compare price must be positive').optional(),
   inventory: z.number().int().min(0, 'Inventory must be 0 or more'),
-  sku: z.string().min(1, 'SKU is required'),
+  // Filled in from the Product ID on save (lib/productCodes).
+  sku: z.string(),
   featured: z.boolean(),
   bestseller: z.boolean(),
   newArrival: z.boolean(),

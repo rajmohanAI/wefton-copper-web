@@ -20,10 +20,20 @@ import type { Product, ProductVariant, ProductImage } from '@/types';
 import {
   productRowSchema,
   stockRowSchema,
-  variantRowSchema,
   splitList,
   formatIssues,
 } from '@/lib/bulkImportSchemas';
+import {
+  CATALOG_SIZES,
+  autoShortDescription,
+  buildVariantSku,
+  findColor,
+  normalizeSize,
+  sizeCode,
+  skuBase,
+  type CatalogColor,
+} from '@/lib/productCodes';
+import { reserveProductCodes } from '@/services/catalogAdminService';
 import { requiredColumns, type ImportMode } from '@/lib/bulkImportTemplates';
 
 const PRODUCTS_COL = 'products';
@@ -55,6 +65,8 @@ export interface StockCommitItem {
 
 export interface CreateCommitItem {
   data: Omit<Product, 'productId'>;
+  /** variantId → colour number, for building the variant SKUs on commit. */
+  colorCodes: Record<string, string>;
 }
 
 export interface ValidationOutcome {
@@ -260,137 +272,179 @@ export async function validateStockRows(
 
 // ── Validation: Create Products ───────────────────────────────
 
-function hasVariantColumns(rec: Record<string, string>): boolean {
-  return (
-    !!rec.variantsize || !!rec.variantcolor || !!rec.variantsku || rec.variantinventory !== undefined && rec.variantinventory !== ''
-  );
-}
-
 function toImages(imagesCol: string | undefined, title: string): ProductImage[] {
   return splitList(imagesCol).map((url, i) => ({ url, alt: title, isPrimary: i === 0 }));
 }
 
+/**
+ * One CSV row per variant. Rows sharing a slug (or, without a slug, the
+ * same title + gender) fold into one product. Colours must be in the
+ * colour list and sizes in the size table so SKUs can be generated.
+ */
 export async function validateProductRows(
   rows: ParsedRow[],
-  products: Product[]
+  products: Product[],
+  colors: CatalogColor[]
 ): Promise<ValidationOutcome> {
   const missingColumns = findMissingColumns(rows, 'create-products');
   const results: RowResult[] = [];
   const existingSlugs = new Set(products.map((p) => p.slug));
 
-  // Group rows by resolved slug so variant rows fold into one product.
   interface Draft {
-    firstRow: number;
-    base: Omit<Product, 'productId'> | null;
+    rows: number[];
+    base: Omit<Product, 'productId'>;
     variants: ProductVariant[];
-    error?: string;
-    label: string;
+    colorCodes: Map<string, string>; // variantId → colour number
+    explicitSlug: boolean;
+    failed: boolean;
   }
   const drafts = new Map<string, Draft>();
-  const order: string[] = [];
 
   if (missingColumns.length === 0) {
     for (const row of rows) {
       const rec = row.data;
-      const parsed = productRowSchema.safeParse(rec);
+      // Headers arrive lowercased; map them onto the schema's field names.
+      const parsed = productRowSchema.safeParse({
+        title: rec.title,
+        slug: rec.slug,
+        category: rec.category,
+        gender: rec.gender?.toLowerCase(),
+        price: rec.price,
+        comparePrice: rec.compareprice ?? '',
+        inventory: rec.inventory,
+        color: rec.color ?? rec.colour,
+        size: rec.size,
+        description: rec.description,
+        shortDescription: rec.shortdescription,
+        subcategory: rec.subcategory,
+        tags: rec.tags,
+        featured: rec.featured || undefined,
+        bestseller: rec.bestseller || undefined,
+        newArrival: rec.newarrival || undefined,
+        images: rec.images,
+      });
+      const label = [rec.title, rec.color, rec.size].filter(Boolean).join(' / ');
       if (!parsed.success) {
-        results.push({ rowNumber: row.rowNumber, status: 'error', message: formatIssues(parsed.error), label: rec.title || rec.sku });
+        results.push({ rowNumber: row.rowNumber, status: 'error', message: formatIssues(parsed.error), label });
         continue;
       }
       const p = parsed.data;
-      const slug = (p.slug && p.slug !== '' ? p.slug : slugify(p.title)).trim();
+      const explicitSlug = !!p.slug;
+      const key = explicitSlug ? `slug:${p.slug}` : `title:${p.title.trim().toLowerCase()}|${p.gender}`;
 
-      let draft = drafts.get(slug);
-      if (!draft) {
-        draft = { firstRow: row.rowNumber, base: null, variants: [], label: p.title };
-        drafts.set(slug, draft);
-        order.push(slug);
-      }
-
-      // The first row for a slug establishes the product base fields.
-      if (!draft.base) {
-        draft.base = {
-          title: p.title,
-          slug,
-          description: p.description || p.shortDescription || p.title,
-          shortDescription: p.shortDescription || '',
-          category: p.category,
-          subcategory: p.subcategory || undefined,
-          gender: p.gender,
-          tags: splitList(p.tags),
-          price: p.price,
-          comparePrice: p.comparePrice,
-          inventory: p.inventory,
-          sku: p.sku,
-          images: toImages(p.images, p.title),
-          variants: [],
-          ratings: 0,
-          reviewsCount: 0,
-          featured: p.featured ?? false,
-          bestseller: p.bestseller ?? false,
-          newArrival: p.newArrival ?? false,
-          createdAt: new Date().toISOString(),
-        } as Omit<Product, 'productId'>;
-        results.push({ rowNumber: row.rowNumber, status: 'applicable', label: p.title });
-      } else {
-        // Subsequent row for same slug: treated as an additional variant carrier.
-        results.push({ rowNumber: row.rowNumber, status: 'applicable', label: `${p.title} (variant)` });
-      }
-
-      // Collect a variant if variant columns are present on this row.
-      if (hasVariantColumns(rec)) {
-        const vParsed = variantRowSchema.safeParse({
-          size: rec.variantsize,
-          color: rec.variantcolor,
-          colorHex: rec.variantcolorhex,
-          inventory: rec.variantinventory || '0',
-          sku: rec.variantsku,
-        });
-        if (vParsed.success) {
-          draft.variants.push({
-            variantId: crypto.randomUUID(),
-            size: vParsed.data.size || undefined,
-            color: vParsed.data.color || undefined,
-            colorHex: vParsed.data.colorHex || undefined,
-            inventory: vParsed.data.inventory,
-            sku: vParsed.data.sku || undefined,
-          });
-        } else {
-          // Downgrade the row to error but keep the product base.
-          results.push({ rowNumber: row.rowNumber, status: 'error', message: `Variant: ${formatIssues(vParsed.error)}`, label: p.title });
+      // Variant columns: both colour and size, or neither.
+      const colorName = (p.color || '').trim();
+      const size = normalizeSize(p.size);
+      let variant: ProductVariant | null = null;
+      let colorCode = '';
+      if (colorName || size) {
+        const master = findColor(colors, colorName);
+        if (!colorName || !size) {
+          results.push({ rowNumber: row.rowNumber, status: 'error', message: 'Give both a colour and a size, or leave both empty.', label });
+          continue;
         }
+        if (!master) {
+          results.push({ rowNumber: row.rowNumber, status: 'error', message: `Colour "${colorName}" is not in the colour list. Add it from the product form first.`, label });
+          continue;
+        }
+        if (!sizeCode(size)) {
+          results.push({ rowNumber: row.rowNumber, status: 'error', message: `Size "${p.size}" is not in the size table (${CATALOG_SIZES.join(', ')}).`, label });
+          continue;
+        }
+        colorCode = master.code;
+        variant = {
+          variantId: crypto.randomUUID(),
+          color: master.name,
+          colorHex: master.hex,
+          size,
+          inventory: p.inventory,
+        };
       }
+
+      let draft = drafts.get(key);
+      if (!draft) {
+        draft = {
+          rows: [],
+          explicitSlug,
+          failed: false,
+          variants: [],
+          colorCodes: new Map(),
+          base: {
+            title: p.title,
+            slug: explicitSlug ? p.slug! : slugify(p.title),
+            description: p.description || p.shortDescription || p.title,
+            shortDescription: p.shortDescription || autoShortDescription(p.description || p.title),
+            category: p.category,
+            subcategory: p.subcategory || undefined,
+            gender: p.gender,
+            tags: splitList(p.tags),
+            price: p.price,
+            comparePrice: p.comparePrice,
+            inventory: p.inventory,
+            sku: '',
+            images: toImages(p.images, p.title),
+            variants: [],
+            ratings: 0,
+            reviewsCount: 0,
+            featured: p.featured ?? false,
+            bestseller: p.bestseller ?? false,
+            newArrival: p.newArrival ?? false,
+            createdAt: new Date().toISOString(),
+          } as Omit<Product, 'productId'>,
+        };
+        drafts.set(key, draft);
+      } else if (draft.base.gender !== p.gender) {
+        results.push({ rowNumber: row.rowNumber, status: 'error', message: `Slug "${p.slug}" is used for more than one gender.`, label });
+        continue;
+      }
+
+      if (variant) {
+        const dup = draft.variants.some((v) => v.color === variant!.color && v.size === variant!.size);
+        if (dup) {
+          results.push({ rowNumber: row.rowNumber, status: 'error', message: `${variant.color} / ${variant.size} appears twice for this product.`, label });
+          continue;
+        }
+        draft.variants.push(variant);
+        draft.colorCodes.set(variant.variantId, colorCode);
+      }
+      draft.rows.push(row.rowNumber);
+      results.push({ rowNumber: row.rowNumber, status: 'applicable', label });
     }
+  }
+
+  // Same title for men and women without explicit slugs: add the gender
+  // to each slug so they don't collide.
+  const slugCount = new Map<string, number>();
+  for (const d of drafts.values()) {
+    if (!d.explicitSlug) slugCount.set(d.base.slug, (slugCount.get(d.base.slug) ?? 0) + 1);
+  }
+  for (const d of drafts.values()) {
+    if (!d.explicitSlug && (slugCount.get(d.base.slug) ?? 0) > 1) d.base.slug = `${d.base.slug}-${d.base.gender}`;
   }
 
   const createPlan: CreateCommitItem[] = [];
-  for (const slug of order) {
-    const draft = drafts.get(slug)!;
-    if (!draft.base) continue;
-
-    if (existingSlugs.has(slug)) {
-      results.push({ rowNumber: draft.firstRow, status: 'skipped', message: `A product with slug "${slug}" already exists.`, label: draft.label });
-      // Remove the earlier "applicable" marks for this draft's rows.
-      demoteApplicableToSkipped(results, draft.firstRow, slug);
+  const planSlugs = new Set<string>();
+  for (const draft of drafts.values()) {
+    const slug = draft.base.slug;
+    if (existingSlugs.has(slug) || planSlugs.has(slug)) {
+      for (const n of draft.rows) {
+        const r = results.find((x) => x.rowNumber === n && x.status === 'applicable');
+        if (r) {
+          r.status = 'skipped';
+          r.message = `A product with slug "${slug}" already exists.`;
+        }
+      }
       continue;
     }
-
-    const base = draft.base;
+    planSlugs.add(slug);
     if (draft.variants.length > 0) {
-      base.variants = draft.variants;
-      base.inventory = sumVariantInventory(draft.variants);
+      draft.base.variants = draft.variants;
+      draft.base.inventory = sumVariantInventory(draft.variants);
     }
-    createPlan.push({ data: base });
+    createPlan.push({ data: draft.base, colorCodes: Object.fromEntries(draft.colorCodes) });
   }
 
   return summarise('create-products', results, [], createPlan, missingColumns);
-}
-
-// When a whole product is skipped as a duplicate, ensure its rows are not
-// double-counted as applicable in the summary.
-function demoteApplicableToSkipped(results: RowResult[], firstRow: number, _slug: string) {
-  const r = results.find((x) => x.rowNumber === firstRow && x.status === 'applicable');
-  if (r) r.status = 'skipped';
 }
 
 // ── Summary ───────────────────────────────────────────────────
@@ -410,9 +464,15 @@ function summarise(
 
 // ── Commit ────────────────────────────────────────────────────
 
+// Firestore rejects undefined field values.
+function stripUndefined<T extends object>(obj: T): T {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
+}
+
 export async function commit(
   outcome: ValidationOutcome,
-  onProgress?: (done: number, total: number) => void
+  onProgress?: (done: number, total: number) => void,
+  reserveCodes: (gender: Product['gender'], count: number) => Promise<string[]> = reserveProductCodes
 ): Promise<CommitResult> {
   const db = requireDb();
   const result: CommitResult = { created: 0, updated: 0, failed: 0, failures: [] };
@@ -446,12 +506,32 @@ export async function commit(
     const items = outcome.createPlan;
     const total = items.length;
     let done = 0;
+
+    // Reserve Product IDs per gender up front, then fill in the SKUs.
+    const codes = new Map<CreateCommitItem, string>();
+    for (const gender of ['men', 'women', 'unisex'] as const) {
+      const group = items.filter((i) => i.data.gender === gender);
+      if (group.length === 0) continue;
+      const reserved = await reserveCodes(gender, group.length);
+      group.forEach((item, i) => codes.set(item, reserved[i]));
+    }
+
     for (let i = 0; i < items.length; i += BATCH_SIZE) {
       const chunk = items.slice(i, i + BATCH_SIZE);
       const batch = writeBatch(db);
       for (const item of chunk) {
+        const code = codes.get(item)!;
         const ref = doc(collection(db, PRODUCTS_COL));
-        batch.set(ref, { ...item.data, createdAt: serverTimestamp() });
+        batch.set(ref, {
+          ...stripUndefined(item.data),
+          productCode: code,
+          sku: skuBase(code) ?? '',
+          variants: item.data.variants.map((v) => ({
+            ...v,
+            sku: buildVariantSku(code, item.colorCodes[v.variantId], v.size) ?? '',
+          })),
+          createdAt: serverTimestamp(),
+        });
       }
       try {
         await batch.commit();

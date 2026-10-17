@@ -119,7 +119,7 @@ export default function ProductImageManager({ open, onOpenChange, product, onSuc
     <Dialog.Root open={open} onOpenChange={(o) => !busy && onOpenChange(o)}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
-        <Dialog.Content className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[720px] md:max-h-[90vh] bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg shadow-xl z-50 flex flex-col overflow-hidden">
+        <Dialog.Content className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[720px] md:max-h-[90vh] bg-[var(--wc-surface)] text-[var(--text-light)] border border-[var(--wc-line)] rounded-lg shadow-xl z-50 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)]">
             <Dialog.Title className="text-lg font-light text-[var(--text-light)] flex items-center gap-2">
               <ImageIcon size={18} className="text-[var(--copper-light)]" />
@@ -141,8 +141,8 @@ export default function ProductImageManager({ open, onOpenChange, product, onSuc
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {images.map((img, idx) => (
-                    <div key={`${img.url}-${idx}`} className="relative group rounded border border-white/10 overflow-hidden">
-                      <div className="aspect-square bg-white/5">
+                    <div key={`${img.url}-${idx}`} className="relative group rounded border border-[var(--wc-line)] overflow-hidden">
+                      <div className="aspect-square bg-[var(--wc-canvas)]">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
                       </div>
@@ -170,7 +170,7 @@ export default function ProductImageManager({ open, onOpenChange, product, onSuc
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {pendingFiles.map((file, idx) => (
                     <div key={idx} className="relative group rounded border border-blue-500/30 overflow-hidden">
-                      <div className="aspect-square bg-white/5">
+                      <div className="aspect-square bg-[var(--wc-canvas)]">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={URL.createObjectURL(file)} alt={file.name} className="w-full h-full object-cover" />
                       </div>
@@ -190,7 +190,7 @@ export default function ProductImageManager({ open, onOpenChange, product, onSuc
 
             {progress && (
               <div className="space-y-1">
-                <div className="h-1.5 bg-white/10 rounded overflow-hidden">
+                <div className="h-1.5 bg-[var(--wc-line)] rounded overflow-hidden">
                   <div className="h-full bg-[var(--copper-main)] transition-all" style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 0}%` }} />
                 </div>
                 <p className="text-[10px] text-[var(--text-muted)]">Uploading {progress.done} of {progress.total}…</p>

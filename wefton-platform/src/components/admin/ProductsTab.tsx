@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 import { deleteProduct } from '@/services/productService';
+import { assignMissingProductCodes } from '@/services/catalogAdminService';
 import { formatPrice } from '@/lib/utils';
-import { Plus, Edit2, Trash2, Package, Image as ImageIcon, FileSpreadsheet, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, Trash2, Package, Image as ImageIcon, FileSpreadsheet, AlertTriangle, Hash } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import ProductFormModal from './ProductFormModal';
@@ -23,6 +24,8 @@ export default function ProductsTab() {
   const [deleting, setDeleting] = useState(false);
   const [imageTarget, setImageTarget] = useState<Product | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const [search, setSearch] = useState('');
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -76,6 +79,29 @@ export default function ProductsTab() {
     }
   };
 
+  const missingCodes = products.filter((p) => !p.productCode).length;
+  const term = search.trim().toLowerCase();
+  const visibleProducts = term
+    ? products.filter((p) =>
+        [p.productCode, p.title, p.sku, ...(p.variants || []).map((v) => v.sku)]
+          .some((v) => v?.toLowerCase().includes(term))
+      )
+    : products;
+
+  const handleAssignCodes = async () => {
+    if (!confirm(`Give ${missingCodes} product(s) a Product ID, oldest first? This can't be undone.`)) return;
+    setAssigning(true);
+    try {
+      const assigned = await assignMissingProductCodes();
+      alert(`Assigned Product IDs to ${assigned} product(s). Open a product and save it to fill in its variant SKUs.`);
+      fetchProducts();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Could not assign Product IDs.');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
   const handleFormSuccess = () => {
     fetchProducts();
   };
@@ -95,6 +121,11 @@ export default function ProductsTab() {
           Products ({products.length})
         </h2>
         <div className="flex items-center gap-2">
+          {missingCodes > 0 && (
+            <Button variant="secondary" size="sm" onClick={handleAssignCodes} loading={assigning} disabled={assigning}>
+              <Hash size={14} /> Assign Product IDs ({missingCodes})
+            </Button>
+          )}
           <Button variant="secondary" size="sm" onClick={() => setBulkOpen(true)}>
             <FileSpreadsheet size={14} /> Bulk Import
           </Button>
@@ -103,6 +134,17 @@ export default function ProductsTab() {
           </Button>
         </div>
       </div>
+
+      {products.length > 0 && (
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by Product ID, title or SKU"
+          aria-label="Search products"
+          className="w-full md:w-80 h-10 px-3 text-sm rounded bg-[var(--wc-surface)] border border-[var(--wc-line)] text-[var(--text-light)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--copper-main)]"
+        />
+      )}
 
       {products.length === 0 ? (
         <div className="glass-card p-8 text-center">
@@ -115,8 +157,9 @@ export default function ProductsTab() {
       ) : (
         <div className="space-y-2">
           {/* Table header */}
-          <div className="hidden md:grid grid-cols-[60px_1fr_120px_80px_100px_80px_140px_80px] gap-3 px-4 py-2 text-[10px] font-medium tracking-wider uppercase text-[var(--text-muted)]">
+          <div className="hidden md:grid grid-cols-[60px_90px_1fr_120px_80px_100px_80px_140px_80px] gap-3 px-4 py-2 text-[10px] font-medium tracking-wider uppercase text-[var(--text-muted)]">
             <span>Image</span>
+            <span>Product ID</span>
             <span>Title</span>
             <span>Category</span>
             <span>Gender</span>
@@ -127,12 +170,12 @@ export default function ProductsTab() {
           </div>
 
           {/* Product rows */}
-          {products.map((product) => {
+          {visibleProducts.map((product) => {
             const primaryImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
             return (
               <div
                 key={product.productId}
-                className="glass-card p-4 md:grid md:grid-cols-[60px_1fr_120px_80px_100px_80px_140px_80px] md:gap-3 md:items-center"
+                className="glass-card p-4 md:grid md:grid-cols-[60px_90px_1fr_120px_80px_100px_80px_140px_80px] md:gap-3 md:items-center"
               >
                 {/* Thumbnail */}
                 <div className="w-12 h-12 rounded border border-white/10 overflow-hidden bg-white/5 flex-shrink-0">
@@ -152,6 +195,11 @@ export default function ProductsTab() {
                     </button>
                   )}
                 </div>
+
+                {/* Product ID */}
+                <span className="block mt-2 md:mt-0 font-mono text-xs text-[var(--copper-light)]">
+                  {product.productCode || '—'}
+                </span>
 
                 {/* Title */}
                 <div className="mt-2 md:mt-0">
