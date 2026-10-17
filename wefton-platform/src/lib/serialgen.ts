@@ -11,6 +11,8 @@ export interface SerialConfig {
   start: number;
   end: number;
   increment: number;
+  /** Minimum digits for the number part (zero-padded), e.g. 6 → 000001. */
+  padWidth?: number;
 }
 
 export interface SerialValidation {
@@ -39,6 +41,9 @@ export function validateSerialConfig(cfg: Partial<SerialConfig>): SerialValidati
   if (start < 0 || end < 0) return { valid: false, error: 'Start and End must be 0 or greater.' };
   if (increment < 1) return { valid: false, error: 'Increment must be at least 1.' };
   if (end < start) return { valid: false, error: 'End value must be greater than or equal to Start value.' };
+  if (cfg.padWidth !== undefined && (!Number.isInteger(cfg.padWidth) || cfg.padWidth < 1 || cfg.padWidth > 12)) {
+    return { valid: false, error: 'Serial digits must be between 1 and 12.' };
+  }
 
   // Code128 accepts printable ASCII; reject control chars in affixes.
   // eslint-disable-next-line no-control-regex
@@ -59,11 +64,11 @@ export function validateSerialConfig(cfg: Partial<SerialConfig>): SerialValidati
  * Builds the list of serial strings.
  * Format: `${prefix}${zeroPaddedNumber}${suffix}`.
  * The number is left-padded with zeros to the width of the End value so all
- * serials align (e.g. end=100 → 001, 010, 100).
+ * serials align (e.g. end=100 → 001, 010, 100), or to `padWidth` if wider.
  */
 export function buildSerials(cfg: SerialConfig): string[] {
   const { prefix, suffix, start, end, increment } = cfg;
-  const padWidth = String(end).length;
+  const padWidth = Math.max(String(end).length, cfg.padWidth ?? 0);
   const serials: string[] = [];
   for (let n = start; n <= end; n += increment) {
     const num = String(n).padStart(padWidth, '0');

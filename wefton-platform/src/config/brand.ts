@@ -47,7 +47,7 @@ export const WOMEN_CATEGORIES = [
   { id: 'active-wear', name: 'Active Wear Tshirt', slug: 'active-wear', thumbnail: '' },
 ] as const;
 
-export const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'] as const;
+export const SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'] as const;
 
 export const SHIPPING_COST = 99;
 export const FREE_SHIPPING_THRESHOLD = 999;

@@ -4,6 +4,8 @@
 
 export interface Product {
   productId: string;
+  /** Business Product ID, e.g. WCPM001 (see lib/productCodes). Assigned on first save. */
+  productCode?: string;
   title: string;
   slug: string;
   description: string;

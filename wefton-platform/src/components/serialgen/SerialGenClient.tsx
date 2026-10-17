@@ -19,6 +19,9 @@ export default function SerialGenClient() {
   const [start, setStart] = useState('1');
   const [end, setEnd] = useState('100');
   const [increment, setIncrement] = useState('1');
+  const [padWidth, setPadWidth] = useState('');
+  const [variantSku, setVariantSku] = useState('');
+  const [pieces, setPieces] = useState('20');
   const [barcodeType, setBarcodeType] = useState<'code128' | 'qrcode'>('code128');
 
   const [submitting, setSubmitting] = useState(false);
@@ -32,8 +35,9 @@ export default function SerialGenClient() {
       start: Number(start),
       end: Number(end),
       increment: Number(increment),
+      padWidth: padWidth ? Number(padWidth) : undefined,
     }),
-    [prefix, suffix, start, end, increment]
+    [prefix, suffix, start, end, increment, padWidth]
   );
 
   const validation = useMemo(() => validateSerialConfig(cfg), [cfg]);
@@ -43,6 +47,18 @@ export default function SerialGenClient() {
     if (!validation.valid) return [];
     return buildSerials(cfg).slice(0, 5);
   }, [validation.valid, cfg]);
+
+  // Product labels: SKU + 6-digit piece serial, e.g. WCP001M0103000001.
+  const applyVariant = () => {
+    const sku = variantSku.trim().toUpperCase();
+    if (!sku) return;
+    setPrefix(sku);
+    setSuffix('');
+    setStart('1');
+    setEnd(String(Math.max(1, parseInt(pieces, 10) || 1)));
+    setIncrement('1');
+    setPadWidth('6');
+  };
 
   const handleGenerate = async () => {
     setError('');
@@ -110,16 +126,30 @@ export default function SerialGenClient() {
           sticker printing.
         </p>
 
+        <div className="glass-card p-6 space-y-3 mb-6">
+          <p className="text-xs font-medium tracking-wider uppercase text-[var(--text-muted)]">Product labels</p>
+          <p className="text-xs text-[var(--text-muted)]">
+            Enter a variant SKU from the product (for example WCP001M0103) and the number of pieces; each label
+            gets a 6-digit piece serial: WCP001M0103000001, WCP001M0103000002…
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_120px_auto] gap-3 items-end">
+            <Input label="Variant SKU" value={variantSku} onChange={(e) => setVariantSku(e.target.value)} placeholder="WCP001M0103" />
+            <Input label="Pieces" type="number" value={pieces} onChange={(e) => setPieces(e.target.value)} min="1" />
+            <Button variant="secondary" onClick={applyVariant} disabled={!variantSku.trim()}>Use</Button>
+          </div>
+        </div>
+
         <div className="glass-card p-6 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input label="Prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="WC-" />
             <Input label="Suffix" value={suffix} onChange={(e) => setSuffix(e.target.value)} placeholder="-A" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Input label="Start Value" type="number" value={start} onChange={(e) => setStart(e.target.value)} min="0" />
             <Input label="End Value" type="number" value={end} onChange={(e) => setEnd(e.target.value)} min="0" />
             <Input label="Increment" type="number" value={increment} onChange={(e) => setIncrement(e.target.value)} min="1" />
+            <Input label="Serial digits" type="number" value={padWidth} onChange={(e) => setPadWidth(e.target.value)} min="1" max="12" placeholder="auto" />
           </div>
 
           <div className="flex flex-col gap-1.5">

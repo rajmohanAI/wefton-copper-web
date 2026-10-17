@@ -32,8 +32,8 @@ export default function ImportPreviewTable({ outcome }: Props) {
             onClick={() => setTab(key)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs border transition-colors ${
               tab === key
-                ? 'border-[var(--copper-main)] bg-white/5 text-[var(--text-light)]'
-                : 'border-white/10 text-[var(--text-muted)] hover:text-[var(--text-light)]'
+                ? 'border-[var(--copper-main)] bg-[var(--wc-canvas)] text-[var(--text-light)]'
+                : 'border-[var(--wc-line)] text-[var(--text-muted)] hover:text-[var(--text-light)]'
             }`}
           >
             <Icon size={13} className={color} />
@@ -43,12 +43,12 @@ export default function ImportPreviewTable({ outcome }: Props) {
         ))}
       </div>
 
-      <div className="bg-black/30 border border-white/10 rounded-lg max-h-[40vh] overflow-y-auto">
+      <div className="bg-[var(--wc-canvas)] border border-[var(--wc-line)] rounded-lg max-h-[40vh] overflow-y-auto">
         {rows.length === 0 ? (
           <p className="p-4 text-xs text-[var(--text-faint)] italic">No {tab} rows.</p>
         ) : (
           <table className="w-full text-xs">
-            <thead className="sticky top-0 bg-[var(--bg-card)]">
+            <thead className="sticky top-0 bg-[var(--wc-surface)]">
               <tr className="text-left text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
                 <th className="px-3 py-2 w-16">Row</th>
                 <th className="px-3 py-2 w-1/3">Item</th>
@@ -57,7 +57,7 @@ export default function ImportPreviewTable({ outcome }: Props) {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={`${r.status}-${r.rowNumber}-${r.label ?? ''}`} className="border-t border-white/5">
+                <tr key={`${r.status}-${r.rowNumber}-${r.label ?? ''}`} className="border-t border-[var(--wc-line)]">
                   <td className="px-3 py-2 text-[var(--text-faint)]">{r.rowNumber || '—'}</td>
                   <td className="px-3 py-2 text-[var(--text-light)] truncate">{r.label || '—'}</td>
                   <td className="px-3 py-2 text-[var(--text-muted)]">{r.message || (r.status === 'applicable' ? 'Will be applied' : '')}</td>
