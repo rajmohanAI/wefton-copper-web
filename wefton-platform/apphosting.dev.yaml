@@ -1,0 +1,23 @@
+# Overrides for the dev backend (wefton-copper-dev, serving www.dev.weftoncopper.com
+# from feature/dev). App Hosting merges this over apphosting.yaml when the
+# backend's environment name is "dev".
+
+env:
+  - variable: NEXT_PUBLIC_APP_URL
+    value: https://www.dev.weftoncopper.com
+    availability:
+      - BUILD
+      - RUNTIME
+  # Razorpay test-mode keys, so checkout on dev never takes real payments.
+  # Create these secrets once with:
+  #   firebase apphosting:secrets:set RAZORPAY_TEST_KEY_ID
+  #   firebase apphosting:secrets:set RAZORPAY_TEST_KEY_SECRET
+  # then grant the dev backend access when the CLI asks.
+  - variable: RAZORPAY_KEY_ID
+    secret: RAZORPAY_TEST_KEY_ID
+    availability:
+      - RUNTIME
+  - variable: RAZORPAY_KEY_SECRET
+    secret: RAZORPAY_TEST_KEY_SECRET
+    availability:
+      - RUNTIME
