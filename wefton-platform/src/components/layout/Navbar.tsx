@@ -172,9 +172,23 @@ export default function Navbar() {
           {/* Logo */}
           <Link
             href="/"
-            className="text-[var(--copper-light)] font-bold tracking-[4px] uppercase text-base hover:text-[var(--copper-main)] transition-colors"
+            aria-label="Wefton Copper home"
+            className="group flex items-center gap-3 text-[var(--copper-light)] font-bold tracking-[4px] uppercase text-base hover:text-[var(--copper-main)] transition-colors"
           >
-            WEFTON COPPER
+            <Image
+              src="/brand/wefton-mark.png"
+              alt=""
+              width={720}
+              height={464}
+              loading="eager"
+              sizes="64px"
+              className={cn(
+                'w-auto drop-shadow-[0_1px_2px_rgba(60,40,25,0.28)] transition-all duration-500 group-hover:brightness-110',
+                scrolled ? 'h-[30px]' : 'h-[34px]'
+              )}
+            />
+            <span aria-hidden className="hidden sm:block h-6 w-px bg-[var(--copper-main)]/40" />
+            <span className="hidden sm:inline">WEFTON COPPER</span>
           </Link>
 
           {/* Desktop Nav */}

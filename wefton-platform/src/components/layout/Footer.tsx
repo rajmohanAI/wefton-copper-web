@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Instagram, Facebook, Twitter, Mail, Phone, MapPin } from '@/components/ui/SocialIcons';
 import { BRAND } from '@/config/brand';
 import NewsletterForm from './NewsletterForm';
@@ -41,8 +42,25 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <Link
               href="/"
-              className="text-[var(--copper-light)] font-bold tracking-[4px] uppercase text-sm"
+              aria-label="Wefton Copper home"
+              className="inline-flex flex-col items-start gap-4 text-[var(--copper-light)] font-bold tracking-[4px] uppercase text-sm"
             >
+              <span className="relative">
+                {/* Soft copper halo behind the mark */}
+                <span
+                  aria-hidden
+                  className="absolute -inset-4 rounded-full blur-xl"
+                  style={{ background: 'radial-gradient(ellipse at center, rgba(214,143,100,0.22) 0%, transparent 70%)' }}
+                />
+                <Image
+                  src="/brand/wefton-mark.png"
+                  alt=""
+                  width={720}
+                  height={464}
+                  sizes="96px"
+                  className="relative h-14 w-auto drop-shadow-[0_1px_2px_rgba(60,40,25,0.28)]"
+                />
+              </span>
               WEFTON COPPER
             </Link>
             <p className="mt-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-xs">
@@ -145,7 +163,15 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="border-t border-[var(--border-subtle)] py-5">
         <div className="max-w-[1280px] mx-auto px-4 md:px-8 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-[var(--text-faint)]">
+          <p className="flex items-center gap-2 text-xs text-[var(--text-faint)]">
+            <Image
+              src="/brand/wefton-mark.png"
+              alt=""
+              width={720}
+              height={464}
+              sizes="32px"
+              className="h-3.5 w-auto opacity-60"
+            />
             © 2026 Wefton Copper. All rights reserved.
           </p>
           <p className="text-xs text-[var(--text-faint)]">
