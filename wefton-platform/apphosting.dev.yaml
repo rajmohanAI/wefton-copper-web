@@ -1,0 +1,20 @@
+# Overrides for the App Hosting backend whose environment name is "dev"
+# (Firebase console → App Hosting → backend → Settings → Environment).
+# That backend deploys from feature/dev and serves www.dev.weftoncopper.com.
+# Merged on top of apphosting.yaml.
+#
+# No Razorpay, Resend or CRON secrets here, so dev cannot take real
+# payments or send customer emails.
+env:
+  - variable: NEXT_PUBLIC_APP_URL
+    value: https://www.dev.weftoncopper.com
+    availability:
+      - BUILD
+      - RUNTIME
+  # Anything other than "production" makes the site noindex and
+  # robots.txt disallow everything.
+  - variable: NEXT_PUBLIC_SITE_ENV
+    value: dev
+    availability:
+      - BUILD
+      - RUNTIME
