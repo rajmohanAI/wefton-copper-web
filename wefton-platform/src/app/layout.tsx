@@ -12,6 +12,9 @@ const inter = Inter({
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
+// The dev, qa and pp backends set NEXT_PUBLIC_SITE_ENV; production leaves it unset.
+const siteEnv = process.env.NEXT_PUBLIC_SITE_ENV;
+const indexable = !siteEnv || siteEnv === 'production';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -54,17 +57,19 @@ export const metadata: Metadata = {
     description: 'Premium Cotton Fabric essentials.',
     images: ['/og-image.jpg'],
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
+  robots: indexable
+    ? {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-video-preview': -1,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
+      }
+    : { index: false, follow: false },
   icons: {
     icon: [
       { url: '/icons/icon-32.png', sizes: '32x32', type: 'image/png' },
