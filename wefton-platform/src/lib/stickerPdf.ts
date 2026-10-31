@@ -28,6 +28,17 @@ const MAX_MODULE = 0.33 * MM;
 const MAX_BARS_W = 4.8 * CM;
 const BARS_H = 1.2 * CM;
 
+/** Gender on the sticker reads M / F / U (the serial itself uses W for women). */
+export const STICKER_GENDER: Record<StickerSeries['gender'], string> = { M: 'M', W: 'F', U: 'U' };
+
+// Bottom row of the sticker; widths (cm) add up to the 5.3 cm inside the edges.
+const STICKER_COLUMNS: { label: string; width: number; valueSize: number; value: (s: StickerSeries) => string }[] = [
+  { label: 'Prod', width: 1.2, valueSize: 11, value: (s) => s.modelId },
+  { label: 'Color', width: 1.9, valueSize: 7.5, value: (s) => s.colorName },
+  { label: 'Gender', width: 1.1, valueSize: 11, value: (s) => STICKER_GENDER[s.gender] },
+  { label: 'Size', width: 1.1, valueSize: 11, value: (s) => s.size },
+];
+
 interface Bars {
   /** Bars as [left, width] in modules. */
   bars: [number, number][];
@@ -91,16 +102,17 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
     const cx = x + STICKER_W / 2;
     drawCentered(page, serial, mono, fitSize(mono, serial, 8, barsW), cx, barsY - 0.33 * CM);
 
-    // Prod / Color / Size, as on the sample sticker.
-    const colW = STICKER_W / 3;
+    // Prod / Color / Gender / Size; Color gets the widest column for its name.
     const labelY = y + 0.75 * CM;
     const valueY = y + 0.25 * CM;
-    const cols: [string, string][] = [['Prod', s.modelId], ['Color', s.colorName], ['Size', s.size]];
-    cols.forEach(([label, value], i) => {
-      const colCx = x + colW * i + colW / 2;
-      drawCentered(page, label, regular, 8, colCx, labelY);
-      const size = fitSize(bold, value, i === 1 ? 7.5 : 11, colW - 0.2 * CM);
-      drawCentered(page, value, bold, size, colCx, valueY);
+    let colX = x + 0.1 * CM;
+    STICKER_COLUMNS.forEach(({ label, width, valueSize, value }) => {
+      const colW = width * CM;
+      const colCx = colX + colW / 2;
+      const text = value(s);
+      drawCentered(page, label, regular, 7.5, colCx, labelY);
+      drawCentered(page, text, bold, fitSize(bold, text, valueSize, colW - 0.1 * CM), colCx, valueY);
+      colX += colW;
     });
   };
 
