@@ -3,9 +3,9 @@
 // ============================================================
 // Product ID: WCP + gender letter + 3-digit running number per gender,
 //   e.g. WCPM001, WCPW001, WCPU001.
-// Variant SKU: WC + P + 3-digit model no + gender + colour no + size no,
-//   e.g. Olive Green / Men / M on WCPM001 → WCP001M0103.
-// The 6-digit serial on a barcode label (WCP001M0103000001) is per piece
+// Variant SKU: WC + P + 2-digit model no + gender + colour no + size no,
+//   e.g. Olive Green / Men / M on WCPM001 → WCP01M0103.
+// The 6-digit serial on a barcode label (WCP01M0103000001) is per piece
 // and is printed from the Serial Generator, not stored on the product.
 
 export type Gender = 'men' | 'women' | 'unisex';
@@ -45,6 +45,13 @@ export const DEFAULT_COLORS: CatalogColor[] = [
 ];
 
 export const MAX_PRODUCT_NUMBER = 999;
+/** SKUs and serials carry a 2-digit model no, so only P01–P99 fit. */
+export const MAX_SKU_MODEL_NUMBER = 99;
+
+/** 2-digit model no as printed in SKUs and serials, e.g. 1 → "P01". */
+export function formatModelId(n: number): string {
+  return `P${String(n).padStart(2, '0')}`;
+}
 
 /** "XXL" and lowercase spellings map onto the size table; unknown sizes pass through. */
 export function normalizeSize(size: string | undefined | null): string {
@@ -83,11 +90,11 @@ export function parseProductCode(code: string | undefined | null): { letter: Gen
   return { letter: m[1] as GenderLetter, number: parseInt(m[2], 10) };
 }
 
-/** Product-level SKU (no colour/size): WCPM001 → WCP001M. */
+/** Product-level SKU (no colour/size): WCPM001 → WCP01M. */
 export function skuBase(productCode: string): string | null {
   const p = parseProductCode(productCode);
-  if (!p) return null;
-  return `WCP${String(p.number).padStart(3, '0')}${p.letter}`;
+  if (!p || p.number > MAX_SKU_MODEL_NUMBER) return null;
+  return `WC${formatModelId(p.number)}${p.letter}`;
 }
 
 /** Variant SKU, or null when the product code, colour or size is unknown. */
