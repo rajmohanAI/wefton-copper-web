@@ -1,0 +1,11 @@
+# Overrides for the dev backend (wefton-copper-dev, serving www.dev.weftoncopper.com
+# from feature/dev). App Hosting merges this over apphosting.yaml when the
+# backend's environment name is "dev". Razorpay keys live only in
+# apphosting.production.yaml, so online payments stay off on dev.
+
+env:
+  - variable: NEXT_PUBLIC_APP_URL
+    value: https://www.dev.weftoncopper.com
+    availability:
+      - BUILD
+      - RUNTIME

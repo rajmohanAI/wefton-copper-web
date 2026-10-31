@@ -10,7 +10,6 @@ export const BRAND = {
   email: 'sales@weftoncopper.com',
   phone: '+91 80561 35201',
   address: 'Chennai, Tamil Nadu, India',
-  mapUrl: 'https://maps.app.goo.gl/r82wZXHQRbgeAk4X8',
   social: {
     instagram: 'https://instagram.com/weftoncopper',
     facebook: 'https://facebook.com/weftoncopper',
