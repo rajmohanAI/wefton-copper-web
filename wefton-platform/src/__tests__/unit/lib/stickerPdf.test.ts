@@ -10,29 +10,30 @@ import { renderStickerPdf, STICKER_GENDER } from '@/lib/stickerPdf';
 describe('sticker sheet', () => {
   it('prints 3 copies per serial, 8 rows per A4 page', async () => {
     const base = { modelId: 'P01', gender: 'W' as const, colorCode: '01', colorName: 'Olive Green', size: 'M', quantity: 5 };
-    // 5 + 4 serials = 9 rows → 2 pages.
+    // 5 + 4 serials = 9 product rows (8 + 1), then 3 rows of tag labels: 2 fit
+    // below the last product row, the third goes to page 3.
     const { series } = planSeries([base, { ...base, size: 'L', quantity: 4 }], {});
     const bytes = await renderStickerPdf(series);
     if (process.env.STICKER_PDF_OUT) writeFileSync(process.env.STICKER_PDF_OUT, bytes);
     const pdf = await PDFDocument.load(bytes);
     expect(STICKERS_PER_PAGE).toBe(24);
-    expect(pdf.getPageCount()).toBe(2);
+    expect(pdf.getPageCount()).toBe(3);
     expect(Math.round(pdf.getPage(0).getWidth())).toBe(595);
   });
 
-  it('adds tag stickers below the product rows, 4 per row and 9 rows per page', async () => {
+  it('adds tag labels after the product rows, 12 per page', async () => {
     const base = { modelId: 'P01', gender: 'M' as const, colorCode: '01', colorName: 'Olive Green', size: 'M' };
     const pages = async (quantity: number) => {
       const { series } = planSeries([{ ...base, quantity }], {});
       return (await PDFDocument.load(await renderStickerPdf(series))).getPageCount();
     };
-    // 4 product rows leave room for the 1 tag row on the same page.
-    expect(await pages(4)).toBe(1);
-    // 8 product rows fill the page, so the tag rows start on page 2.
-    expect(await pages(8)).toBe(2);
-    // 72 product rows = 9 full pages, then 18 tag rows = 2 more.
-    expect(await pages(72)).toBe(11);
-    expect(estimateStickerPages(72)).toBe(11);
+    // 2 product rows leave room for 1 label row on the same page.
+    expect(await pages(2)).toBe(1);
+    // 6 product rows leave less than a label's height, so labels go to page 2.
+    expect(await pages(6)).toBe(2);
+    // 24 product rows = 3 full pages, then 24 labels = 2 more.
+    expect(await pages(24)).toBe(5);
+    expect(estimateStickerPages(24)).toBe(5);
   });
 
   it('shows gender as M / F / U', () => {

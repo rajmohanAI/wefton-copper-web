@@ -265,7 +265,7 @@ export default function StickerBatch({
 
       {queue.length > 0 && (
         <p className="text-xs text-[var(--text-muted)]">
-          {serials} serial(s) × {STICKER_COPIES} copies + 1 tag sticker each = {serials * STICKERS_PER_SERIAL} stickers, about{' '}
+          {serials} serial(s) × {STICKER_COPIES} copies + 1 tag label each = {serials * STICKERS_PER_SERIAL} stickers, about{' '}
           {estimateStickerPages(serials)} A4 page(s).
         </p>
       )}
