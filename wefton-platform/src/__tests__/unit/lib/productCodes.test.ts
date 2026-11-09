@@ -26,19 +26,21 @@ describe('product codes', () => {
     expect(parseProductCode('WCP01M')).toBeNull();
   });
 
-  it('builds variant SKUs in the Table 1.1 order with a 3-digit model no', () => {
-    expect(skuBase('WCPM001')).toBe('WCP001M');
-    expect(buildVariantSku('WCPM001', '01', 'M')).toBe('WCP001M0103');
-    expect(buildVariantSku('WCPW001', '02', 'S')).toBe('WCP001W0202');
-    expect(buildVariantSku('WCPM001', '02', 'XL')).toBe('WCP001M0205');
-    expect(buildVariantSku('WCPM001', '01', '6XL')).toBe('WCP001M0110');
+  it('builds variant SKUs in the Table 1.1 order with a 2-digit model no', () => {
+    expect(skuBase('WCPM001')).toBe('WCP01M');
+    expect(skuBase('WCPM099')).toBe('WCP99M');
+    expect(skuBase('WCPM100')).toBeNull();
+    expect(buildVariantSku('WCPM001', '01', 'M')).toBe('WCP01M0103');
+    expect(buildVariantSku('WCPW001', '02', 'S')).toBe('WCP01W0202');
+    expect(buildVariantSku('WCPM001', '02', 'XL')).toBe('WCP01M0205');
+    expect(buildVariantSku('WCPM001', '01', '6XL')).toBe('WCP01M0110');
     expect(buildVariantSku('WCPM001', undefined, 'M')).toBeNull();
     expect(buildVariantSku('WCPM001', '01', 'XXXXL')).toBeNull();
   });
 
   it('maps XXL onto the size table', () => {
     expect(normalizeSize('xxl')).toBe('2XL');
-    expect(buildVariantSku('WCPM001', '01', 'XXL')).toBe('WCP001M0106');
+    expect(buildVariantSku('WCPM001', '01', 'XXL')).toBe('WCP01M0106');
   });
 
   it('numbers new colours after the highest one', () => {

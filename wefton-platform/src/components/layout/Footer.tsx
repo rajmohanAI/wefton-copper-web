@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Instagram, Facebook, Twitter, Mail, Phone, MapPin } from '@/components/ui/SocialIcons';
 import { BRAND } from '@/config/brand';
 import NewsletterForm from './NewsletterForm';
@@ -41,8 +42,25 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <Link
               href="/"
-              className="text-[var(--copper-light)] font-bold tracking-[4px] uppercase text-sm"
+              aria-label="Wefton Copper home"
+              className="inline-flex flex-col items-start gap-4 text-[var(--copper-light)] font-bold tracking-[4px] uppercase text-sm"
             >
+              <span className="relative">
+                {/* Soft copper halo behind the mark */}
+                <span
+                  aria-hidden
+                  className="absolute -inset-4 rounded-full blur-xl"
+                  style={{ background: 'radial-gradient(ellipse at center, rgba(214,143,100,0.22) 0%, transparent 70%)' }}
+                />
+                <Image
+                  src="/brand/wefton-mark.png"
+                  alt=""
+                  width={720}
+                  height={464}
+                  sizes="96px"
+                  className="relative h-14 w-auto drop-shadow-[0_1px_2px_rgba(60,40,25,0.28)]"
+                />
+              </span>
               WEFTON COPPER
             </Link>
             <p className="mt-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-xs">
@@ -140,45 +158,20 @@ export default function Footer() {
             <NewsletterForm />
           </div>
         </div>
-        {/* Google Maps Location */}
-        <div className="mt-12 pt-8 border-t border-[var(--border-subtle)]">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-6">
-            <div>
-              <h3 className="text-sm font-medium tracking-wider text-[var(--text-light)]">
-                Visit Us
-              </h3>
-              <p className="text-xs text-[var(--text-muted)] mt-1">
-                Wefton Copper — Chennai, India
-              </p>
-            </div>
-            <a
-              href="https://maps.app.goo.gl/r82wZXHQRbgeAk4X8"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-[var(--copper-light)] hover:underline"
-            >
-              Open in Google Maps →
-            </a>
-          </div>
-          <div className="w-full h-[250px] rounded-xl overflow-hidden border border-[var(--border-subtle)]">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d230.67822236149357!2d80.162703!3d12.9523555!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a525fb3cff0b54d%3A0xa458fe01de5b7f5!2sWEFTON%20COPPER!5e1!3m2!1sen!2sin!4v1783013837517!5m2!1sen!2sin"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
-              title="Wefton Copper Location"
-            />
-          </div>
-        </div>
       </div>
 
       {/* Bottom Bar */}
       <div className="border-t border-[var(--border-subtle)] py-5">
         <div className="max-w-[1280px] mx-auto px-4 md:px-8 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-[var(--text-faint)]">
+          <p className="flex items-center gap-2 text-xs text-[var(--text-faint)]">
+            <Image
+              src="/brand/wefton-mark.png"
+              alt=""
+              width={720}
+              height={464}
+              sizes="32px"
+              className="h-3.5 w-auto opacity-60"
+            />
             © 2026 Wefton Copper. All rights reserved.
           </p>
           <p className="text-xs text-[var(--text-faint)]">

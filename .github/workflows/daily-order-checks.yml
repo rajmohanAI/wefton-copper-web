@@ -25,7 +25,7 @@ jobs:
       - name: Call the order-checks endpoint
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          SITE_URL: ${{ vars.SITE_URL || 'https://weftoncopper.com' }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://www.weftoncopper.com' }}
         run: |
           if [ -z "$CRON_SECRET" ]; then
             echo "::warning::CRON_SECRET is not set; skipping."

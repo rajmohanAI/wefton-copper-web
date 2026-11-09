@@ -91,8 +91,8 @@ export function buildTemplateCsv(mode: ImportMode): string {
   if (mode === 'update-stock') {
     const headers = ['sku', 'inventory', 'mode'];
     const rows = [
-      ['WCP001M0103', '20', 'set'],
-      ['WCP001M0104', '5', 'delta'],
+      ['WCP01M0103', '20', 'set'],
+      ['WCP01M0104', '5', 'delta'],
     ];
     return [headers, ...rows].map((r) => r.join(',')).join('\n') + '\n';
   }

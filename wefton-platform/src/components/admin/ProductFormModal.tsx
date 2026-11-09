@@ -404,7 +404,7 @@ export default function ProductFormModal({
     const master = findColor(colors, colorName);
     const code = productCode || `WCP${gender === 'women' ? 'W' : gender === 'unisex' ? 'U' : 'M'}000`;
     const sku = buildVariantSku(code, master?.code, size);
-    return sku ? (productCode ? sku : sku.replace(/^WCP000/, 'WCP###')) : '—';
+    return sku ? (productCode ? sku : sku.replace(/^WCP00/, 'WCP##')) : '—';
   };
 
   return (

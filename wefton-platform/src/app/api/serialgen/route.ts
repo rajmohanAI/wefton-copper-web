@@ -6,6 +6,11 @@ import {
   buildPdfName,
   type SerialConfig,
 } from '@/lib/serialgen';
+import { getAdminDb } from '@/lib/firebaseAdmin';
+import { getRequestAdminUid } from '@/lib/serverAuth';
+import { renderStickerPdf, buildStickerPdfName } from '@/lib/stickerPdf';
+import { CatalogError, getColors } from '@/services/catalogServer';
+import { getLastPrinted, getSerialModels, reserveSeries } from '@/services/serialServer';
 
 // Barcode rendering requires the Node.js runtime.
 export const runtime = 'nodejs';
@@ -31,8 +36,55 @@ const ROWS = Math.max(1, Math.floor((USABLE_H + CELL_GAP_Y) / (LABEL_H + CELL_GA
 const PER_PAGE = COLS * ROWS;
 
 /**
+ * GET /api/serialgen — product/model list, colours and the last piece no
+ * printed per variant, for the sticker form. Admin only.
+ */
+export async function GET(request: NextRequest) {
+  if (!(await getRequestAdminUid(request))) {
+    return NextResponse.json({ error: 'Admins only' }, { status: 403 });
+  }
+  const db = getAdminDb();
+  const [models, colors, last] = await Promise.all([getSerialModels(db), getColors(db), getLastPrinted(db)]);
+  return NextResponse.json({ models, colors, last });
+}
+
+/**
+ * POST /api/serialgen with { items: StickerRequest[] } reserves the next
+ * serials for each line and returns the sticker sheet PDF (see
+ * lib/stickerPdf). The reserved numbers are remembered, so the next batch
+ * for the same variant carries on from there.
+ */
+async function generateStickers(items: unknown) {
+  try {
+    const series = await reserveSeries(getAdminDb(), items as never[]);
+    const pdfBytes = await renderStickerPdf(series);
+    const pdfName = buildStickerPdfName(series);
+    const count = series.reduce((n, s) => n + s.quantity, 0);
+    return new NextResponse(new Uint8Array(pdfBytes), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${pdfName}"`,
+        'Content-Length': String(pdfBytes.length),
+        'Cache-Control': 'no-store',
+        'X-Serial-Count': String(count),
+        'X-Serial-Series': encodeURIComponent(
+          JSON.stringify(series.map((s) => ({ prefix: s.prefix, start: s.start, end: s.end })))
+        ),
+        'X-Serial-Filename': pdfName,
+      },
+    });
+  } catch (e) {
+    if (e instanceof CatalogError) return NextResponse.json({ error: e.message }, { status: e.status });
+    console.error('[serialgen] Sticker generation failed:', e);
+    return NextResponse.json({ error: 'Sticker generation failed.' }, { status: 500 });
+  }
+}
+
+/**
  * POST /api/serialgen
- * Body: { prefix, suffix, start, end, increment, barcodeType? }
+ * Body: { items } for product stickers (above), or the custom range
+ * { prefix, suffix, start, end, increment, barcodeType? } below.
  *
  * Generates a high-quality barcode per serial, lays them out in sequence
  * order into a single PDF (grid, one cell per serial, each labelled), and
@@ -41,12 +93,18 @@ const PER_PAGE = COLS * ROWS;
  * to server storage, so it works locally and on the deployed app.
  */
 export async function POST(request: NextRequest) {
-  let body: Partial<SerialConfig> & { barcodeType?: string };
+  if (!(await getRequestAdminUid(request))) {
+    return NextResponse.json({ error: 'Admins only' }, { status: 403 });
+  }
+
+  let body: Partial<SerialConfig> & { barcodeType?: string; items?: unknown };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }
+
+  if (body.items !== undefined) return generateStickers(body.items);
 
   const cfg: SerialConfig = {
     prefix: (body.prefix ?? '').toString(),
