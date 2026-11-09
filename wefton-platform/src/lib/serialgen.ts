@@ -111,6 +111,18 @@ export const STICKER_COPIES = 3;
 /** A4 sheet: one serial (its 3 copies) per row, 8 rows a page. */
 export const STICKER_ROWS_PER_PAGE = 8;
 export const STICKERS_PER_PAGE = STICKER_COPIES * STICKER_ROWS_PER_PAGE;
+/** After those rows, every serial prints once more for the tag label. */
+export const TAG_STICKERS_PER_ROW = 4;
+export const TAG_ROWS_PER_PAGE = 9;
+
+/** Stickers one serial uses in the PDF: its product copies plus one for the tag. */
+export const STICKERS_PER_SERIAL = STICKER_COPIES + 1;
+
+/** Rough A4 page count for a batch; tag rows start on the last product page. */
+export function estimateStickerPages(serials: number): number {
+  const tagRows = Math.ceil(serials / TAG_STICKERS_PER_ROW);
+  return Math.ceil(serials / STICKER_ROWS_PER_PAGE + tagRows / TAG_ROWS_PER_PAGE);
+}
 
 export interface SerialModel {
   id: string; // "P01"
