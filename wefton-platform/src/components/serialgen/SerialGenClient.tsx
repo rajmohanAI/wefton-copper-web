@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { AlertCircle, Barcode } from 'lucide-react';
 import { fetchSerialCatalog, type SerialCatalog } from '@/services/serialgenService';
 import CustomRangeForm from './CustomRangeForm';
+import SerialHistory from './SerialHistory';
 import StickerBatch from './StickerBatch';
 import StickerExcelUpload from './StickerExcelUpload';
 
@@ -14,6 +15,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 export default function SerialGenClient() {
   const [catalog, setCatalog] = useState<SerialCatalog | null>(null);
   const [error, setError] = useState('');
+  const [printCount, setPrintCount] = useState(0);
 
   // Reloaded after every print so "next serial" reflects what was just used.
   const refresh = useCallback(() => {
@@ -24,6 +26,11 @@ export default function SerialGenClient() {
 
   useEffect(refresh, [refresh]);
 
+  const onPrinted = useCallback(() => {
+    refresh();
+    setPrintCount((n) => n + 1);
+  }, [refresh]);
+
   return (
     <div className="min-h-screen pt-[var(--nav-height)] bg-[var(--bg-dark)] p-8">
       <div className="max-w-3xl mx-auto space-y-8">
@@ -32,9 +39,10 @@ export default function SerialGenClient() {
             <Barcode size={28} /> Serial / Barcode Generator
           </h1>
           <p className="text-sm text-[var(--text-muted)]">
-            Product stickers are 5.5 × 3.3 cm, three copies of each serial per row on A4. Serials look like
+            Product stickers are 5.5 × 3.3 cm, three copies of each serial per row on A4, followed by one 4.78 × 2.9 cm
+            tag sticker per serial, four per row. Serials look like
             WCP01M0103000001 (product, gender, colour, size, piece no) and carry on from the last one printed for
-            that variant, so no number is printed twice.
+            that variant. Asking for serials already generated brings up a prompt first.
           </p>
         </div>
 
@@ -48,16 +56,21 @@ export default function SerialGenClient() {
           <>
             <section>
               <SectionTitle>Build a batch</SectionTitle>
-              <StickerBatch catalog={catalog} onCatalogChange={setCatalog} onPrinted={refresh} />
+              <StickerBatch catalog={catalog} onCatalogChange={setCatalog} onPrinted={onPrinted} />
             </section>
             <section>
               <SectionTitle>Or upload an Excel file</SectionTitle>
-              <StickerExcelUpload catalog={catalog} onPrinted={refresh} />
+              <StickerExcelUpload catalog={catalog} onPrinted={onPrinted} />
             </section>
           </>
         ) : (
           !error && <p className="text-sm text-[var(--text-muted)]">Loading products…</p>
         )}
+
+        <section>
+          <SectionTitle>Download history</SectionTitle>
+          <SerialHistory refreshKey={printCount} />
+        </section>
 
         <details>
           <summary className="cursor-pointer text-xs font-medium tracking-wider uppercase text-[var(--text-muted)] mb-3">
