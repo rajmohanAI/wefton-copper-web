@@ -5,7 +5,14 @@
 // ============================================================
 import { getFirebaseAuth } from '@/lib/firebase';
 import type { CatalogColor } from '@/lib/productCodes';
-import { STICKER_SHEET_HEADERS, type SerialModel, type StickerRequest } from '@/lib/serialgen';
+import {
+  STICKER_SHEET_HEADERS,
+  type SerialConflict,
+  type SerialLogEntry,
+  type SerialModel,
+  type StickerRequest,
+  type StickerSource,
+} from '@/lib/serialgen';
 
 export interface SerialCatalog {
   models: SerialModel[];
@@ -17,6 +24,14 @@ export interface DownloadedPdf {
   file: string;
   count: number;
   series: { prefix: string; start: number; end: number }[];
+}
+
+/** Thrown when a batch repeats serials already generated. */
+export class StickerConflict extends Error {
+  constructor(public conflicts: SerialConflict[]) {
+    super('Some of these serials were already generated.');
+    this.name = 'StickerConflict';
+  }
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
@@ -57,13 +72,31 @@ function saveBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-/** Reserves the serials for `items`, then downloads the sticker PDF. */
-export async function downloadStickerPdf(items: StickerRequest[]): Promise<DownloadedPdf> {
+/** The latest lines of the download changelog. */
+export async function fetchSerialLog(): Promise<SerialLogEntry[]> {
+  const res = await fetch('/api/serialgen/history', { headers: await authHeaders(), cache: 'no-store' });
+  if (!res.ok) throw await errorFrom(res);
+  return (await res.json()).entries;
+}
+
+/**
+ * Reserves the serials for `items`, then downloads the sticker PDF. Throws
+ * StickerConflict when serials were already generated, unless `override`.
+ */
+export async function downloadStickerPdf(
+  items: StickerRequest[],
+  source: StickerSource,
+  override = false
+): Promise<DownloadedPdf> {
   const res = await fetch('/api/serialgen', {
     method: 'POST',
     headers: await authHeaders(),
-    body: JSON.stringify({ items }),
+    body: JSON.stringify({ items, source, override }),
   });
+  if (res.status === 409) {
+    const data = (await res.clone().json().catch(() => ({}))) as { conflicts?: SerialConflict[] };
+    if (data.conflicts?.length) throw new StickerConflict(data.conflicts);
+  }
   if (!res.ok) throw await errorFrom(res);
   const file = res.headers.get('X-Serial-Filename') || 'stickers.pdf';
   saveBlob(await res.blob(), file);
@@ -90,10 +123,10 @@ export async function downloadStickerTemplate() {
   const XLSX = await import('xlsx');
   const sheet = XLSX.utils.aoa_to_sheet([
     [...STICKER_SHEET_HEADERS],
-    ['P01', 'Olive Green', 'Men', 'M', 20],
-    ['P01', 'Deep Blue', 'Women', 'S', 20],
+    ['P01', 'Olive Green', 'Men', 'M', 20, ''],
+    ['P01', 'Deep Blue', 'Women', 'S', 20, ''],
   ]);
-  sheet['!cols'] = [{ wch: 12 }, { wch: 16 }, { wch: 10 }, { wch: 8 }, { wch: 10 }];
+  sheet['!cols'] = [{ wch: 12 }, { wch: 16 }, { wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 8 }];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, sheet, 'Stickers');
   const out = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;

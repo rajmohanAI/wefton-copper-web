@@ -6,11 +6,17 @@ import {
   buildPdfName,
   type SerialConfig,
 } from '@/lib/serialgen';
-import { getAdminDb } from '@/lib/firebaseAdmin';
+import { getAdminAuth, getAdminDb } from '@/lib/firebaseAdmin';
 import { getRequestAdminUid } from '@/lib/serverAuth';
 import { renderStickerPdf, buildStickerPdfName } from '@/lib/stickerPdf';
 import { CatalogError, getColors } from '@/services/catalogServer';
-import { getLastPrinted, getSerialModels, reserveSeries } from '@/services/serialServer';
+import {
+  SerialConflictError,
+  getLastPrinted,
+  getSerialModels,
+  markSerialLogFailed,
+  reserveSeries,
+} from '@/services/serialServer';
 
 // Barcode rendering requires the Node.js runtime.
 export const runtime = 'nodejs';
@@ -49,15 +55,28 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/serialgen with { items: StickerRequest[] } reserves the next
- * serials for each line and returns the sticker sheet PDF (see
- * lib/stickerPdf). The reserved numbers are remembered, so the next batch
- * for the same variant carries on from there.
+ * POST /api/serialgen with { items: StickerRequest[], source, override? }
+ * reserves the serials for each line and returns the sticker sheet PDF (see
+ * lib/stickerPdf). The reserved numbers are remembered and logged, so the
+ * next batch for the same variant carries on from there. Serials already
+ * generated come back as a 409 with `conflicts` unless `override` is set.
  */
-async function generateStickers(items: unknown) {
+async function generateStickers(uid: string, body: { items?: unknown; override?: unknown; source?: unknown }) {
   try {
-    const series = await reserveSeries(getAdminDb(), items as never[]);
-    const pdfBytes = await renderStickerPdf(series);
+    const db = getAdminDb();
+    const by = (await getAdminAuth().getUser(uid).catch(() => null))?.email ?? uid;
+    const { series, logIds } = await reserveSeries(db, body.items as never[], {
+      override: body.override === true,
+      source: body.source === 'excel' ? 'excel' : 'batch',
+      by,
+    });
+    let pdfBytes: Uint8Array;
+    try {
+      pdfBytes = await renderStickerPdf(series);
+    } catch (e) {
+      await markSerialLogFailed(db, logIds).catch((err) => console.error('[serialgen] Could not mark log:', err));
+      throw e;
+    }
     const pdfName = buildStickerPdfName(series);
     const count = series.reduce((n, s) => n + s.quantity, 0);
     return new NextResponse(new Uint8Array(pdfBytes), {
@@ -75,6 +94,9 @@ async function generateStickers(items: unknown) {
       },
     });
   } catch (e) {
+    if (e instanceof SerialConflictError) {
+      return NextResponse.json({ error: e.message, conflicts: e.conflicts }, { status: e.status });
+    }
     if (e instanceof CatalogError) return NextResponse.json({ error: e.message }, { status: e.status });
     console.error('[serialgen] Sticker generation failed:', e);
     return NextResponse.json({ error: 'Sticker generation failed.' }, { status: 500 });
@@ -93,18 +115,19 @@ async function generateStickers(items: unknown) {
  * to server storage, so it works locally and on the deployed app.
  */
 export async function POST(request: NextRequest) {
-  if (!(await getRequestAdminUid(request))) {
+  const uid = await getRequestAdminUid(request);
+  if (!uid) {
     return NextResponse.json({ error: 'Admins only' }, { status: 403 });
   }
 
-  let body: Partial<SerialConfig> & { barcodeType?: string; items?: unknown };
+  let body: Partial<SerialConfig> & { barcodeType?: string; items?: unknown; override?: unknown; source?: unknown };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }
 
-  if (body.items !== undefined) return generateStickers(body.items);
+  if (body.items !== undefined) return generateStickers(uid, body);
 
   const cfg: SerialConfig = {
     prefix: (body.prefix ?? '').toString(),
