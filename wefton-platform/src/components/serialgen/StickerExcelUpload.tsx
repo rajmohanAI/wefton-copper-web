@@ -102,7 +102,7 @@ export default function StickerExcelUpload({ catalog, onPrinted }: { catalog: Se
       {requests.length > 0 && errors.length === 0 && (
         <>
           <p className="text-xs text-[var(--text-muted)]">
-            {requests.length} row(s), {serials} serial(s) × {STICKER_COPIES} copies + 1 tag sticker each ={' '}
+            {requests.length} row(s), {serials} serial(s) × {STICKER_COPIES} copies + 1 tag label each ={' '}
             {serials * STICKERS_PER_SERIAL} stickers, about {estimateStickerPages(serials)} A4 page(s).
           </p>
           <Button variant="copper" onClick={generate} loading={submitting} disabled={submitting}>
