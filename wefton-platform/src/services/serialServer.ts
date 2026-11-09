@@ -1,17 +1,24 @@
 // ============================================================
 // Wefton Copper — Sticker serial masters (server only)
-// The product/model list and the last piece no printed per variant live
-// in Firestore and are written only through the Admin SDK. Serials are
-// reserved inside a transaction, so two admins printing at the same
-// moment never get the same numbers.
+// The product/model list, the piece nos printed per variant and the
+// download changelog (serialLog) live in Firestore and are written only
+// through the Admin SDK. Serials are reserved inside a transaction, so two
+// admins printing at the same moment never get the same numbers.
 // ============================================================
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import {
   DEFAULT_SERIAL_MODELS,
+  findSerialConflicts,
+  mergeRanges,
   nextModelId,
   planSeries,
+  printedRanges,
   validateStickerRequest,
+  type PrintedRange,
+  type SerialConflict,
+  type SerialLogEntry,
   type SerialModel,
+  type StickerSource,
   type StickerRequest,
   type StickerSeries,
 } from '@/lib/serialgen';
@@ -19,6 +26,15 @@ import { CatalogError, getColors } from '@/services/catalogServer';
 
 const MODELS_DOC = 'settings/serialModels';
 const COUNTERS_DOC = 'counters/serials';
+const LOG_COLLECTION = 'serialLog';
+
+/** The batch repeats serials already generated; the admin decides what to do. */
+export class SerialConflictError extends CatalogError {
+  constructor(public conflicts: SerialConflict[]) {
+    super(409, 'Some of these serials were already generated.');
+    this.name = 'SerialConflictError';
+  }
+}
 
 /** Most serial lines one PDF may hold, to keep a request bounded. */
 export const MAX_REQUEST_LINES = 200;
@@ -57,11 +73,24 @@ export async function getLastPrinted(db: Firestore): Promise<Record<string, numb
   return (snap.exists ? (snap.get('last') as Record<string, number> | undefined) : undefined) ?? {};
 }
 
+export interface ReserveOptions {
+  /** Print even though some serials were already generated. */
+  override?: boolean;
+  source: StickerSource;
+  by: string;
+}
+
 /**
- * Validates the requests, then reserves their serial ranges, carrying on
- * from the last piece no printed for each variant.
+ * Validates the requests, reserves their serial ranges and writes them to the
+ * changelog. A line with no start carries on from the last piece no printed
+ * for its variant. Throws SerialConflictError when a line repeats serials
+ * already generated, unless `override` is set.
  */
-export async function reserveSeries(db: Firestore, requests: Partial<StickerRequest>[]): Promise<StickerSeries[]> {
+export async function reserveSeries(
+  db: Firestore,
+  requests: Partial<StickerRequest>[],
+  options: ReserveOptions
+): Promise<{ series: StickerSeries[]; logIds: string[] }> {
   if (!Array.isArray(requests) || !requests.length) throw new CatalogError(400, 'Add at least one line.');
   if (requests.length > MAX_REQUEST_LINES) throw new CatalogError(400, `At most ${MAX_REQUEST_LINES} lines per PDF.`);
 
@@ -82,15 +111,66 @@ export async function reserveSeries(db: Firestore, requests: Partial<StickerRequ
   return db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     const lastPrinted = (snap.exists ? (snap.get('last') as Record<string, number> | undefined) : undefined) ?? {};
+    const ranges = (snap.exists ? (snap.get('ranges') as Record<string, PrintedRange[]> | undefined) : undefined) ?? {};
     let plan: ReturnType<typeof planSeries>;
     try {
       plan = planSeries(resolved, lastPrinted);
     } catch (e) {
       throw new CatalogError(409, e instanceof Error ? e.message : 'Serial range is full');
     }
-    const updates: Record<string, number> = {};
-    for (const s of plan.series) updates[s.prefix] = plan.last[s.prefix];
-    tx.set(ref, { last: updates, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-    return plan.series;
+    const conflicts = findSerialConflicts(plan.series, ranges, lastPrinted);
+    if (conflicts.length && !options.override) throw new SerialConflictError(conflicts);
+
+    const lastUpdates: Record<string, number> = {};
+    const rangeUpdates: Record<string, PrintedRange[]> = {};
+    for (const s of plan.series) {
+      lastUpdates[s.prefix] = plan.last[s.prefix];
+      rangeUpdates[s.prefix] = mergeRanges([
+        ...(rangeUpdates[s.prefix] ?? printedRanges(s.prefix, ranges, lastPrinted)),
+        { s: s.start, e: s.end },
+      ]);
+    }
+    tx.set(ref, { last: lastUpdates, ranges: rangeUpdates, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+
+    const logIds = plan.series.map((s, line) => {
+      const logRef = db.collection(LOG_COLLECTION).doc();
+      tx.set(logRef, {
+        prefix: s.prefix,
+        modelId: s.modelId,
+        gender: s.gender,
+        colorName: s.colorName,
+        size: s.size,
+        start: s.start,
+        end: s.end,
+        quantity: s.quantity,
+        reprint: conflicts.some((c) => c.line === line),
+        source: options.source,
+        status: 'generated',
+        by: options.by,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+      return logRef.id;
+    });
+    return { series: plan.series, logIds };
+  });
+}
+
+/** Marks changelog lines whose PDF could not be built. */
+export async function markSerialLogFailed(db: Firestore, logIds: string[]): Promise<void> {
+  const batch = db.batch();
+  for (const id of logIds) batch.update(db.collection(LOG_COLLECTION).doc(id), { status: 'failed' });
+  await batch.commit();
+}
+
+/** Latest changelog lines, newest first. */
+export async function getSerialLog(db: Firestore, limit = 200): Promise<SerialLogEntry[]> {
+  const snap = await db.collection(LOG_COLLECTION).orderBy('createdAt', 'desc').limit(limit).get();
+  return snap.docs.map((d) => {
+    const data = d.data();
+    return {
+      ...(data as Omit<SerialLogEntry, 'id' | 'createdAt'>),
+      id: d.id,
+      createdAt: data.createdAt?.toDate?.().toISOString() ?? null,
+    };
   });
 }

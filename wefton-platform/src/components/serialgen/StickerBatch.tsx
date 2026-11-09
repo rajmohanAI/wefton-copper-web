@@ -7,13 +7,15 @@ import Input from '@/components/ui/Input';
 import { CATALOG_SIZES, type GenderLetter } from '@/lib/productCodes';
 import {
   STICKER_COPIES,
-  STICKERS_PER_PAGE,
+  STICKERS_PER_SERIAL,
   countSerials,
+  estimateStickerPages,
   formatSerial,
   planSeries,
   type StickerRequest,
 } from '@/lib/serialgen';
-import { createSerialModel, downloadStickerPdf, type DownloadedPdf, type SerialCatalog } from '@/services/serialgenService';
+import { createSerialModel, type DownloadedPdf, type SerialCatalog } from '@/services/serialgenService';
+import { useStickerPrint } from './useStickerPrint';
 
 type QueueItem = StickerRequest & { id: string; colorName: string };
 
@@ -67,11 +69,14 @@ export default function StickerBatch({
   const [gender, setGender] = useState<GenderLetter>('M');
   const [size, setSize] = useState('M');
   const [quantity, setQuantity] = useState('20');
+  const [startFrom, setStartFrom] = useState('');
   const [newModel, setNewModel] = useState('');
   const [addingModel, setAddingModel] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [result, setResult] = useState<DownloadedPdf | null>(null);
+  const { print, submitting, error: printError, result, clearResult, dialog } = useStickerPrint('batch', () => {
+    setQueue([]);
+    onPrinted();
+  });
 
   useEffect(() => {
     setQueue(loadQueue());
@@ -96,26 +101,36 @@ export default function StickerBatch({
     }
   }, [queue, catalog.last]);
 
+  const startValue = startFrom ? Number(startFrom) : undefined;
+
   const nextFor = useMemo(() => {
     const color = catalog.colors.find((c) => c.code === colorCode);
     if (!color) return null;
     try {
-      const { series } = planSeries([...queue, { modelId, gender, colorCode, colorName: color.name, size, quantity: 1 }], catalog.last);
+      const { series } = planSeries(
+        [...queue, { modelId, gender, colorCode, colorName: color.name, size, quantity: 1, ...(startValue ? { start: startValue } : {}) }],
+        catalog.last
+      );
       const s = series[series.length - 1];
       return formatSerial(s.prefix, s.start);
     } catch {
       return null;
     }
-  }, [queue, modelId, gender, colorCode, size, catalog]);
+  }, [queue, modelId, gender, colorCode, size, startValue, catalog]);
 
   const qty = parseInt(quantity, 10);
-  const canAdd = !!modelId && !!colorCode && Number.isInteger(qty) && qty >= 1 && !!nextFor;
+  const startOk = !startFrom || (startValue !== undefined && startValue >= 1);
+  const canAdd = !!modelId && !!colorCode && Number.isInteger(qty) && qty >= 1 && startOk && !!nextFor;
 
   const addLine = () => {
     const color = catalog.colors.find((c) => c.code === colorCode);
     if (!canAdd || !color) return;
-    setQueue((q) => [...q, { id: crypto.randomUUID(), modelId, gender, colorCode, colorName: color.name, size, quantity: qty }]);
-    setResult(null);
+    setQueue((q) => [
+      ...q,
+      { id: crypto.randomUUID(), modelId, gender, colorCode, colorName: color.name, size, quantity: qty, ...(startValue ? { start: startValue } : {}) },
+    ]);
+    setStartFrom('');
+    clearResult();
   };
 
   const addModel = async () => {
@@ -133,20 +148,9 @@ export default function StickerBatch({
     }
   };
 
-  const generate = async () => {
+  const generate = () => {
     setError('');
-    setResult(null);
-    setSubmitting(true);
-    try {
-      const pdf = await downloadStickerPdf(queue.map(({ modelId, gender, colorCode, size, quantity }) => ({ modelId, gender, colorCode, size, quantity })));
-      setResult(pdf);
-      setQueue([]);
-      onPrinted();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Generation failed.');
-    } finally {
-      setSubmitting(false);
-    }
+    print(queue.map(({ modelId, gender, colorCode, size, quantity, start }) => ({ modelId, gender, colorCode, size, quantity, ...(start ? { start } : {}) })));
   };
 
   const serials = countSerials(queue);
@@ -171,7 +175,7 @@ export default function StickerBatch({
       </div>
       {modelName && <p className="-mt-3 text-xs text-[var(--text-muted)]">{modelName}</p>}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Select label="Color" value={colorCode} onChange={setColorCode}>
           {catalog.colors.map((c) => (
             <option key={c.code} value={c.code} className="bg-[var(--bg-dark)]">
@@ -194,6 +198,7 @@ export default function StickerBatch({
           ))}
         </Select>
         <Input label="Quantity" type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+        <Input label="Start from" type="number" min="1" value={startFrom} onChange={(e) => setStartFrom(e.target.value)} placeholder="Auto" />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -260,14 +265,14 @@ export default function StickerBatch({
 
       {queue.length > 0 && (
         <p className="text-xs text-[var(--text-muted)]">
-          {serials} serial(s) × {STICKER_COPIES} copies = {serials * STICKER_COPIES} stickers, about{' '}
-          {Math.ceil((serials * STICKER_COPIES) / STICKERS_PER_PAGE)} A4 page(s).
+          {serials} serial(s) × {STICKER_COPIES} copies + 1 tag sticker each = {serials * STICKERS_PER_SERIAL} stickers, about{' '}
+          {estimateStickerPages(serials)} A4 page(s).
         </p>
       )}
 
-      {error && (
+      {(error || printError) && (
         <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded px-3 py-2 flex items-start gap-2">
-          <AlertCircle size={15} className="mt-0.5 flex-shrink-0" /> {error}
+          <AlertCircle size={15} className="mt-0.5 flex-shrink-0" /> {error || printError}
         </p>
       )}
 
@@ -283,6 +288,7 @@ export default function StickerBatch({
       </div>
 
       {result && <PrintedNote result={result} />}
+      {dialog}
     </div>
   );
 }
