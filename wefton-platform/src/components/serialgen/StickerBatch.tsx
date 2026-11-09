@@ -7,8 +7,9 @@ import Input from '@/components/ui/Input';
 import { CATALOG_SIZES, type GenderLetter } from '@/lib/productCodes';
 import {
   STICKER_COPIES,
-  STICKERS_PER_PAGE,
+  STICKERS_PER_SERIAL,
   countSerials,
+  estimateStickerPages,
   formatSerial,
   planSeries,
   type StickerRequest,
@@ -260,8 +261,8 @@ export default function StickerBatch({
 
       {queue.length > 0 && (
         <p className="text-xs text-[var(--text-muted)]">
-          {serials} serial(s) × {STICKER_COPIES} copies = {serials * STICKER_COPIES} stickers, about{' '}
-          {Math.ceil((serials * STICKER_COPIES) / STICKERS_PER_PAGE)} A4 page(s).
+          {serials} serial(s) × {STICKER_COPIES} copies + 1 tag sticker each = {serials * STICKERS_PER_SERIAL} stickers, about{' '}
+          {estimateStickerPages(serials)} A4 page(s).
         </p>
       )}
 
