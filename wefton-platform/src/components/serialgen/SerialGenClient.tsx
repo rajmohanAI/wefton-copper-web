@@ -39,8 +39,8 @@ export default function SerialGenClient() {
             <Barcode size={28} /> Serial / Barcode Generator
           </h1>
           <p className="text-sm text-[var(--text-muted)]">
-            Product stickers are 5.5 × 3.3 cm, three copies of each serial per row on A4, followed by one 4.78 × 2.9 cm
-            tag sticker per serial, four per row. Serials look like
+            Product stickers are 5.5 × 3.3 cm, three copies of each serial per row on A4, followed by one full 4.8 × 8.5 cm
+            tag label per serial, twelve per page. Serials look like
             WCP01M0103000001 (product, gender, colour, size, piece no) and carry on from the last one printed for
             that variant. Asking for serials already generated brings up a prompt first.
           </p>
