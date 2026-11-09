@@ -140,6 +140,8 @@ export interface StickerRequest {
   colorCode: string;
   size: string;
   quantity: number;
+  /** Piece no to start from; left out, it carries on from the last one printed. */
+  start?: number;
 }
 
 /** A request resolved to its serial range and the text printed on its stickers. */
@@ -185,6 +187,9 @@ export function validateStickerRequest(
   if (!r.colorCode || !colorCodes.includes(r.colorCode)) return `Unknown colour "${r.colorCode ?? ''}".`;
   if (!sizeCode(r.size)) return `Unknown size "${r.size ?? ''}".`;
   if (!Number.isInteger(r.quantity) || (r.quantity ?? 0) < 1) return 'Quantity must be a whole number of at least 1.';
+  if (r.start !== undefined && (!Number.isInteger(r.start) || r.start < 1 || r.start > MAX_PIECE_NUMBER)) {
+    return `Start must be a whole number from 1 to ${MAX_PIECE_NUMBER}.`;
+  }
   return null;
 }
 
@@ -201,14 +206,104 @@ export function planSeries(
   const series = requests.map((r) => {
     const prefix = serialPrefix(r);
     if (!prefix) throw new Error(`Cannot build a serial for ${r.modelId} ${r.gender} ${r.colorCode} ${r.size}`);
-    const start = (last[prefix] ?? 0) + 1;
+    const start = r.start ?? (last[prefix] ?? 0) + 1;
     const end = start + r.quantity - 1;
     if (end > MAX_PIECE_NUMBER) throw new Error(`${prefix} would pass ${formatSerial(prefix, MAX_PIECE_NUMBER)}`);
-    last[prefix] = end;
+    last[prefix] = Math.max(last[prefix] ?? 0, end);
     return { ...r, size: normalizeSize(r.size), prefix, start, end };
   });
   return { series, last };
 }
+
+// ── Already-printed ranges ───────────────────────────────────
+
+/** A run of piece nos already generated for one variant (s to e, inclusive). */
+export interface PrintedRange {
+  s: number;
+  e: number;
+}
+
+/** A batch line whose serials were already generated. */
+export interface SerialConflict {
+  line: number; // index into the request list
+  prefix: string;
+  start: number;
+  end: number;
+  overlapStart: number;
+  overlapEnd: number;
+  /** First piece no free after everything printed so far for the variant. */
+  nextStart: number;
+}
+
+/** Sorts ranges and joins the ones that overlap or touch. */
+export function mergeRanges(ranges: PrintedRange[]): PrintedRange[] {
+  const merged: PrintedRange[] = [];
+  for (const r of [...ranges].sort((a, b) => a.s - b.s)) {
+    const prev = merged[merged.length - 1];
+    if (prev && r.s <= prev.e + 1) prev.e = Math.max(prev.e, r.e);
+    else merged.push({ ...r });
+  }
+  return merged;
+}
+
+/** Ranges for a variant. Batches from before ranges were kept count as 1 to last. */
+export function printedRanges(
+  prefix: string,
+  ranges: Record<string, PrintedRange[]>,
+  lastPrinted: Record<string, number>
+): PrintedRange[] {
+  if (ranges[prefix]) return ranges[prefix];
+  return lastPrinted[prefix] ? [{ s: 1, e: lastPrinted[prefix] }] : [];
+}
+
+/** Lines repeating serials already generated, or repeating an earlier line in the batch. */
+export function findSerialConflicts(
+  series: Pick<StickerSeries, 'prefix' | 'start' | 'end'>[],
+  ranges: Record<string, PrintedRange[]>,
+  lastPrinted: Record<string, number>
+): SerialConflict[] {
+  const seen: Record<string, PrintedRange[]> = {};
+  const conflicts: SerialConflict[] = [];
+  series.forEach(({ prefix, start, end }, line) => {
+    seen[prefix] ??= [...printedRanges(prefix, ranges, lastPrinted)];
+    const hit = seen[prefix].find((r) => r.s <= end && r.e >= start);
+    if (hit) {
+      conflicts.push({
+        line,
+        prefix,
+        start,
+        end,
+        overlapStart: Math.max(start, hit.s),
+        overlapEnd: Math.min(end, hit.e),
+        nextStart: Math.max(...seen[prefix].map((r) => r.e)) + 1,
+      });
+    }
+    seen[prefix].push({ s: start, e: end });
+  });
+  return conflicts;
+}
+
+/** One line of the download changelog. */
+export interface SerialLogEntry {
+  id: string;
+  prefix: string;
+  modelId: string;
+  gender: GenderLetter;
+  colorName: string;
+  size: string;
+  start: number;
+  end: number;
+  quantity: number;
+  /** The admin chose to print serials that were already generated. */
+  reprint: boolean;
+  source: StickerSource;
+  /** "failed" when the PDF could not be built after the numbers were reserved. */
+  status: 'generated' | 'failed';
+  by: string;
+  createdAt: string | null;
+}
+
+export type StickerSource = 'batch' | 'excel';
 
 export function countSerials(series: Pick<StickerSeries, 'quantity'>[]): number {
   return series.reduce((n, s) => n + s.quantity, 0);
@@ -216,7 +311,7 @@ export function countSerials(series: Pick<StickerSeries, 'quantity'>[]): number 
 
 // ── Excel upload ─────────────────────────────────────────────
 
-export const STICKER_SHEET_HEADERS = ['Product ID', 'Color', 'Gender', 'Size', 'Quantity'] as const;
+export const STICKER_SHEET_HEADERS = ['Product ID', 'Color', 'Gender', 'Size', 'Quantity', 'Start'] as const;
 
 const GENDER_WORDS: Record<string, GenderLetter> = {
   M: 'M', MEN: 'M', MALE: 'M',
@@ -247,7 +342,7 @@ export function parseStickerRows(
     const rowNo = i + 2;
     const raw = STICKER_SHEET_HEADERS.map((h) => cell(row, h));
     if (raw.every((v) => !v)) return;
-    const [model, colorText, genderText, size, qty] = raw;
+    const [model, colorText, genderText, size, qty, startText] = raw;
     const color = findColor(colors, colorText) ?? colors.find((c) => c.code === colorText.padStart(2, '0')) ?? null;
     const request = {
       modelId: model.toUpperCase(),
@@ -255,6 +350,7 @@ export function parseStickerRows(
       colorCode: color?.code ?? colorText,
       size: normalizeSize(size),
       quantity: Number(qty),
+      ...(startText ? { start: Number(startText) } : {}),
     };
     const error = validateStickerRequest(request, models, colors.map((c) => c.code));
     if (error) errors.push(`Row ${rowNo}: ${error}`);
