@@ -66,6 +66,7 @@ function buildNavLinks(
     { label: 'New Arrivals', href: '/new-arrivals' },
     { label: 'Vision', href: '/vision' },
     { label: 'About', href: '/about' },
+    { label: 'Check Product', href: '/check-product' },
   ];
 }
 
@@ -168,7 +169,7 @@ export default function Navbar() {
               : 'bg-[var(--bg-dark)]/80 backdrop-blur-sm'
           )}
         />
-        <nav className="w-full min-h-[48px] px-[0.5cm] flex items-center justify-between">
+        <nav className="w-full min-h-[48px] px-[0.5cm] flex items-center justify-between gap-6">
           {/* Logo */}
           <Link
             href="/"
@@ -187,12 +188,12 @@ export default function Navbar() {
                 scrolled ? 'h-[30px]' : 'h-[34px]'
               )}
             />
-            <span aria-hidden className="hidden sm:block h-6 w-px bg-[var(--copper-main)]/40" />
-            <span className="hidden sm:inline">WEFTON COPPER</span>
+            <span aria-hidden className="hidden sm:block lg:hidden xl:block h-6 w-px bg-[var(--copper-main)]/40" />
+            <span className="hidden sm:inline lg:hidden xl:inline">WEFTON COPPER</span>
           </Link>
 
           {/* Desktop Nav */}
-          <ul className="hidden lg:flex items-center gap-8">
+          <ul className="hidden lg:flex items-center gap-5 xl:gap-8">
             {navLinks.map((link) => (
               <li
                 key={link.label}
@@ -202,7 +203,7 @@ export default function Navbar() {
                 <Link
                   href={link.href}
                   className={cn(
-                    'flex items-center gap-1 text-sm tracking-widest uppercase transition-colors duration-200',
+                    'flex items-center gap-1 whitespace-nowrap text-sm tracking-widest uppercase transition-colors duration-200',
                     pathname === link.href || pathname.startsWith(link.href + '/')
                       ? 'text-[var(--copper-light)]'
                       : 'text-[var(--text-light)] hover:text-[var(--copper-light)]'

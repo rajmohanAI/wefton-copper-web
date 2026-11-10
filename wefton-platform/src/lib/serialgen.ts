@@ -8,6 +8,7 @@
 import {
   GENDER_LETTER,
   MAX_SKU_MODEL_NUMBER,
+  SIZE_CODES,
   findColor,
   formatModelId,
   normalizeSize,
@@ -175,6 +176,39 @@ export function serialPrefix(r: Pick<StickerRequest, 'modelId' | 'gender' | 'col
 
 export function formatSerial(prefix: string, n: number): string {
   return `${prefix}${String(n).padStart(PIECE_DIGITS, '0')}`;
+}
+
+/** A serial read back into its parts. */
+export interface ParsedSerial {
+  serial: string;
+  prefix: string;
+  piece: number;
+  modelId: string;
+  gender: GenderLetter;
+  colorCode: string;
+  size: string;
+}
+
+/**
+ * Reads a serial such as WCP01M0103000001 (spaces, dashes and case are
+ * ignored). Null when it isn't in that shape or the size code is unknown.
+ */
+export function parseSerial(input: string): ParsedSerial | null {
+  const serial = input.toUpperCase().replace(/[\s-]+/g, '');
+  const m = /^WC(P\d{2})([MWU])(\d{2})(\d{2})(\d{6})$/.exec(serial);
+  if (!m || !isModelId(m[1])) return null;
+  const size = Object.keys(SIZE_CODES).find((k) => SIZE_CODES[k] === m[4]);
+  const piece = Number(m[5]);
+  if (!size || piece < 1) return null;
+  return {
+    serial,
+    prefix: serial.slice(0, -PIECE_DIGITS),
+    piece,
+    modelId: m[1],
+    gender: m[2] as GenderLetter,
+    colorCode: m[3],
+    size,
+  };
 }
 
 /** Checks one request against the model and colour lists; returns an error or null. */
