@@ -8,7 +8,6 @@ const FOOTER_LINKS = {
   Shop: [
     { label: "Men's Collection", href: '/men' },
     { label: "Women's Collection", href: '/women' },
-    { label: 'New Arrivals', href: '/new-arrivals' },
     { label: 'Bestsellers', href: '/bestsellers' },
   ],
   Company: [
@@ -20,6 +19,7 @@ const FOOTER_LINKS = {
   Support: [
     { label: 'Size Guide', href: '/size-guide' },
     { label: 'Wash Care', href: '/wash-care' },
+    { label: 'Check Your Product', href: '/check-product' },
     { label: 'Shipping Policy', href: '/shipping' },
     { label: 'Return Policy', href: '/returns' },
     { label: 'Contact Us', href: '/contact' },

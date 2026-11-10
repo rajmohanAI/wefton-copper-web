@@ -8,6 +8,7 @@ import {
   formatSerial,
   mergeRanges,
   nextModelId,
+  parseSerial,
   parseStickerRows,
   planSeries,
   serialPrefix,
@@ -79,6 +80,22 @@ describe('sticker serials', () => {
 
   it('does not treat the same numbers on another variant as a repeat', () => {
     expect(findSerialConflicts([{ prefix: 'WCP01M0104', start: 1, end: 20 }], { WCP01M0103: [{ s: 1, e: 20 }] }, { WCP01M0103: 20 })).toEqual([]);
+  });
+
+  it('reads a serial back into its parts', () => {
+    expect(parseSerial(' wcp01-w0205 000020 ')).toEqual({
+      serial: 'WCP01W0205000020',
+      prefix: 'WCP01W0205',
+      piece: 20,
+      modelId: 'P01',
+      gender: 'W',
+      colorCode: '02',
+      size: 'XL',
+    });
+    expect(parseSerial('WCP01M0111000001')).toBeNull(); // no size 11
+    expect(parseSerial('WCP01M0103000000')).toBeNull();
+    expect(parseSerial('WCP01M010300001')).toBeNull();
+    expect(parseSerial('hello')).toBeNull();
   });
 
   it('refuses to pass 999999', () => {
