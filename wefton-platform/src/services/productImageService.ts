@@ -14,6 +14,8 @@ export const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
 export interface ImageUploadResult {
   uploaded: ProductImage[];
   failures: { fileName: string; message: string }[];
+  /** For each uploaded image, the position of its file in `files`. */
+  sourceIndexes: number[];
 }
 
 /** Filters a FileList/array to valid image files (type + size). */
@@ -37,26 +39,32 @@ export async function uploadProductImages(
   files: File[],
   altBase: string,
   markFirstPrimary = false,
-  onProgress?: (done: number, total: number) => void
+  onProgress?: (done: number, total: number) => void,
+  /** Colour for each file, by position; unset = every colour. */
+  colors?: (string | undefined)[]
 ): Promise<ImageUploadResult> {
   const storage = getFirebaseStorage();
   if (!storage) throw new Error('Firebase Storage is not configured.');
 
   const uploaded: ProductImage[] = [];
   const failures: ImageUploadResult['failures'] = [];
+  const sourceIndexes: number[] = [];
   let done = 0;
 
-  for (const file of files) {
+  for (const [index, file] of files.entries()) {
     try {
       const filename = `${Date.now()}-${file.name}`;
       const storageRef = ref(storage, `products/${productId}/${filename}`);
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
+      const color = colors?.[index];
       uploaded.push({
         url,
         alt: altBase || file.name,
         isPrimary: markFirstPrimary && uploaded.length === 0,
+        ...(color ? { color } : {}),
       });
+      sourceIndexes.push(index);
     } catch (e) {
       failures.push({ fileName: file.name, message: e instanceof Error ? e.message : 'Upload failed' });
     } finally {
@@ -65,5 +73,5 @@ export async function uploadProductImages(
     }
   }
 
-  return { uploaded, failures };
+  return { uploaded, failures, sourceIndexes };
 }

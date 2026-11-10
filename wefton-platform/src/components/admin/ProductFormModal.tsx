@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, Plus, Upload } from 'lucide-react';
+import { X, Plus, Upload, Star } from 'lucide-react';
 import { uploadProductImages, filterValidImageFiles } from '@/services/productImageService';
 import { slugify, cn } from '@/lib/utils';
 import { productFormSchema } from '@/lib/schemas';
@@ -67,6 +67,12 @@ export default function ProductFormModal({
   const [newArrival, setNewArrival] = useState(false);
   const [images, setImages] = useState<ProductImage[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  /** Colour for each new file, by position ('' = every colour). */
+  const [imageFileColors, setImageFileColors] = useState<string[]>([]);
+  /** Which image is the main one (the thumbnail): an existing image or a new file. */
+  const [mainImage, setMainImage] = useState<{ kind: 'existing' | 'new'; index: number } | null>(null);
+  /** Colour that newly chosen files are tagged with. */
+  const [uploadColor, setUploadColor] = useState('');
 
   // Variant grid state
   const [colors, setColors] = useState<CatalogColor[]>([]);
@@ -105,6 +111,8 @@ export default function ProductFormModal({
     setNewArrival(false);
     setImages([]);
     setImageFiles([]);
+    setImageFileColors([]);
+    setMainImage(null);
     setSelectedColors([]);
     setSelectedSizes([]);
     setStock({});
@@ -130,8 +138,12 @@ export default function ProductFormModal({
         setFeatured(product.featured);
         setBestseller(product.bestseller);
         setNewArrival(product.newArrival);
-        setImages(product.images || []);
+        const existing = product.images || [];
+        setImages(existing);
         setImageFiles([]);
+        setImageFileColors([]);
+        const mainIdx = existing.findIndex((i) => i.isPrimary);
+        setMainImage(existing.length ? { kind: 'existing', index: mainIdx >= 0 ? mainIdx : 0 } : null);
 
         const variants = product.variants || [];
         const gridVariants = variants.filter(fitsGrid);
@@ -253,32 +265,57 @@ export default function ProductFormModal({
     return [...grid, ...otherVariants];
   };
 
-  // Image handling
+  // Image handling. Each image can be tagged with the colour it shows, and
+  // one image is the main one (the product's thumbnail).
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const validFiles = filterValidImageFiles(files);
+    // New files take the colour picked in the upload box.
     setImageFiles((prev) => [...prev, ...validFiles]);
+    setImageFileColors((prev) => [...prev, ...validFiles.map(() => uploadColor)]);
+    if (!mainImage && validFiles.length) setMainImage({ kind: 'new', index: imageFiles.length });
+    e.target.value = '';
+  };
+
+  /** Keeps the main-image pointer valid after an image is removed. */
+  const afterRemove = (kind: 'existing' | 'new', index: number, remaining: { existing: number; new: number }) => {
+    setMainImage((m) => {
+      if (m && m.kind === kind && m.index === index) {
+        if (remaining.existing) return { kind: 'existing', index: 0 };
+        return remaining.new ? { kind: 'new', index: 0 } : null;
+      }
+      if (m && m.kind === kind && m.index > index) return { ...m, index: m.index - 1 };
+      return m;
+    });
   };
 
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
+    afterRemove('existing', index, { existing: images.length - 1, new: imageFiles.length });
   };
 
   const removeNewImage = (index: number) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImageFileColors((prev) => prev.filter((_, i) => i !== index));
+    afterRemove('new', index, { existing: images.length, new: imageFiles.length - 1 });
   };
 
-  // Upload images to Firebase Storage (delegates to shared service)
-  const uploadImages = useCallback(async (productId: string): Promise<ProductImage[]> => {
-    if (imageFiles.length === 0) return [];
-    const { uploaded } = await uploadProductImages(
-      productId,
-      imageFiles,
-      title,
-      images.length === 0 // mark first as primary only if no existing images
-    );
-    return uploaded;
-  }, [imageFiles, images.length, title]);
+  /**
+   * Uploads the new files and returns the full image list: colours applied
+   * and exactly one main image.
+   */
+  const buildImages = useCallback(async (productId: string): Promise<ProductImage[]> => {
+    const { uploaded, sourceIndexes } = imageFiles.length
+      ? await uploadProductImages(productId, imageFiles, title, false, undefined, imageFileColors)
+      : { uploaded: [], sourceIndexes: [] as number[] };
+    const all = [
+      ...images.map((img, i) => ({ ...img, isPrimary: mainImage?.kind === 'existing' && mainImage.index === i })),
+      ...uploaded.map((img, i) => ({ ...img, isPrimary: mainImage?.kind === 'new' && mainImage.index === sourceIndexes[i] })),
+    ];
+    if (all.length && !all.some((i) => i.isPrimary)) all[0].isPrimary = true;
+    // Firestore rejects undefined fields, so drop an unset colour.
+    return all.map(({ color, ...rest }) => (color ? { ...rest, color } : rest));
+  }, [imageFiles, imageFileColors, images, mainImage, title]);
 
   // Slug uniqueness check
   const checkSlugUniqueness = async (slugToCheck: string): Promise<boolean> => {
@@ -361,26 +398,25 @@ export default function ProductFormModal({
       if (isEditing) {
         // Upload new images
         setUploading(imageFiles.length > 0);
-        const newImages = await uploadImages(product.productId);
-        const allImages = [...images, ...newImages];
+        const allImages = await buildImages(product.productId);
 
-        await updateProduct(product.productId, {
+        await updateProduct(product.productId, withoutUndefined({
           ...data,
           images: allImages,
-        });
+        }));
       } else {
         // Create product first to get ID, then upload images
-        const productId = await createProduct({
+        const productId = await createProduct(withoutUndefined({
           ...data,
           images: [],
           ratings: 0,
           reviewsCount: 0,
-        });
+        }));
 
         // Upload images with the product ID
         if (imageFiles.length > 0) {
           setUploading(true);
-          const uploadedImages = await uploadImages(productId);
+          const uploadedImages = await buildImages(productId);
           if (uploadedImages.length > 0) {
             await updateProduct(productId, { images: uploadedImages });
           }
@@ -794,66 +830,77 @@ export default function ProductFormModal({
             {/* Images */}
             <div className="space-y-4">
               <h3 className={SECTION}>Images</h3>
+              <p className="text-xs text-[var(--text-muted)]">
+                Tag each image with the colour it shows, so the product page shows the right photos for each colour.
+                Click the star to make an image the main one: it is the thumbnail on product cards and in the cart.
+              </p>
 
-              {/* Existing images */}
-              {images.length > 0 && (
+              {(images.length > 0 || imageFiles.length > 0) && (
                 <div className="flex flex-wrap gap-3">
                   {images.map((img, idx) => (
-                    <div key={idx} className="relative group w-20 h-20 rounded border border-[var(--wc-line)] overflow-hidden">
-                      <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(idx)}
-                        className="absolute top-0.5 right-0.5 bg-red-600/80 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X size={12} />
-                      </button>
-                      {img.isPrimary && (
-                        <span className="absolute bottom-0 left-0 right-0 bg-[var(--copper-main)]/80 text-[0.5625rem] text-white text-center py-0.5">
-                          Primary
-                        </span>
-                      )}
-                    </div>
+                    <ImageTile
+                      key={`e-${idx}`}
+                      src={img.url}
+                      alt={img.alt}
+                      isMain={mainImage?.kind === 'existing' && mainImage.index === idx}
+                      onMain={() => setMainImage({ kind: 'existing', index: idx })}
+                      onRemove={() => removeImage(idx)}
+                      color={img.color ?? ''}
+                      colors={selectedColors}
+                      onColor={(c) =>
+                        setImages((prev) => prev.map((x, i) => (i === idx ? { ...x, color: c || undefined } : x)))
+                      }
+                    />
                   ))}
-                </div>
-              )}
-
-              {/* New image files preview */}
-              {imageFiles.length > 0 && (
-                <div className="flex flex-wrap gap-3">
                   {imageFiles.map((file, idx) => (
-                    <div key={idx} className="relative group w-20 h-20 rounded border border-[var(--wc-line)] overflow-hidden">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={file.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeNewImage(idx)}
-                        className="absolute top-0.5 right-0.5 bg-red-600/80 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X size={12} />
-                      </button>
-                      <span className="absolute bottom-0 left-0 right-0 bg-blue-600/80 text-[0.5625rem] text-white text-center py-0.5">
-                        New
-                      </span>
-                    </div>
+                    <ImageTile
+                      key={`n-${idx}`}
+                      src={URL.createObjectURL(file)}
+                      alt={file.name}
+                      isNew
+                      isMain={mainImage?.kind === 'new' && mainImage.index === idx}
+                      onMain={() => setMainImage({ kind: 'new', index: idx })}
+                      onRemove={() => removeNewImage(idx)}
+                      color={imageFileColors[idx] ?? ''}
+                      colors={selectedColors}
+                      onColor={(c) => setImageFileColors((prev) => prev.map((x, i) => (i === idx ? c : x)))}
+                    />
                   ))}
                 </div>
               )}
 
-              <label className="flex items-center gap-2 px-4 py-3 border border-dashed border-[var(--wc-line)] rounded cursor-pointer hover:border-[var(--copper-main)] transition-colors">
-                <Upload size={16} className="text-[var(--text-muted)]" />
-                <span className="text-sm text-[var(--text-muted)]">Upload images (JPEG, PNG, WebP, max 5MB)</span>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  onChange={handleImageSelect}
-                  className="hidden"
-                />
-              </label>
+              <div className="flex flex-wrap items-center gap-3">
+                {selectedColors.length > 0 && (
+                  <label className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                    Upload for
+                    <select
+                      value={uploadColor}
+                      onChange={(e) => setUploadColor(e.target.value)}
+                      className={cn('h-9 text-xs px-2', ADMIN_FIELD)}
+                    >
+                      <option value="">All colours</option>
+                      {selectedColors.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                <label className="flex flex-1 items-center gap-2 px-4 py-3 border border-dashed border-[var(--wc-line)] rounded cursor-pointer hover:border-[var(--copper-main)] transition-colors">
+                  <Upload size={16} className="text-[var(--text-muted)]" />
+                  <span className="text-sm text-[var(--text-muted)]">
+                    Upload images{uploadColor ? ` for ${uploadColor}` : ''} (JPEG, PNG, WebP, max 5MB)
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    onChange={handleImageSelect}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             </div>
           </form>
 
@@ -874,5 +921,92 @@ export default function ProductFormModal({
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+  );
+}
+
+/** Drops undefined fields (Firestore rejects them), e.g. an empty compare price. */
+function withoutUndefined<T extends object>(data: T): T {
+  return Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined)) as T;
+}
+
+/** One image in the form: main-image star, colour tag and remove. */
+function ImageTile({
+  src,
+  alt,
+  isNew,
+  isMain,
+  onMain,
+  onRemove,
+  color,
+  colors,
+  onColor,
+}: {
+  src: string;
+  alt: string;
+  isNew?: boolean;
+  isMain: boolean;
+  onMain: () => void;
+  onRemove: () => void;
+  color: string;
+  colors: string[];
+  onColor: (color: string) => void;
+}) {
+  return (
+    <div className="w-28 space-y-1">
+      <div
+        className={cn(
+          'relative group w-28 h-28 rounded border overflow-hidden',
+          isMain ? 'border-[var(--copper-main)] ring-2 ring-[var(--copper-main)]/40' : 'border-[var(--wc-line)]'
+        )}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={alt} className="w-full h-full object-cover" />
+        <button
+          type="button"
+          onClick={onMain}
+          className={cn(
+            'absolute top-1 left-1 rounded-full p-1',
+            isMain ? 'bg-[var(--copper-main)] text-white' : 'bg-black/50 text-white/80 hover:text-white'
+          )}
+          title={isMain ? 'Main image' : 'Make this the main image'}
+          aria-label={isMain ? 'Main image' : 'Make this the main image'}
+          aria-pressed={isMain}
+        >
+          <Star size={12} className={isMain ? 'fill-current' : ''} />
+        </button>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="absolute top-1 right-1 bg-red-600/80 text-white rounded-full p-0.5"
+          aria-label="Remove image"
+        >
+          <X size={12} />
+        </button>
+        {(isMain || isNew) && (
+          <span
+            className={cn(
+              'absolute bottom-0 left-0 right-0 text-[0.5625rem] text-white text-center py-0.5',
+              isMain ? 'bg-[var(--copper-main)]/85' : 'bg-blue-600/80'
+            )}
+          >
+            {isMain ? 'Main image' : 'New'}
+          </span>
+        )}
+      </div>
+      <select
+        value={color}
+        onChange={(e) => onColor(e.target.value)}
+        aria-label="Colour this image shows"
+        className={cn('h-7 w-full text-[11px] px-1', ADMIN_FIELD)}
+      >
+        <option value="">All colours</option>
+        {colors.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+        {color && !colors.includes(color) && <option value={color}>{color}</option>}
+      </select>
+    </div>
   );
 }

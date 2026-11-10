@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import { updateProduct } from '@/services/productService';
 import { uploadProductImages, filterValidImageFiles } from '@/services/productImageService';
 import type { Product, ProductImage } from '@/types';
+import { variantColors } from '@/lib/productImages';
 
 interface Props {
   open: boolean;
@@ -35,6 +36,7 @@ export default function ProductImageManager({ open, onOpenChange, product, onSuc
   }, [open, product]);
 
   const busy = uploading || saving;
+  const productColors = variantColors(product?.variants ?? []);
 
   const handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = filterValidImageFiles(Array.from(e.target.files || []));
@@ -96,7 +98,10 @@ export default function ProductImageManager({ open, onOpenChange, product, onSuc
       }
 
       setSaving(true);
-      await updateProduct(product.productId, { images: finalImages });
+      // Firestore rejects undefined fields, so drop an unset colour.
+      await updateProduct(product.productId, {
+        images: finalImages.map(({ color, ...rest }) => (color ? { ...rest, color } : rest)),
+      });
       setSaving(false);
 
       // Keep uploaded images visible; clear only the pending queue.
@@ -148,15 +153,30 @@ export default function ProductImageManager({ open, onOpenChange, product, onSuc
                       </div>
                       {img.isPrimary && (
                         <span className="absolute top-1 left-1 bg-[var(--copper-main)] text-white text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                          <Star size={9} /> Primary
+                          <Star size={9} /> Main image
                         </span>
                       )}
-                      <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1 bg-black/60 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute inset-x-0 bottom-8 flex justify-center gap-1 bg-black/60 py-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <button onClick={() => move(idx, -1)} disabled={idx === 0} className="p-1 text-white/80 hover:text-white disabled:opacity-30" title="Move left"><ArrowLeft size={12} /></button>
-                        <button onClick={() => setPrimary(idx)} disabled={img.isPrimary} className="p-1 text-white/80 hover:text-[var(--copper-light)] disabled:opacity-30" title="Set primary"><Star size={12} /></button>
+                        <button onClick={() => setPrimary(idx)} disabled={img.isPrimary} className="p-1 text-white/80 hover:text-[var(--copper-light)] disabled:opacity-30" title="Make this the main image"><Star size={12} /></button>
                         <button onClick={() => removeImage(idx)} className="p-1 text-white/80 hover:text-red-400" title="Remove"><Trash2 size={12} /></button>
                         <button onClick={() => move(idx, 1)} disabled={idx === images.length - 1} className="p-1 text-white/80 hover:text-white disabled:opacity-30" title="Move right"><ArrowRight size={12} /></button>
                       </div>
+                      <select
+                        value={img.color ?? ''}
+                        onChange={(e) =>
+                          setImages((prev) => prev.map((x, i) => (i === idx ? { ...x, color: e.target.value || undefined } : x)))
+                        }
+                        aria-label="Colour this image shows"
+                        className="block w-full h-8 text-[11px] px-1 bg-[var(--wc-canvas)] border-t border-[var(--wc-line)] text-[var(--text-light)] focus:outline-none"
+                      >
+                        <option value="">All colours</option>
+                        {productColors.map((c) => (
+                          <option key={c.color} value={c.color}>
+                            {c.color}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   ))}
                 </div>
