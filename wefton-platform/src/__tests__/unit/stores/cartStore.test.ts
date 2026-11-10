@@ -153,50 +153,35 @@ describe('cartStore', () => {
   });
 
   describe('getShipping', () => {
-    it('returns 99 when subtotal is below 999', () => {
+    it('is free on every order', () => {
       useCartStore.getState().addItem(createCartItem({ price: 500, quantity: 1 }));
-      expect(useCartStore.getState().getShipping()).toBe(99);
-    });
-
-    it('returns 0 when subtotal is 999 or above', () => {
-      useCartStore.getState().addItem(createCartItem({ price: 999, quantity: 1 }));
       expect(useCartStore.getState().getShipping()).toBe(0);
     });
 
-    it('returns 99 for empty cart', () => {
-      expect(useCartStore.getState().getShipping()).toBe(99);
+    it('is free for an empty cart', () => {
+      expect(useCartStore.getState().getShipping()).toBe(0);
     });
   });
 
   describe('getTax', () => {
-    it('calculates 5% GST on subtotal minus discount', () => {
+    it('adds no GST on top, since prices include 5% GST', () => {
       useCartStore.getState().addItem(createCartItem({ price: 1000, quantity: 1 }));
-      useCartStore.setState({ discount: 10 }); // 10% off
-      // subtotal = 1000, discountAmount = 100, taxable = 900, tax = 45
-      expect(useCartStore.getState().getTax()).toBe(45);
-    });
-
-    it('calculates tax without discount', () => {
-      useCartStore.getState().addItem(createCartItem({ price: 1000, quantity: 1 }));
-      // subtotal = 1000, tax = 50
-      expect(useCartStore.getState().getTax()).toBe(50);
+      useCartStore.setState({ discount: 10 });
+      expect(useCartStore.getState().getTax()).toBe(0);
     });
   });
 
   describe('getTotal', () => {
-    it('calculates total = subtotal - discount + shipping + tax', () => {
+    it('is the subtotal less the discount', () => {
       useCartStore.getState().addItem(createCartItem({ price: 1000, quantity: 1 }));
       useCartStore.setState({ discount: 10 });
-      // subtotal = 1000, discountAmount = 100, shipping = 0 (1000 >= 999), tax = round(900 * 0.05) = 45
-      // total = 1000 - 100 + 0 + 45 = 945
-      expect(useCartStore.getState().getTotal()).toBe(945);
+      // subtotal = 1000, discount = 100, free delivery, GST included
+      expect(useCartStore.getState().getTotal()).toBe(900);
     });
 
-    it('includes shipping when below threshold', () => {
-      useCartStore.getState().addItem(createCartItem({ price: 500, quantity: 1 }));
-      // subtotal = 500, discount = 0, shipping = 99, tax = round(500 * 0.05) = 25
-      // total = 500 + 99 + 25 = 624
-      expect(useCartStore.getState().getTotal()).toBe(624);
+    it('is the price when there is no discount', () => {
+      useCartStore.getState().addItem(createCartItem({ price: 689, quantity: 1 }));
+      expect(useCartStore.getState().getTotal()).toBe(689);
     });
   });
 });

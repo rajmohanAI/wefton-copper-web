@@ -25,8 +25,7 @@ export default function ShippingPolicyPage() {
           <section>
             <h2 className="text-lg font-medium text-[var(--text-light)] mb-3">Shipping Charges</h2>
             <ul className="list-disc list-inside space-y-2">
-              <li>Orders above ₹999: <strong>Free Shipping</strong></li>
-              <li>Orders below ₹999: Flat ₹99 shipping fee</li>
+              <li>All orders: <strong>Free Shipping</strong></li>
               <li>Express delivery (metro cities only): ₹149 additional</li>
             </ul>
           </section>

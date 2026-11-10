@@ -416,7 +416,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
                   </>
                 )}
               </div>
-              <p className="text-xs text-[var(--text-muted)] mt-1">Inclusive of all taxes</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">Inclusive of all taxes (5% GST)</p>
             </div>
 
             {/* Color Variants */}
@@ -572,7 +572,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
             {/* Delivery Info */}
             <div className="space-y-3 pt-2 border-t border-[var(--border-subtle)]">
               {[
-                { icon: Truck, text: 'Free delivery on orders above ₹999' },
+                { icon: Truck, text: 'Free delivery on every order' },
                 { icon: RotateCcw, text: '7-day easy returns & exchanges' },
                 { icon: Shield, text: 'Authentic product with serial verification' },
               ].map(({ icon: Icon, text }) => (
