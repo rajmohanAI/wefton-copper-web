@@ -8,7 +8,7 @@ import ProductCard from '@/components/product/ProductCard';
 import { ProductCardSkeleton } from '@/components/ui/Skeleton';
 import FilterSidebar from './FilterSidebar';
 import { getProductsByGender } from '@/services/productService';
-import { MEN_CATEGORIES, WOMEN_CATEGORIES } from '@/config/brand';
+import { useGenderCategories } from '@/hooks/useGenderCategories';
 import type { Product, FilterState } from '@/types';
 import Button from '@/components/ui/Button';
 import Container from '@/components/layout/Container';
@@ -128,7 +128,7 @@ export default function CollectionPage({ gender, title, subtitle }: CollectionPa
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitialMount = useRef(true);
 
-  const categories = gender === 'men' ? MEN_CATEGORIES : WOMEN_CATEGORIES;
+  const categories = useGenderCategories(gender);
   const activeFilterCount = getActiveFilterCount(filters);
 
   // Sync filters to URL params (skip initial mount to avoid double-load)

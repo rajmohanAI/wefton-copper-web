@@ -10,6 +10,7 @@ import { formatPrice, getDiscountPercent, cn } from '@/lib/utils';
 import StarRating from '@/components/ui/StarRating';
 import Badge from '@/components/ui/Badge';
 import type { Product } from '@/types';
+import { imagesForColor } from '@/lib/productImages';
 
 interface ProductCardProps {
   product: Product;
@@ -27,7 +28,8 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const isWishlisted = has(product.productId);
   const discount = getDiscountPercent(product.price, product.comparePrice || 0);
   const isOutOfStock = product.inventory === 0;
-  const images = product.images || [];
+  // Main image first, so it is the card's thumbnail.
+  const images = imagesForColor(product.images || []);
   const currentImage = images[currentImageIndex] || images[0];
   const hasMultipleImages = images.length > 1;
 

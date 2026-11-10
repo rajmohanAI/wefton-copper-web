@@ -8,7 +8,6 @@ const FOOTER_LINKS = {
   Shop: [
     { label: "Men's Collection", href: '/men' },
     { label: "Women's Collection", href: '/women' },
-    { label: 'New Arrivals', href: '/new-arrivals' },
     { label: 'Bestsellers', href: '/bestsellers' },
   ],
   Company: [
