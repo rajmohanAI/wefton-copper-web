@@ -123,10 +123,10 @@ export default function RefundPolicyPage() {
           If you have any questions about our refund policy or need assistance with a return,
           please contact us at{' '}
           <a
-            href="mailto:support@weftoncopper.com"
+            href="mailto:admin@weftoncopper.com"
             className="text-[var(--color-accent)] hover:underline"
           >
-            support@weftoncopper.com
+            admin@weftoncopper.com
           </a>
           .
         </p>

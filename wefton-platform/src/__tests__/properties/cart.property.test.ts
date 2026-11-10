@@ -4,7 +4,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import * as fc from 'fast-check';
 import { useCartStore } from '@/store/cartStore';
-import { SHIPPING_COST, FREE_SHIPPING_THRESHOLD, TAX_RATE } from '@/config/brand';
+import { SHIPPING_COST, FREE_SHIPPING_THRESHOLD, TAX_RATE, PRICES_INCLUDE_GST } from '@/config/brand';
 import type { CartItem } from '@/types';
 
 // Reset store state between tests
@@ -41,8 +41,8 @@ describe('Feature: wefton-copper-platform, Property 1: Cart arithmetic invariant
           // Compute expected values using the same logic as the store
           const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
           const discountAmount = (subtotal * discount) / 100;
-          const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
-          const tax = Math.round((subtotal - discountAmount) * TAX_RATE);
+          const shipping = SHIPPING_COST > 0 && subtotal < FREE_SHIPPING_THRESHOLD ? SHIPPING_COST : 0;
+          const tax = PRICES_INCLUDE_GST ? 0 : Math.round((subtotal - discountAmount) * TAX_RATE);
           const expectedTotal = subtotal - discountAmount + shipping + tax;
 
           // Set up the store with these items
