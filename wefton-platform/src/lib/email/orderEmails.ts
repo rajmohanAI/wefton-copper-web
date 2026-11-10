@@ -80,7 +80,7 @@ function itemsTable(order: Order): string {
   <table style="width:100%;font-size:14px;margin-top:12px;">
     <tr><td>Subtotal</td><td style="text-align:right;">${inr(order.subtotal)}</td></tr>
     <tr><td>Shipping</td><td style="text-align:right;">${inr(order.shipping)}</td></tr>
-    <tr><td>Taxes</td><td style="text-align:right;">${inr(order.taxes)}</td></tr>
+    <tr><td>GST (5%)</td><td style="text-align:right;">${order.taxes ? inr(order.taxes) : 'Included'}</td></tr>
     <tr style="font-weight:700;"><td style="padding-top:6px;border-top:1px solid #ddd;">Total</td>
       <td style="padding-top:6px;border-top:1px solid #ddd;text-align:right;">${inr(order.total)}</td></tr>
   </table>`;
