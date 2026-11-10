@@ -19,6 +19,7 @@ import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 import type { Category, Product } from '@/types';
 import { MEN_CATEGORIES, WOMEN_CATEGORIES } from '@/config/brand';
+import { primaryImage } from '@/lib/productImages';
 
 const CATEGORIES_COL = 'categories';
 const PRODUCTS_COL = 'products';
@@ -28,17 +29,6 @@ export interface NavCategory {
   name: string;
   slug: string;
   thumbnail: string;
-}
-
-/** Static fallback used when Firestore has no data or is unreachable. */
-function staticFallback(gender: 'men' | 'women'): NavCategory[] {
-  const source = gender === 'men' ? MEN_CATEGORIES : WOMEN_CATEGORIES;
-  return source.map((c) => ({
-    id: c.id,
-    name: c.name,
-    slug: c.slug,
-    thumbnail: c.thumbnail,
-  }));
 }
 
 /** Build a slug → thumbnail map from the static config for image reuse. */
@@ -71,12 +61,6 @@ function displayName(value: string): string {
     .join(' ');
 }
 
-/** Pick the primary image URL from a product (falls back to first image). */
-function primaryImage(product: Product): string | undefined {
-  const images = product.images ?? [];
-  const primary = images.find((i) => i.isPrimary) ?? images[0];
-  return primary?.url;
-}
 
 /**
  * Derive distinct categories for a gender directly from the products
@@ -107,7 +91,7 @@ export async function getCategoriesFromProducts(
         id: `${gender}-${slug}`,
         name: displayName(raw),
         slug,
-        thumbnail: primaryImage(product) || thumbnailFor(gender, slug),
+        thumbnail: primaryImage(product)?.url || thumbnailFor(gender, slug),
       });
     });
 
@@ -118,23 +102,19 @@ export async function getCategoriesFromProducts(
 }
 
 /**
- * Fetch categories for a gender. Preference order:
- *   1. `categories` collection (admin-managed ordering + thumbnails)
- *   2. categories derived from live products
- *   3. static config in `@/config/brand`
- *
- * When both the `categories` collection and product-derived categories
- * are available, product-derived categories are merged in so that any
- * product added under a brand-new category still appears in the menu.
+ * Categories for a gender that have at least one product. The managed
+ * `categories` collection only sets their order, names and thumbnails; a
+ * category with no products is never shown (menu, home page or filters).
  */
 export async function getCategoriesByGender(
   gender: 'men' | 'women'
 ): Promise<NavCategory[]> {
   const db = getFirebaseDb();
-  if (!db) return staticFallback(gender);
+  if (!db) return [];
 
   // Derive from products first — this is the live source of truth.
   const fromProducts = await getCategoriesFromProducts(gender);
+  if (!fromProducts.length) return [];
 
   // Try the managed `categories` collection for ordering/thumbnails.
   let managed: NavCategory[] = [];
@@ -151,7 +131,7 @@ export async function getCategoriesByGender(
         id: data.categoryId || d.id,
         name: data.name,
         slug: data.slug,
-        thumbnail: data.image || thumbnailFor(gender, data.slug),
+        thumbnail: data.image || '',
       };
     });
   } catch {
@@ -159,20 +139,14 @@ export async function getCategoriesByGender(
     managed = [];
   }
 
-  // If we have managed categories, use them as the base ordering and
-  // append any product-derived categories that aren't already listed
-  // (so newly added products with new categories still show up).
-  if (managed.length) {
-    const seen = new Set(managed.map((c) => c.slug));
-    const extras = fromProducts.filter((c) => !seen.has(c.slug));
-    return [...managed, ...extras];
-  }
-
-  // No managed collection → use product-derived categories.
-  if (fromProducts.length) return fromProducts;
-
-  // Nothing in Firestore → static config.
-  return staticFallback(gender);
+  // Managed order first (only the ones with products), then any other
+  // category a product uses.
+  const bySlug = new Map(fromProducts.map((c) => [c.slug, c]));
+  const ordered = managed
+    .filter((c) => bySlug.has(c.slug))
+    .map((c) => ({ ...c, thumbnail: c.thumbnail || bySlug.get(c.slug)!.thumbnail }));
+  const seen = new Set(ordered.map((c) => c.slug));
+  return [...ordered, ...fromProducts.filter((c) => !seen.has(c.slug))];
 }
 
 /** Convenience: fetch both genders in parallel. */

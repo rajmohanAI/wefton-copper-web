@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, type MouseEvent, type TouchEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, type MouseEvent, type TouchEvent } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -36,6 +36,7 @@ import ReviewSection from '@/components/product/ReviewSection';
 import type { Product } from '@/types';
 import { SIZES } from '@/config/brand';
 import { cn } from '@/lib/utils';
+import { findVariant, imagesForColor, initialColor, primaryImage, variantColors } from '@/lib/productImages';
 
 interface ProductDetailClientProps {
   product: Product;
@@ -53,7 +54,9 @@ function getProductJsonLd(product: Product) {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.title,
-    image: product.images?.map((img) => img.url) || [],
+    image: [primaryImage(product), ...(product.images ?? []).filter((i) => i !== primaryImage(product))]
+      .filter(Boolean)
+      .map((img) => img!.url),
     description: product.description,
     offers: {
       '@type': 'Offer',
@@ -79,7 +82,11 @@ function getProductJsonLd(product: Product) {
 export default function ProductDetailClient({ product, similar }: ProductDetailClientProps) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
-  const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] || null);
+  const [selectedColor, setSelectedColor] = useState(() => initialColor(product));
+  // A variant is one colour in one size; before a size is picked, the colour's first.
+  const selectedVariant = findVariant(product.variants ?? [], selectedColor, selectedSize || undefined) ?? null;
+  // The gallery shows the selected colour's images (plus untagged ones), main image first.
+  const gallery = useMemo(() => imagesForColor(product.images ?? [], selectedColor), [product.images, selectedColor]);
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
@@ -98,6 +105,14 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
   const { toggle, has } = useWishlistStore();
   const isWishlisted = has(product.productId);
   const discount = getDiscountPercent(product.price, product.comparePrice || 0);
+
+  const selectColor = (color: string) => {
+    setSelectedColor(color);
+    setSelectedImage(0);
+    // Keep the size when the new colour has it in stock, else clear it.
+    const v = findVariant(product.variants ?? [], color, selectedSize || undefined);
+    if (selectedSize && (!v || v.size !== selectedSize || v.inventory === 0)) setSelectedSize('');
+  };
 
   const currentPrice = selectedVariant?.price || product.price;
   const currentInventory = selectedVariant?.inventory ?? product.inventory;
@@ -148,15 +163,15 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
     if (Math.abs(delta) > threshold) {
       if (delta < 0) {
         // Swipe left → next image
-        setSelectedImage((i) => (i + 1) % product.images.length);
+        setSelectedImage((i) => (i + 1) % gallery.length);
       } else {
         // Swipe right → previous image
-        setSelectedImage((i) => (i - 1 + product.images.length) % product.images.length);
+        setSelectedImage((i) => (i - 1 + gallery.length) % gallery.length);
       }
     }
     touchStartRef.current = null;
     touchDeltaRef.current = 0;
-  }, [product.images.length]);
+  }, [gallery.length]);
 
   const handleAddToCart = () => {
     if (!selectedSize && product.variants?.length > 0) {
@@ -168,7 +183,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
       productId: product.productId,
       title: product.title,
       slug: product.slug,
-      image: product.images?.[0]?.url || '',
+      image: gallery[selectedImage]?.url || primaryImage(product)?.url || '',
       price: currentPrice,
       quantity,
       size: selectedSize,
@@ -202,17 +217,18 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
   };
 
   const prevImage = () =>
-    setSelectedImage((i) => (i - 1 + product.images.length) % product.images.length);
+    setSelectedImage((i) => (i - 1 + gallery.length) % gallery.length);
   const nextImage = () =>
-    setSelectedImage((i) => (i + 1) % product.images.length);
+    setSelectedImage((i) => (i + 1) % gallery.length);
 
-  // Unique sizes from variants
+  // Sizes offered in the selected colour (all sizes when the product has no colours)
+  const colorVariants = (product.variants ?? []).filter((v) => !selectedColor || !v.color || v.color === selectedColor);
   const availableSizes = product.variants?.length
-    ? [...new Set(product.variants.map((v) => v.size).filter(Boolean))]
+    ? [...new Set(colorVariants.map((v) => v.size).filter(Boolean))]
     : SIZES;
 
-  // Unique colors from variants
-  const colors = product.variants?.filter((v) => v.color) || [];
+  // One swatch per colour
+  const colors = variantColors(product.variants ?? []);
 
   // JSON-LD structured data
   const jsonLd = getProductJsonLd(product);
@@ -254,16 +270,16 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               role="img"
-              aria-label={`Product image gallery showing ${product.images?.[selectedImage]?.alt || product.title}`}
+              aria-label={`Product image gallery showing ${gallery[selectedImage]?.alt || product.title}`}
             >
               <div
                 key={selectedImage}
                 className="absolute inset-0 animate-fade-in"
               >
-                {product.images?.[selectedImage] && (
+                {gallery[selectedImage] && (
                   <Image
-                    src={product.images[selectedImage].url}
-                    alt={product.images[selectedImage].alt || product.title}
+                    src={gallery[selectedImage].url}
+                    alt={gallery[selectedImage].alt || product.title}
                     fill
                     className={cn(
                       'object-cover transition-transform duration-300 ease-out',
@@ -284,7 +300,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
               </div>
 
               {/* Nav arrows */}
-              {product.images?.length > 1 && (
+              {gallery.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
@@ -311,10 +327,10 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
               </div>
 
               {/* Swipe indicator dots (visible on touch devices only) */}
-              {product.images?.length > 1 && (
+              {gallery.length > 1 && (
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 md:hidden">
                   <div className="flex gap-1.5">
-                    {product.images.map((_, i) => (
+                    {gallery.map((_, i) => (
                       <span
                         key={i}
                         className={cn(
@@ -336,9 +352,9 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
             </div>
 
             {/* Thumbnails */}
-            {product.images?.length > 1 && (
+            {gallery.length > 1 && (
               <div className="flex gap-2 overflow-x-auto no-scrollbar" role="tablist" aria-label="Product image thumbnails">
-                {product.images.map((img, i) => (
+                {gallery.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
@@ -407,22 +423,23 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
             {colors.length > 0 && (
               <div>
                 <p className="text-xs tracking-widest uppercase text-[var(--text-muted)] mb-3">
-                  Color: <span className="text-[var(--text-light)]">{selectedVariant?.color}</span>
+                  Color: <span className="text-[var(--text-light)]">{selectedColor}</span>
                 </p>
                 <div className="flex gap-2 flex-wrap">
-                  {colors.map((v) => (
+                  {colors.map((c) => (
                     <button
-                      key={v.variantId}
-                      onClick={() => setSelectedVariant(v)}
+                      key={c.color}
+                      onClick={() => selectColor(c.color)}
                       className={cn(
                         'w-8 h-8 rounded-full border-2 transition-all',
-                        selectedVariant?.variantId === v.variantId
+                        selectedColor === c.color
                           ? 'border-[var(--copper-light)] scale-110'
                           : 'border-transparent hover:border-white/30'
                       )}
-                      style={{ backgroundColor: v.colorHex || '#888' }}
-                      title={v.color}
-                      aria-label={`Select color ${v.color}`}
+                      style={{ backgroundColor: c.colorHex || '#888' }}
+                      title={c.color}
+                      aria-label={`Select color ${c.color}`}
+                      aria-pressed={selectedColor === c.color}
                     />
                   ))}
                 </div>
@@ -441,7 +458,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
               </div>
               <div className="flex gap-2 flex-wrap">
                 {availableSizes.map((size) => {
-                  const variant = product.variants?.find((v) => v.size === size);
+                  const variant = colorVariants.find((v) => v.size === size);
                   const outOfStock = variant ? variant.inventory === 0 : false;
                   return (
                     <button

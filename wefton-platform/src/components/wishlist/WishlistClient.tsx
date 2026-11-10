@@ -15,6 +15,7 @@ import { ProductCardSkeleton } from '@/components/ui/Skeleton';
 import StarRating from '@/components/ui/StarRating';
 import Badge from '@/components/ui/Badge';
 import type { Product } from '@/types';
+import { primaryImage } from '@/lib/productImages';
 
 export default function WishlistClient() {
   const { items, toggle, syncFromFirestore } = useWishlistStore();
@@ -64,7 +65,7 @@ export default function WishlistClient() {
       productId: product.productId,
       title: product.title,
       slug: product.slug,
-      image: product.images?.[0]?.url || '/placeholder.jpg',
+      image: primaryImage(product)?.url || '/placeholder.jpg',
       price: product.price,
       quantity: 1,
       inventory: product.inventory,
@@ -125,7 +126,7 @@ export default function WishlistClient() {
                 const isOutOfStock = product.inventory === 0;
                 const isRemoving = removingIds.has(product.productId);
                 const isAdding = addingIds.has(product.productId);
-                const primaryImage = product.images?.[0];
+                const mainImage = primaryImage(product);
 
                 return (
                   <motion.div
@@ -139,10 +140,10 @@ export default function WishlistClient() {
                   >
                     {/* Product Image */}
                     <Link href={`/products/${product.slug}`} className="block relative aspect-[3/4] overflow-hidden">
-                      {primaryImage ? (
+                      {mainImage ? (
                         <Image
-                          src={primaryImage.url}
-                          alt={primaryImage.alt || product.title}
+                          src={mainImage.url}
+                          alt={mainImage.alt || product.title}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
                           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"

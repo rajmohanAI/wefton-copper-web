@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, Plus, Upload } from 'lucide-react';
+import { X, Plus, Upload, Star } from 'lucide-react';
 import { uploadProductImages, filterValidImageFiles } from '@/services/productImageService';
 import { slugify, cn } from '@/lib/utils';
 import { productFormSchema } from '@/lib/schemas';
@@ -64,9 +64,12 @@ export default function ProductFormModal({
   const [inventory, setInventory] = useState('');
   const [featured, setFeatured] = useState(false);
   const [bestseller, setBestseller] = useState(false);
-  const [newArrival, setNewArrival] = useState(false);
   const [images, setImages] = useState<ProductImage[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  /** Colour for each new file, by position ('' = every colour). */
+  const [imageFileColors, setImageFileColors] = useState<string[]>([]);
+  /** Which image is the main one (the thumbnail): an existing image or a new file. */
+  const [mainImage, setMainImage] = useState<{ kind: 'existing' | 'new'; index: number } | null>(null);
 
   // Variant grid state
   const [colors, setColors] = useState<CatalogColor[]>([]);
@@ -102,9 +105,10 @@ export default function ProductFormModal({
     setInventory('');
     setFeatured(false);
     setBestseller(false);
-    setNewArrival(false);
     setImages([]);
     setImageFiles([]);
+    setImageFileColors([]);
+    setMainImage(null);
     setSelectedColors([]);
     setSelectedSizes([]);
     setStock({});
@@ -129,9 +133,12 @@ export default function ProductFormModal({
         setInventory(product.inventory.toString());
         setFeatured(product.featured);
         setBestseller(product.bestseller);
-        setNewArrival(product.newArrival);
-        setImages(product.images || []);
+        const existing = product.images || [];
+        setImages(existing);
         setImageFiles([]);
+        setImageFileColors([]);
+        const mainIdx = existing.findIndex((i) => i.isPrimary);
+        setMainImage(existing.length ? { kind: 'existing', index: mainIdx >= 0 ? mainIdx : 0 } : null);
 
         const variants = product.variants || [];
         const gridVariants = variants.filter(fitsGrid);
@@ -181,6 +188,13 @@ export default function ProductFormModal({
   const categories = gender === 'women' ? WOMEN_CATEGORIES : MEN_CATEGORIES;
 
   const hasGrid = selectedColors.length > 0 && selectedSizes.length > 0;
+  const imageRows = [
+    ...selectedColors,
+    ...[...new Set([...images.map((i) => i.color ?? ''), ...imageFileColors])].filter(
+      (c) => c && !selectedColors.includes(c)
+    ),
+    '',
+  ];
   const gridTotal = useMemo(
     () =>
       selectedColors.reduce(
@@ -253,32 +267,57 @@ export default function ProductFormModal({
     return [...grid, ...otherVariants];
   };
 
-  // Image handling
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Image handling. Each image can be tagged with the colour it shows, and
+  // one image is the main one (the product's thumbnail).
+  /** Adds files to one colour row ('' = the All colours row). */
+  const handleImageSelect = (color: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const validFiles = filterValidImageFiles(files);
     setImageFiles((prev) => [...prev, ...validFiles]);
+    setImageFileColors((prev) => [...prev, ...validFiles.map(() => color)]);
+    if (!mainImage && validFiles.length) setMainImage({ kind: 'new', index: imageFiles.length });
+    e.target.value = '';
+  };
+
+  /** Keeps the main-image pointer valid after an image is removed. */
+  const afterRemove = (kind: 'existing' | 'new', index: number, remaining: { existing: number; new: number }) => {
+    setMainImage((m) => {
+      if (m && m.kind === kind && m.index === index) {
+        if (remaining.existing) return { kind: 'existing', index: 0 };
+        return remaining.new ? { kind: 'new', index: 0 } : null;
+      }
+      if (m && m.kind === kind && m.index > index) return { ...m, index: m.index - 1 };
+      return m;
+    });
   };
 
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
+    afterRemove('existing', index, { existing: images.length - 1, new: imageFiles.length });
   };
 
   const removeNewImage = (index: number) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImageFileColors((prev) => prev.filter((_, i) => i !== index));
+    afterRemove('new', index, { existing: images.length, new: imageFiles.length - 1 });
   };
 
-  // Upload images to Firebase Storage (delegates to shared service)
-  const uploadImages = useCallback(async (productId: string): Promise<ProductImage[]> => {
-    if (imageFiles.length === 0) return [];
-    const { uploaded } = await uploadProductImages(
-      productId,
-      imageFiles,
-      title,
-      images.length === 0 // mark first as primary only if no existing images
-    );
-    return uploaded;
-  }, [imageFiles, images.length, title]);
+  /**
+   * Uploads the new files and returns the full image list: colours applied
+   * and exactly one main image.
+   */
+  const buildImages = useCallback(async (productId: string): Promise<ProductImage[]> => {
+    const { uploaded, sourceIndexes } = imageFiles.length
+      ? await uploadProductImages(productId, imageFiles, title, false, undefined, imageFileColors)
+      : { uploaded: [], sourceIndexes: [] as number[] };
+    const all = [
+      ...images.map((img, i) => ({ ...img, isPrimary: mainImage?.kind === 'existing' && mainImage.index === i })),
+      ...uploaded.map((img, i) => ({ ...img, isPrimary: mainImage?.kind === 'new' && mainImage.index === sourceIndexes[i] })),
+    ];
+    if (all.length && !all.some((i) => i.isPrimary)) all[0].isPrimary = true;
+    // Firestore rejects undefined fields, so drop an unset colour.
+    return all.map(({ color, ...rest }) => (color ? { ...rest, color } : rest));
+  }, [imageFiles, imageFileColors, images, mainImage, title]);
 
   // Slug uniqueness check
   const checkSlugUniqueness = async (slugToCheck: string): Promise<boolean> => {
@@ -320,7 +359,8 @@ export default function ProductFormModal({
       sku: product?.sku || '',
       featured,
       bestseller,
-      newArrival,
+      // The New Arrival badge is retired; saving a product clears it.
+      newArrival: false,
       variants: draftVariants,
     };
 
@@ -361,26 +401,25 @@ export default function ProductFormModal({
       if (isEditing) {
         // Upload new images
         setUploading(imageFiles.length > 0);
-        const newImages = await uploadImages(product.productId);
-        const allImages = [...images, ...newImages];
+        const allImages = await buildImages(product.productId);
 
-        await updateProduct(product.productId, {
+        await updateProduct(product.productId, withoutUndefined({
           ...data,
           images: allImages,
-        });
+        }));
       } else {
         // Create product first to get ID, then upload images
-        const productId = await createProduct({
+        const productId = await createProduct(withoutUndefined({
           ...data,
           images: [],
           ratings: 0,
           reviewsCount: 0,
-        });
+        }));
 
         // Upload images with the product ID
         if (imageFiles.length > 0) {
           setUploading(true);
-          const uploadedImages = await uploadImages(productId);
+          const uploadedImages = await buildImages(productId);
           if (uploadedImages.length > 0) {
             await updateProduct(productId, { images: uploadedImages });
           }
@@ -600,7 +639,6 @@ export default function ProductFormModal({
                 {([
                   ['Featured', featured, setFeatured],
                   ['Bestseller', bestseller, setBestseller],
-                  ['New Arrival', newArrival, setNewArrival],
                 ] as const).map(([label, checked, set]) => (
                   <label key={label} className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -791,69 +829,89 @@ export default function ProductFormModal({
               )}
             </div>
 
-            {/* Images */}
+            {/* Images: one row per colour, plus a row for images that suit every colour */}
             <div className="space-y-4">
               <h3 className={SECTION}>Images</h3>
+              <p className="text-xs text-[var(--text-muted)]">
+                Upload each colour’s photos in its own row. On the product page, choosing a colour shows only that
+                colour’s photos. Click <Star size={11} className="inline -mt-0.5" /> on a photo to make it the{' '}
+                <strong>main image</strong>: the thumbnail on product cards, search and the cart.
+              </p>
+              <p className="text-xs text-[var(--text-light)]">
+                Main image:{' '}
+                {mainImage ? (
+                  <span className="text-[var(--copper-light)]">chosen (marked ★)</span>
+                ) : (
+                  <span className="text-amber-700 dark:text-amber-300">not chosen yet; the first photo will be used</span>
+                )}
+              </p>
 
-              {/* Existing images */}
-              {images.length > 0 && (
-                <div className="flex flex-wrap gap-3">
-                  {images.map((img, idx) => (
-                    <div key={idx} className="relative group w-20 h-20 rounded border border-[var(--wc-line)] overflow-hidden">
-                      <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(idx)}
-                        className="absolute top-0.5 right-0.5 bg-red-600/80 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X size={12} />
-                      </button>
-                      {img.isPrimary && (
-                        <span className="absolute bottom-0 left-0 right-0 bg-[var(--copper-main)]/80 text-[0.5625rem] text-white text-center py-0.5">
-                          Primary
+              {imageRows.map((rowColor) => {
+                const master = rowColor ? findColor(colors, rowColor) : null;
+                const existing = images.map((img, idx) => ({ img, idx })).filter(({ img }) => (img.color ?? '') === rowColor);
+                const added = imageFiles.map((file, idx) => ({ file, idx })).filter(({ idx }) => (imageFileColors[idx] ?? '') === rowColor);
+                return (
+                  <div key={rowColor || 'all'} className="rounded border border-[var(--wc-line)] p-3 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="flex items-center gap-2 text-sm text-[var(--text-light)]">
+                        {rowColor ? (
+                          <span className="w-3.5 h-3.5 rounded-full border border-black/20" style={{ backgroundColor: master?.hex ?? 'transparent' }} />
+                        ) : null}
+                        {rowColor || 'All colours'}
+                        <span className="text-xs text-[var(--text-faint)]">
+                          {existing.length + added.length} photo{existing.length + added.length === 1 ? '' : 's'}
                         </span>
-                      )}
+                      </p>
+                      <label className="flex items-center gap-1.5 h-8 px-3 rounded border border-dashed border-[var(--wc-line)] text-xs text-[var(--text-muted)] cursor-pointer hover:border-[var(--copper-main)] hover:text-[var(--copper-light)] transition-colors">
+                        <Upload size={13} /> Add photos
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          multiple
+                          onChange={handleImageSelect(rowColor)}
+                          className="hidden"
+                        />
+                      </label>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {/* New image files preview */}
-              {imageFiles.length > 0 && (
-                <div className="flex flex-wrap gap-3">
-                  {imageFiles.map((file, idx) => (
-                    <div key={idx} className="relative group w-20 h-20 rounded border border-[var(--wc-line)] overflow-hidden">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={file.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeNewImage(idx)}
-                        className="absolute top-0.5 right-0.5 bg-red-600/80 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X size={12} />
-                      </button>
-                      <span className="absolute bottom-0 left-0 right-0 bg-blue-600/80 text-[0.5625rem] text-white text-center py-0.5">
-                        New
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <label className="flex items-center gap-2 px-4 py-3 border border-dashed border-[var(--wc-line)] rounded cursor-pointer hover:border-[var(--copper-main)] transition-colors">
-                <Upload size={16} className="text-[var(--text-muted)]" />
-                <span className="text-sm text-[var(--text-muted)]">Upload images (JPEG, PNG, WebP, max 5MB)</span>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  onChange={handleImageSelect}
-                  className="hidden"
-                />
-              </label>
+                    {existing.length + added.length > 0 ? (
+                      <div className="flex flex-wrap gap-3">
+                        {existing.map(({ img, idx }) => (
+                          <ImageTile
+                            key={`e-${idx}`}
+                            src={img.url}
+                            alt={img.alt}
+                            isMain={mainImage?.kind === 'existing' && mainImage.index === idx}
+                            onMain={() => setMainImage({ kind: 'existing', index: idx })}
+                            onRemove={() => removeImage(idx)}
+                            color={img.color ?? ''}
+                            colors={selectedColors}
+                            onColor={(c) =>
+                              setImages((prev) => prev.map((x, i) => (i === idx ? { ...x, color: c || undefined } : x)))
+                            }
+                          />
+                        ))}
+                        {added.map(({ file, idx }) => (
+                          <ImageTile
+                            key={`n-${idx}`}
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            isNew
+                            isMain={mainImage?.kind === 'new' && mainImage.index === idx}
+                            onMain={() => setMainImage({ kind: 'new', index: idx })}
+                            onRemove={() => removeNewImage(idx)}
+                            color={imageFileColors[idx] ?? ''}
+                            colors={selectedColors}
+                            onColor={(c) => setImageFileColors((prev) => prev.map((x, i) => (i === idx ? c : x)))}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-[var(--text-faint)] italic">No photos yet.</p>
+                    )}
+                  </div>
+                );
+              })}
+              <p className="text-[11px] text-[var(--text-faint)]">JPEG, PNG or WebP, up to 5MB each. The dropdown under a photo moves it to another colour.</p>
             </div>
           </form>
 
@@ -874,5 +932,92 @@ export default function ProductFormModal({
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+  );
+}
+
+/** Drops undefined fields (Firestore rejects them), e.g. an empty compare price. */
+function withoutUndefined<T extends object>(data: T): T {
+  return Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined)) as T;
+}
+
+/** One image in the form: main-image star, colour tag and remove. */
+function ImageTile({
+  src,
+  alt,
+  isNew,
+  isMain,
+  onMain,
+  onRemove,
+  color,
+  colors,
+  onColor,
+}: {
+  src: string;
+  alt: string;
+  isNew?: boolean;
+  isMain: boolean;
+  onMain: () => void;
+  onRemove: () => void;
+  color: string;
+  colors: string[];
+  onColor: (color: string) => void;
+}) {
+  return (
+    <div className="w-28 space-y-1">
+      <div
+        className={cn(
+          'relative group w-28 h-28 rounded border overflow-hidden',
+          isMain ? 'border-[var(--copper-main)] ring-2 ring-[var(--copper-main)]/40' : 'border-[var(--wc-line)]'
+        )}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={alt} className="w-full h-full object-cover" />
+        <button
+          type="button"
+          onClick={onMain}
+          className={cn(
+            'absolute top-1 left-1 rounded-full p-1',
+            isMain ? 'bg-[var(--copper-main)] text-white' : 'bg-black/50 text-white/80 hover:text-white'
+          )}
+          title={isMain ? 'Main image' : 'Make this the main image'}
+          aria-label={isMain ? 'Main image' : 'Make this the main image'}
+          aria-pressed={isMain}
+        >
+          <Star size={12} className={isMain ? 'fill-current' : ''} />
+        </button>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="absolute top-1 right-1 bg-red-600/80 text-white rounded-full p-0.5"
+          aria-label="Remove image"
+        >
+          <X size={12} />
+        </button>
+        {(isMain || isNew) && (
+          <span
+            className={cn(
+              'absolute bottom-0 left-0 right-0 text-[0.5625rem] text-white text-center py-0.5',
+              isMain ? 'bg-[var(--copper-main)]/85' : 'bg-blue-600/80'
+            )}
+          >
+            {isMain ? 'Main image' : 'New'}
+          </span>
+        )}
+      </div>
+      <select
+        value={color}
+        onChange={(e) => onColor(e.target.value)}
+        aria-label="Colour this image shows"
+        className={cn('h-7 w-full text-[11px] px-1', ADMIN_FIELD)}
+      >
+        <option value="">Move to All colours</option>
+        {colors.map((c) => (
+          <option key={c} value={c}>
+            {c === color ? c : `Move to ${c}`}
+          </option>
+        ))}
+        {color && !colors.includes(color) && <option value={color}>{color}</option>}
+      </select>
+    </div>
   );
 }

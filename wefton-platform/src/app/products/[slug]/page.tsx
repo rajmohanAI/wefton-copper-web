@@ -6,6 +6,7 @@ import ProductDetailFallback from '@/components/product/ProductDetailFallback';
 import { collection, getDocs } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 import type { Product } from '@/types';
+import { primaryImage } from '@/lib/productImages';
 
 // ISR: revalidate product detail pages every 3600 seconds (1 hour)
 export const revalidate = 3600;
@@ -43,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     const title = product.title;
     const description = product.shortDescription || product.description || '';
-    const imageUrl = product.images?.[0]?.url || '/og-image.jpg';
+    const imageUrl = primaryImage(product)?.url || '/og-image.jpg';
 
     return {
       title,

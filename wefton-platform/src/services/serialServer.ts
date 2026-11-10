@@ -11,6 +11,7 @@ import {
   findSerialConflicts,
   mergeRanges,
   nextModelId,
+  parseSerial,
   planSeries,
   printedRanges,
   validateStickerRequest,
@@ -173,4 +174,55 @@ export async function getSerialLog(db: Firestore, limit = 200): Promise<SerialLo
       createdAt: data.createdAt?.toDate?.().toISOString() ?? null,
     };
   });
+}
+
+/** What a customer sees for a genuine serial. */
+export interface SerialCheck {
+  serial: string;
+  modelId: string;
+  product: string;
+  color: string;
+  gender: string;
+  size: string;
+  /** When the sticker was printed, when the print log has it. */
+  printedAt: string | null;
+}
+
+const GENDER_NAMES = { M: 'Men', W: 'Women', U: 'Unisex' } as const;
+
+/**
+ * Looks a serial up for the customer "Check your product" page. Returns null
+ * unless the serial was actually printed: it must sit inside a range in the
+ * print log (or, for batches from before the log, the printed ranges).
+ */
+export async function checkSerial(db: Firestore, input: string): Promise<SerialCheck | null> {
+  const parsed = parseSerial(input);
+  if (!parsed) return null;
+
+  const [logSnap, counters, models, colors] = await Promise.all([
+    db.collection(LOG_COLLECTION).where('prefix', '==', parsed.prefix).get(),
+    db.doc(COUNTERS_DOC).get(),
+    getSerialModels(db),
+    getColors(db),
+  ]);
+  const entry = logSnap.docs
+    .map((d) => d.data())
+    .filter((e) => e.status !== 'failed' && e.start <= parsed.piece && e.end >= parsed.piece)
+    .sort((a, b) => (a.createdAt?.toMillis?.() ?? 0) - (b.createdAt?.toMillis?.() ?? 0))[0];
+  if (!entry) {
+    const last = (counters.get('last') as Record<string, number> | undefined) ?? {};
+    const ranges = (counters.get('ranges') as Record<string, PrintedRange[]> | undefined) ?? {};
+    const printed = printedRanges(parsed.prefix, ranges, last).some((r) => r.s <= parsed.piece && r.e >= parsed.piece);
+    if (!printed) return null;
+  }
+
+  return {
+    serial: parsed.serial,
+    modelId: parsed.modelId,
+    product: models.find((m) => m.id === parsed.modelId)?.name ?? parsed.modelId,
+    color: colors.find((c) => c.code === parsed.colorCode)?.name ?? parsed.colorCode,
+    gender: GENDER_NAMES[parsed.gender],
+    size: parsed.size,
+    printedAt: entry?.createdAt?.toDate?.().toISOString() ?? null,
+  };
 }

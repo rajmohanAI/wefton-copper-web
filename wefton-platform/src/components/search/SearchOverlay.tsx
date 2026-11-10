@@ -12,6 +12,7 @@ import { formatPrice, debounce } from '@/lib/utils';
 import { getFirebaseDb } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import type { Product } from '@/types';
+import { primaryImage } from '@/lib/productImages';
 
 // Fallback trending terms if Firestore search_config is unavailable
 const FALLBACK_TRENDING = ['Premium Tee', 'Oversized', 'Active Wear', 'Hoodies', 'Co-Ords'];
@@ -203,10 +204,10 @@ export default function SearchOverlay() {
                           className="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors group w-full text-left"
                         >
                           <div className="relative w-12 h-14 rounded overflow-hidden bg-[var(--bg-darker)] flex-shrink-0">
-                            {product.images?.[0] && (
+                            {primaryImage(product) && (
                               <Image
-                                src={product.images[0].url}
-                                alt={product.images[0].alt || product.title}
+                                src={primaryImage(product)!.url}
+                                alt={primaryImage(product)!.alt || product.title}
                                 fill
                                 className="object-cover"
                                 sizes="48px"
@@ -264,13 +265,6 @@ export default function SearchOverlay() {
                         className="px-4 py-2 text-xs bg-white/5 border border-white/10 rounded-full text-[var(--text-muted)] hover:text-[var(--copper-light)] hover:border-[var(--copper-main)] transition-colors"
                       >
                         Women&apos;s Collection
-                      </Link>
-                      <Link
-                        href="/new-arrivals"
-                        onClick={closeSearch}
-                        className="px-4 py-2 text-xs bg-white/5 border border-white/10 rounded-full text-[var(--text-muted)] hover:text-[var(--copper-light)] hover:border-[var(--copper-main)] transition-colors"
-                      >
-                        New Arrivals
                       </Link>
                     </div>
                   </div>
