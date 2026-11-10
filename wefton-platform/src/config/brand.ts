@@ -48,6 +48,10 @@ export const WOMEN_CATEGORIES = [
 
 export const SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'] as const;
 
-export const SHIPPING_COST = 99;
-export const FREE_SHIPPING_THRESHOLD = 999;
+// Delivery is free on every order for now (we bear the cost). To charge
+// again, set SHIPPING_COST and the FREE_SHIPPING_THRESHOLD above which it is free.
+export const SHIPPING_COST = 0;
+export const FREE_SHIPPING_THRESHOLD = 0;
 export const TAX_RATE = 0.05; // 5% GST
+/** Product prices already include GST, so it is never added on top at checkout. */
+export const PRICES_INCLUDE_GST = true;

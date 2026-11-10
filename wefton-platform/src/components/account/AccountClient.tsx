@@ -892,7 +892,7 @@ export default function AccountClient() {
                                 </div>
                                 <div className="flex justify-between text-[var(--text-muted)]">
                                   <span>GST (5%)</span>
-                                  <span>{formatPrice(order.taxes)}</span>
+                                  <span>{order.taxes ? formatPrice(order.taxes) : 'Included'}</span>
                                 </div>
                                 <div className="flex justify-between text-[var(--text-light)] font-medium pt-2 border-t border-[var(--border-subtle)]">
                                   <span>Total</span>

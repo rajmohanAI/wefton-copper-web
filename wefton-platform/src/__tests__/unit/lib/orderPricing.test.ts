@@ -3,21 +3,22 @@
 // ============================================================
 import { describe, expect, it } from 'vitest';
 import { computeOrderTotals } from '@/lib/orderPricing';
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST, TAX_RATE } from '@/config/brand';
 
 describe('computeOrderTotals', () => {
-  it('adds shipping below the free-shipping threshold', () => {
-    const t = computeOrderTotals([{ price: 500, quantity: 1 }]);
-    expect(t.shipping).toBe(SHIPPING_COST);
-    expect(t.taxes).toBe(Math.round(500 * TAX_RATE));
-    expect(t.total).toBe(500 + SHIPPING_COST + t.taxes);
+  it('charges no delivery on any order', () => {
+    expect(computeOrderTotals([{ price: 100, quantity: 1 }]).shipping).toBe(0);
+    expect(computeOrderTotals([{ price: 689, quantity: 3 }]).shipping).toBe(0);
   });
 
-  it('applies the percentage discount before tax', () => {
-    const t = computeOrderTotals([{ price: FREE_SHIPPING_THRESHOLD, quantity: 2 }], 10);
-    const subtotal = FREE_SHIPPING_THRESHOLD * 2;
-    expect(t.shipping).toBe(0);
-    expect(t.discountAmount).toBe(subtotal * 0.1);
-    expect(t.total).toBe(subtotal * 0.9 + Math.round(subtotal * 0.9 * TAX_RATE));
+  it('adds no GST on top, since prices include it', () => {
+    const t = computeOrderTotals([{ price: 689, quantity: 2 }]);
+    expect(t.taxes).toBe(0);
+    expect(t.total).toBe(1378);
+  });
+
+  it('applies the percentage discount', () => {
+    const t = computeOrderTotals([{ price: 689, quantity: 2 }], 10);
+    expect(t.discountAmount).toBeCloseTo(137.8);
+    expect(t.total).toBeCloseTo(1240.2);
   });
 });
