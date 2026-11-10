@@ -157,7 +157,7 @@ export default function ProductsTab() {
       ) : (
         <div className="space-y-2">
           {/* Table header */}
-          <div className="hidden md:grid grid-cols-[60px_90px_1fr_120px_80px_100px_80px_140px_80px] gap-3 px-4 py-2 text-[10px] font-medium tracking-wider uppercase text-[var(--text-muted)]">
+          <div className="hidden md:grid grid-cols-[60px_90px_minmax(0,1fr)_110px_70px_80px_60px_130px_150px] gap-3 px-4 py-2 text-[10px] font-medium tracking-wider uppercase text-[var(--text-muted)]">
             <span>Image</span>
             <span>Product ID</span>
             <span>Title</span>
@@ -175,7 +175,7 @@ export default function ProductsTab() {
             return (
               <div
                 key={product.productId}
-                className="glass-card p-4 md:grid md:grid-cols-[60px_90px_1fr_120px_80px_100px_80px_140px_80px] md:gap-3 md:items-center"
+                className="glass-card p-4 md:grid md:grid-cols-[60px_90px_minmax(0,1fr)_110px_70px_80px_60px_130px_150px] md:gap-3 md:items-center"
               >
                 {/* Thumbnail */}
                 <div className="w-12 h-12 rounded border border-white/10 overflow-hidden bg-white/5 flex-shrink-0">
@@ -202,7 +202,7 @@ export default function ProductsTab() {
                 </span>
 
                 {/* Title */}
-                <div className="mt-2 md:mt-0">
+                <div className="mt-2 md:mt-0 min-w-0">
                   <p className="text-sm text-[var(--text-light)] truncate">{product.title}</p>
                   <p className="text-[10px] text-[var(--text-faint)] truncate">{product.slug}</p>
                 </div>
@@ -225,17 +225,16 @@ export default function ProductsTab() {
                 <div className="flex flex-wrap gap-1 mt-1 md:mt-0">
                   {product.featured && <Badge variant="copper">Featured</Badge>}
                   {product.bestseller && <Badge variant="success">Bestseller</Badge>}
-                  {product.newArrival && <Badge variant="warning">New</Badge>}
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 mt-2 md:mt-0">
                   <button
                     onClick={() => handleEditProduct(product)}
-                    className="p-1.5 rounded hover:bg-white/10 text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
-                    title="Edit product"
+                    className="flex items-center gap-1 px-2 py-1.5 rounded border border-[var(--wc-line)] text-xs text-[var(--text-light)] hover:border-[var(--copper-main)] hover:text-[var(--copper-light)] transition-colors"
+                    title="Edit details, stock and images"
                   >
-                    <Edit2 size={14} />
+                    <Edit2 size={13} /> Edit
                   </button>
                   <button
                     onClick={() => setImageTarget(product)}
