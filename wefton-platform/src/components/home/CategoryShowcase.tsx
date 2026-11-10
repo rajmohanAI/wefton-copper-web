@@ -22,17 +22,6 @@ interface CategoryTile {
   image: string;
 }
 
-// Static fallback tiles — used when Firestore categories are unavailable.
-// No images: these only keep the section usable.
-const CATEGORY_TILES: CategoryTile[] = [
-  { id: 'men-premium-tee', name: 'Premium Tee', slug: 'premium-tee', gender: 'men', image: '' },
-  { id: 'men-oversized-tee', name: 'Oversized Tee', slug: 'oversized-tee', gender: 'men', image: '' },
-  { id: 'men-premium-polo', name: 'Premium Polo', slug: 'premium-polo', gender: 'men', image: '' },
-  { id: 'men-full-sleeved-tee', name: 'Full Sleeved Tee', slug: 'full-sleeved-tee', gender: 'men', image: '' },
-  { id: 'men-active-wear', name: 'Active Wear', slug: 'active-wear', gender: 'men', image: '' },
-  { id: 'women-premium-tee', name: 'Premium Tee', slug: 'premium-tee', gender: 'women', image: '' },
-  { id: 'women-active-wear', name: 'Active Wear', slug: 'active-wear', gender: 'women', image: '' },
-];
 
 const SKELETON_COUNT = 8;
 
@@ -87,7 +76,7 @@ export default function CategoryShowcase() {
   const [tiles, setTiles] = useState<CategoryTile[] | null>(null);
 
   // Hydrate tiles from Firestore categories so the homepage showcase
-  // reflects the same categories as the menu. Falls back to static.
+  // reflects the same categories as the menu: only ones with products.
   useEffect(() => {
     let cancelled = false;
     Promise.all([
@@ -112,15 +101,18 @@ export default function CategoryShowcase() {
             image: c.thumbnail,
           })),
         ];
-        setTiles(next.length ? next : CATEGORY_TILES);
+        setTiles(next);
       })
       .catch(() => {
-        if (!cancelled) setTiles(CATEGORY_TILES);
+        if (!cancelled) setTiles([]);
       });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  // No categories with products yet: leave the section out.
+  if (tiles && tiles.length === 0) return null;
 
   return (
     <Container>

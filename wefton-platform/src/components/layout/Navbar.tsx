@@ -20,7 +20,6 @@ import { useWishlistStore } from '@/store/wishlistStore';
 import { useAuthStore } from '@/store/authStore';
 import { useSearchStore } from '@/store/searchStore';
 import { useAuthModalStore } from '@/store/authModalStore';
-import { MEN_CATEGORIES, WOMEN_CATEGORIES } from '@/config/brand';
 import { getNavCategories, type NavCategory } from '@/services/categoryService';
 import ThemeSwitcher from './ThemeSwitcher';
 
@@ -61,26 +60,14 @@ function buildNavLinks(
 ): NavLink[] {
   return [
     { label: 'Home', href: '/' },
-    { label: 'Men', href: '/men', dropdown: men },
-    { label: 'Women', href: '/women', dropdown: women },
-    { label: 'New Arrivals', href: '/new-arrivals' },
+    // A dropdown only when the gender has products in some category.
+    { label: 'Men', href: '/men', dropdown: men.length ? men : undefined },
+    { label: 'Women', href: '/women', dropdown: women.length ? women : undefined },
     { label: 'Vision', href: '/vision' },
     { label: 'About', href: '/about' },
+    { label: 'Check Product', href: '/check-product' },
   ];
 }
-
-const STATIC_MEN: NavCategory[] = MEN_CATEGORIES.map((c) => ({
-  id: c.id,
-  name: c.name,
-  slug: c.slug,
-  thumbnail: c.thumbnail,
-}));
-const STATIC_WOMEN: NavCategory[] = WOMEN_CATEGORIES.map((c) => ({
-  id: c.id,
-  name: c.name,
-  slug: c.slug,
-  thumbnail: c.thumbnail,
-}));
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -88,9 +75,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [navLinks, setNavLinks] = useState<NavLink[]>(() =>
-    buildNavLinks(STATIC_MEN, STATIC_WOMEN)
-  );
+  const [navLinks, setNavLinks] = useState<NavLink[]>(() => buildNavLinks([], []));
   const dropdownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cartCount = useCartStore((s) => s.getItemCount());
@@ -103,25 +88,16 @@ export default function Navbar() {
     setMounted(true);
   }, []);
 
-  // Hydrate menu categories from Firestore so newly added product
-  // categories appear in the menu without a code change. Falls back
-  // to the static brand config on error / empty collection.
+  // Menu categories come from the products in Firestore, so a category
+  // shows up once it has a product and never before.
   useEffect(() => {
     let cancelled = false;
     getNavCategories()
       .then(({ men, women }) => {
-        if (cancelled) return;
-        if (men.length || women.length) {
-          setNavLinks(
-            buildNavLinks(
-              men.length ? men : STATIC_MEN,
-              women.length ? women : STATIC_WOMEN
-            )
-          );
-        }
+        if (!cancelled) setNavLinks(buildNavLinks(men, women));
       })
       .catch(() => {
-        /* keep static fallback */
+        /* keep the menu without dropdowns */
       });
     return () => {
       cancelled = true;
@@ -168,12 +144,12 @@ export default function Navbar() {
               : 'bg-[var(--bg-dark)]/80 backdrop-blur-sm'
           )}
         />
-        <nav className="w-full min-h-[48px] px-[0.5cm] flex items-center justify-between">
+        <nav className="w-full min-h-[48px] px-[0.5cm] flex items-center justify-between gap-6">
           {/* Logo */}
           <Link
             href="/"
             aria-label="Wefton Copper home"
-            className="group flex items-center gap-3 text-[var(--copper-light)] font-bold tracking-[4px] uppercase text-base hover:text-[var(--copper-main)] transition-colors"
+            className="group flex items-center gap-3 text-[var(--copper-light)] font-bold tracking-[4px] uppercase text-xl hover:text-[var(--copper-main)] transition-colors"
           >
             <Image
               src="/brand/wefton-mark.png"
@@ -187,12 +163,12 @@ export default function Navbar() {
                 scrolled ? 'h-[30px]' : 'h-[34px]'
               )}
             />
-            <span aria-hidden className="hidden sm:block h-6 w-px bg-[var(--copper-main)]/40" />
-            <span className="hidden sm:inline">WEFTON COPPER</span>
+            <span aria-hidden className="hidden sm:block lg:hidden xl:block h-6 w-px bg-[var(--copper-main)]/40" />
+            <span className="hidden sm:inline lg:hidden xl:inline">WEFTON COPPER</span>
           </Link>
 
           {/* Desktop Nav */}
-          <ul className="hidden lg:flex items-center gap-8">
+          <ul className="hidden lg:flex items-center gap-5 xl:gap-8">
             {navLinks.map((link) => (
               <li
                 key={link.label}
@@ -202,7 +178,7 @@ export default function Navbar() {
                 <Link
                   href={link.href}
                   className={cn(
-                    'flex items-center gap-1 text-sm tracking-widest uppercase transition-colors duration-200',
+                    'flex items-center gap-1 whitespace-nowrap text-sm tracking-widest uppercase transition-colors duration-200',
                     pathname === link.href || pathname.startsWith(link.href + '/')
                       ? 'text-[var(--copper-light)]'
                       : 'text-[var(--text-light)] hover:text-[var(--copper-light)]'

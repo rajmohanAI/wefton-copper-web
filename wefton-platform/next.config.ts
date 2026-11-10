@@ -22,6 +22,13 @@ const nextConfig: NextConfig = {
   // payload (HTTPS://WEFTONCOPPER.COM/IG) also resolves correctly.
   async redirects() {
     return [
+      // Serial short link: /s/WCP01M0103000001 -> "Check your product" for
+      // that serial (for a QR on the sticker). Case-insensitive like the others.
+      {
+        source: '/:s(s|S)/:serial',
+        destination: '/check-product?serial=:serial',
+        permanent: false,
+      },
       {
         source: '/:ig(ig|IG|Ig|iG)',
         destination: 'https://www.instagram.com/weftoncopper',

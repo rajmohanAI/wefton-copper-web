@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star } from 'lucide-react';
 import * as Slider from '@radix-ui/react-slider';
 import * as Checkbox from '@radix-ui/react-checkbox';
-import { MEN_CATEGORIES, WOMEN_CATEGORIES } from '@/config/brand';
+import { useGenderCategories } from '@/hooks/useGenderCategories';
 import type { FilterState } from '@/types';
 import Button from '@/components/ui/Button';
 
@@ -37,7 +37,7 @@ function FilterContent({
   onChange: (filters: FilterState) => void;
   gender: 'men' | 'women';
 }) {
-  const categories = gender === 'men' ? MEN_CATEGORIES : WOMEN_CATEGORIES;
+  const categories = useGenderCategories(gender);
 
   const update = (partial: Partial<FilterState>) =>
     onChange({ ...filters, ...partial });

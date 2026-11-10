@@ -34,7 +34,10 @@ export interface Product {
 export interface ProductImage {
   url: string;
   alt: string;
+  /** The main image: the product's thumbnail on cards, search, wishlist and cart. */
   isPrimary?: boolean;
+  /** Colour this image shows (a variant colour name); unset = every colour. */
+  color?: string;
 }
 
 export interface ProductVariant {
