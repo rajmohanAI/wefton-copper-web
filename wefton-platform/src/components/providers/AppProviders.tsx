@@ -8,6 +8,7 @@ import GA4Provider from '@/components/analytics/GA4Provider';
 const CartDrawer = dynamic(() => import('@/components/cart/CartDrawer'), { ssr: false });
 const SearchOverlay = dynamic(() => import('@/components/search/SearchOverlay'), { ssr: false });
 const AuthModal = dynamic(() => import('@/components/auth/AuthModal'), { ssr: false });
+const SessionTimeout = dynamic(() => import('@/components/auth/SessionTimeout'), { ssr: false });
 
 function AuthListenerWrapper({ children }: { children: React.ReactNode }) {
   useAuthListener();
@@ -27,6 +28,7 @@ export default function AppProviders({ children }: { children: React.ReactNode }
         <CartDrawer />
         <SearchOverlay />
         <GlobalAuthModal />
+        <SessionTimeout />
       </AuthListenerWrapper>
     </ThemeProvider>
   );
