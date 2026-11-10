@@ -1,8 +1,8 @@
 // ============================================================
 // Wefton Copper — Product images and colours (pure logic)
 // ============================================================
-// An image may be tagged with the colour it shows. Untagged images belong
-// to every colour. The main image (isPrimary) is the product's thumbnail
+// An image may be tagged with the colour it shows. Untagged images are
+// shown for a colour that has none of its own. The main image (isPrimary) is the product's thumbnail
 // on cards, in search, the wishlist and the cart.
 import type { Product, ProductImage, ProductVariant } from '@/types';
 
@@ -15,12 +15,14 @@ export function primaryImage(product: Pick<Product, 'images'>): ProductImage | u
 const sameColor = (a?: string, b?: string) => !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /**
- * The gallery for one colour: its own images plus the untagged ones, main
- * image first. Falls back to every image when nothing matches.
+ * The gallery for one colour: only that colour's images, main image first.
+ * A colour with no images of its own shows the untagged ("All colours")
+ * images, and failing that every image.
  */
 export function imagesForColor(images: ProductImage[], color?: string): ProductImage[] {
-  const list = color ? images.filter((i) => !i.color || sameColor(i.color, color)) : images;
-  const shown = list.length ? list : images;
+  const own = color ? images.filter((i) => sameColor(i.color, color)) : images;
+  const untagged = images.filter((i) => !i.color);
+  const shown = own.length ? own : untagged.length ? untagged : images;
   const mainIdx = shown.findIndex((i) => i.isPrimary);
   return mainIdx > 0 ? [shown[mainIdx], ...shown.slice(0, mainIdx), ...shown.slice(mainIdx + 1)] : shown;
 }

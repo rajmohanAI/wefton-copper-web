@@ -35,16 +35,17 @@ describe('product images and colours', () => {
     expect(primaryImage({ images: [] })).toBeUndefined();
   });
 
-  it('shows a colour its own images plus untagged ones, main first', () => {
+  it('shows a colour only its own images, main first', () => {
     const images = [
       img('green-1', { color: 'Olive Green' }),
       img('blue-1', { color: 'Deep Blue' }),
       img('any'),
       img('blue-2', { color: 'Deep Blue', isPrimary: true }),
     ];
-    expect(imagesForColor(images, 'Deep Blue').map((i) => i.url)).toEqual(['blue-2', 'blue-1', 'any']);
-    expect(imagesForColor(images, 'Olive Green').map((i) => i.url)).toEqual(['green-1', 'any']);
-    // No images for the colour: show everything rather than nothing.
+    expect(imagesForColor(images, 'Deep Blue').map((i) => i.url)).toEqual(['blue-2', 'blue-1']);
+    expect(imagesForColor(images, 'Olive Green').map((i) => i.url)).toEqual(['green-1']);
+    // A colour with no images of its own: the untagged ones, else everything.
+    expect(imagesForColor(images, 'Black').map((i) => i.url)).toEqual(['any']);
     expect(imagesForColor([img('green-1', { color: 'Olive Green' })], 'Deep Blue').map((i) => i.url)).toEqual(['green-1']);
   });
 

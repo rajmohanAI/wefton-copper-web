@@ -64,15 +64,12 @@ export default function ProductFormModal({
   const [inventory, setInventory] = useState('');
   const [featured, setFeatured] = useState(false);
   const [bestseller, setBestseller] = useState(false);
-  const [newArrival, setNewArrival] = useState(false);
   const [images, setImages] = useState<ProductImage[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   /** Colour for each new file, by position ('' = every colour). */
   const [imageFileColors, setImageFileColors] = useState<string[]>([]);
   /** Which image is the main one (the thumbnail): an existing image or a new file. */
   const [mainImage, setMainImage] = useState<{ kind: 'existing' | 'new'; index: number } | null>(null);
-  /** Colour that newly chosen files are tagged with. */
-  const [uploadColor, setUploadColor] = useState('');
 
   // Variant grid state
   const [colors, setColors] = useState<CatalogColor[]>([]);
@@ -108,7 +105,6 @@ export default function ProductFormModal({
     setInventory('');
     setFeatured(false);
     setBestseller(false);
-    setNewArrival(false);
     setImages([]);
     setImageFiles([]);
     setImageFileColors([]);
@@ -137,7 +133,6 @@ export default function ProductFormModal({
         setInventory(product.inventory.toString());
         setFeatured(product.featured);
         setBestseller(product.bestseller);
-        setNewArrival(product.newArrival);
         const existing = product.images || [];
         setImages(existing);
         setImageFiles([]);
@@ -193,6 +188,13 @@ export default function ProductFormModal({
   const categories = gender === 'women' ? WOMEN_CATEGORIES : MEN_CATEGORIES;
 
   const hasGrid = selectedColors.length > 0 && selectedSizes.length > 0;
+  const imageRows = [
+    ...selectedColors,
+    ...[...new Set([...images.map((i) => i.color ?? ''), ...imageFileColors])].filter(
+      (c) => c && !selectedColors.includes(c)
+    ),
+    '',
+  ];
   const gridTotal = useMemo(
     () =>
       selectedColors.reduce(
@@ -267,12 +269,12 @@ export default function ProductFormModal({
 
   // Image handling. Each image can be tagged with the colour it shows, and
   // one image is the main one (the product's thumbnail).
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  /** Adds files to one colour row ('' = the All colours row). */
+  const handleImageSelect = (color: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const validFiles = filterValidImageFiles(files);
-    // New files take the colour picked in the upload box.
     setImageFiles((prev) => [...prev, ...validFiles]);
-    setImageFileColors((prev) => [...prev, ...validFiles.map(() => uploadColor)]);
+    setImageFileColors((prev) => [...prev, ...validFiles.map(() => color)]);
     if (!mainImage && validFiles.length) setMainImage({ kind: 'new', index: imageFiles.length });
     e.target.value = '';
   };
@@ -357,7 +359,8 @@ export default function ProductFormModal({
       sku: product?.sku || '',
       featured,
       bestseller,
-      newArrival,
+      // The New Arrival badge is retired; saving a product clears it.
+      newArrival: false,
       variants: draftVariants,
     };
 
@@ -636,7 +639,6 @@ export default function ProductFormModal({
                 {([
                   ['Featured', featured, setFeatured],
                   ['Bestseller', bestseller, setBestseller],
-                  ['New Arrival', newArrival, setNewArrival],
                 ] as const).map(([label, checked, set]) => (
                   <label key={label} className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -827,80 +829,89 @@ export default function ProductFormModal({
               )}
             </div>
 
-            {/* Images */}
+            {/* Images: one row per colour, plus a row for images that suit every colour */}
             <div className="space-y-4">
               <h3 className={SECTION}>Images</h3>
               <p className="text-xs text-[var(--text-muted)]">
-                Tag each image with the colour it shows, so the product page shows the right photos for each colour.
-                Click the star to make an image the main one: it is the thumbnail on product cards and in the cart.
+                Upload each colour’s photos in its own row. On the product page, choosing a colour shows only that
+                colour’s photos. Click <Star size={11} className="inline -mt-0.5" /> on a photo to make it the{' '}
+                <strong>main image</strong>: the thumbnail on product cards, search and the cart.
+              </p>
+              <p className="text-xs text-[var(--text-light)]">
+                Main image:{' '}
+                {mainImage ? (
+                  <span className="text-[var(--copper-light)]">chosen (marked ★)</span>
+                ) : (
+                  <span className="text-amber-700 dark:text-amber-300">not chosen yet; the first photo will be used</span>
+                )}
               </p>
 
-              {(images.length > 0 || imageFiles.length > 0) && (
-                <div className="flex flex-wrap gap-3">
-                  {images.map((img, idx) => (
-                    <ImageTile
-                      key={`e-${idx}`}
-                      src={img.url}
-                      alt={img.alt}
-                      isMain={mainImage?.kind === 'existing' && mainImage.index === idx}
-                      onMain={() => setMainImage({ kind: 'existing', index: idx })}
-                      onRemove={() => removeImage(idx)}
-                      color={img.color ?? ''}
-                      colors={selectedColors}
-                      onColor={(c) =>
-                        setImages((prev) => prev.map((x, i) => (i === idx ? { ...x, color: c || undefined } : x)))
-                      }
-                    />
-                  ))}
-                  {imageFiles.map((file, idx) => (
-                    <ImageTile
-                      key={`n-${idx}`}
-                      src={URL.createObjectURL(file)}
-                      alt={file.name}
-                      isNew
-                      isMain={mainImage?.kind === 'new' && mainImage.index === idx}
-                      onMain={() => setMainImage({ kind: 'new', index: idx })}
-                      onRemove={() => removeNewImage(idx)}
-                      color={imageFileColors[idx] ?? ''}
-                      colors={selectedColors}
-                      onColor={(c) => setImageFileColors((prev) => prev.map((x, i) => (i === idx ? c : x)))}
-                    />
-                  ))}
-                </div>
-              )}
-
-              <div className="flex flex-wrap items-center gap-3">
-                {selectedColors.length > 0 && (
-                  <label className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                    Upload for
-                    <select
-                      value={uploadColor}
-                      onChange={(e) => setUploadColor(e.target.value)}
-                      className={cn('h-9 text-xs px-2', ADMIN_FIELD)}
-                    >
-                      <option value="">All colours</option>
-                      {selectedColors.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-                <label className="flex flex-1 items-center gap-2 px-4 py-3 border border-dashed border-[var(--wc-line)] rounded cursor-pointer hover:border-[var(--copper-main)] transition-colors">
-                  <Upload size={16} className="text-[var(--text-muted)]" />
-                  <span className="text-sm text-[var(--text-muted)]">
-                    Upload images{uploadColor ? ` for ${uploadColor}` : ''} (JPEG, PNG, WebP, max 5MB)
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    multiple
-                    onChange={handleImageSelect}
-                    className="hidden"
-                  />
-                </label>
-              </div>
+              {imageRows.map((rowColor) => {
+                const master = rowColor ? findColor(colors, rowColor) : null;
+                const existing = images.map((img, idx) => ({ img, idx })).filter(({ img }) => (img.color ?? '') === rowColor);
+                const added = imageFiles.map((file, idx) => ({ file, idx })).filter(({ idx }) => (imageFileColors[idx] ?? '') === rowColor);
+                return (
+                  <div key={rowColor || 'all'} className="rounded border border-[var(--wc-line)] p-3 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="flex items-center gap-2 text-sm text-[var(--text-light)]">
+                        {rowColor ? (
+                          <span className="w-3.5 h-3.5 rounded-full border border-black/20" style={{ backgroundColor: master?.hex ?? 'transparent' }} />
+                        ) : null}
+                        {rowColor || 'All colours'}
+                        <span className="text-xs text-[var(--text-faint)]">
+                          {existing.length + added.length} photo{existing.length + added.length === 1 ? '' : 's'}
+                        </span>
+                      </p>
+                      <label className="flex items-center gap-1.5 h-8 px-3 rounded border border-dashed border-[var(--wc-line)] text-xs text-[var(--text-muted)] cursor-pointer hover:border-[var(--copper-main)] hover:text-[var(--copper-light)] transition-colors">
+                        <Upload size={13} /> Add photos
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          multiple
+                          onChange={handleImageSelect(rowColor)}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                    {existing.length + added.length > 0 ? (
+                      <div className="flex flex-wrap gap-3">
+                        {existing.map(({ img, idx }) => (
+                          <ImageTile
+                            key={`e-${idx}`}
+                            src={img.url}
+                            alt={img.alt}
+                            isMain={mainImage?.kind === 'existing' && mainImage.index === idx}
+                            onMain={() => setMainImage({ kind: 'existing', index: idx })}
+                            onRemove={() => removeImage(idx)}
+                            color={img.color ?? ''}
+                            colors={selectedColors}
+                            onColor={(c) =>
+                              setImages((prev) => prev.map((x, i) => (i === idx ? { ...x, color: c || undefined } : x)))
+                            }
+                          />
+                        ))}
+                        {added.map(({ file, idx }) => (
+                          <ImageTile
+                            key={`n-${idx}`}
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            isNew
+                            isMain={mainImage?.kind === 'new' && mainImage.index === idx}
+                            onMain={() => setMainImage({ kind: 'new', index: idx })}
+                            onRemove={() => removeNewImage(idx)}
+                            color={imageFileColors[idx] ?? ''}
+                            colors={selectedColors}
+                            onColor={(c) => setImageFileColors((prev) => prev.map((x, i) => (i === idx ? c : x)))}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-[var(--text-faint)] italic">No photos yet.</p>
+                    )}
+                  </div>
+                );
+              })}
+              <p className="text-[11px] text-[var(--text-faint)]">JPEG, PNG or WebP, up to 5MB each. The dropdown under a photo moves it to another colour.</p>
             </div>
           </form>
 
@@ -999,10 +1010,10 @@ function ImageTile({
         aria-label="Colour this image shows"
         className={cn('h-7 w-full text-[11px] px-1', ADMIN_FIELD)}
       >
-        <option value="">All colours</option>
+        <option value="">Move to All colours</option>
         {colors.map((c) => (
           <option key={c} value={c}>
-            {c}
+            {c === color ? c : `Move to ${c}`}
           </option>
         ))}
         {color && !colors.includes(color) && <option value={color}>{color}</option>}
