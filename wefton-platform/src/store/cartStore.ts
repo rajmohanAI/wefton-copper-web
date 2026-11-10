@@ -4,7 +4,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CartItem } from '@/types';
-import { SHIPPING_COST, FREE_SHIPPING_THRESHOLD, TAX_RATE } from '@/config/brand';
+import { computeOrderTotals } from '@/lib/orderPricing';
 import { validateCoupon } from '@/services/couponService';
 import { trackAddToCart } from '@/lib/analytics';
 
@@ -114,22 +114,11 @@ export const useCartStore = create<CartStore>()(
       getSubtotal: () =>
         get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
 
-      getShipping: () => {
-        const subtotal = get().getSubtotal();
-        return subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
-      },
+      getShipping: () => computeOrderTotals(get().items, get().discount).shipping,
 
-      getTax: () => {
-        const subtotal = get().getSubtotal();
-        const discountAmount = (subtotal * get().discount) / 100;
-        return Math.round((subtotal - discountAmount) * TAX_RATE);
-      },
+      getTax: () => computeOrderTotals(get().items, get().discount).taxes,
 
-      getTotal: () => {
-        const subtotal = get().getSubtotal();
-        const discountAmount = (subtotal * get().discount) / 100;
-        return subtotal - discountAmount + get().getShipping() + get().getTax();
-      },
+      getTotal: () => computeOrderTotals(get().items, get().discount).total,
     }),
     {
       name: 'wefton-cart',

@@ -42,6 +42,7 @@ import { BRAND } from '@/config/brand';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import type { Address } from '@/types';
+import { PRICES_INCLUDE_GST } from '@/config/brand';
 
 type Step = 'address' | 'payment' | 'confirmation';
 
@@ -1133,7 +1134,7 @@ export default function CheckoutClient() {
                 </div>
                 <div className="flex justify-between text-[var(--text-muted)]">
                   <span>GST (5%)</span>
-                  <span>{formatPrice(getTax())}</span>
+                  <span>{PRICES_INCLUDE_GST ? 'Included' : formatPrice(getTax())}</span>
                 </div>
                 <div className="flex justify-between text-sm font-medium text-[var(--text-light)] pt-2 border-t border-[var(--border-subtle)]">
                   <span>Total</span>

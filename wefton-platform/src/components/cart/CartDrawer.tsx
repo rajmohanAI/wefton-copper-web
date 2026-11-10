@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthModalStore } from '@/store/authModalStore';
 import { formatPrice } from '@/lib/utils';
 import Button from '@/components/ui/Button';
-import { FREE_SHIPPING_THRESHOLD } from '@/config/brand';
+import { FREE_SHIPPING_THRESHOLD, PRICES_INCLUDE_GST } from '@/config/brand';
 
 export default function CartDrawer() {
   const {
@@ -47,8 +47,8 @@ export default function CartDrawer() {
   const subtotal = getSubtotal();
   const shipping = getShipping();
   const freeShippingRemaining = FREE_SHIPPING_THRESHOLD - subtotal;
-  const freeShippingProgress = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
-  const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
+  const freeShippingProgress = FREE_SHIPPING_THRESHOLD > 0 ? Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100) : 100;
+  const isFreeShipping = shipping === 0;
 
   const handleApplyCoupon = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -121,7 +121,7 @@ export default function CartDrawer() {
                   <div className="flex items-center gap-2">
                     <Truck size={14} className="text-emerald-400" />
                     <p className="text-xs font-medium text-emerald-400">
-                      Free shipping unlocked!
+                      {FREE_SHIPPING_THRESHOLD > 0 ? 'Free shipping unlocked!' : 'Free delivery on every order'}
                     </p>
                   </div>
                 ) : (
@@ -321,7 +321,7 @@ export default function CartDrawer() {
                   </div>
                   <div className="flex justify-between text-[var(--text-muted)]">
                     <span>GST (5%)</span>
-                    <span>{formatPrice(getTax())}</span>
+                    <span>{PRICES_INCLUDE_GST ? 'Included' : formatPrice(getTax())}</span>
                   </div>
                   <div className="flex justify-between text-sm font-medium text-[var(--text-light)] pt-2 border-t border-[var(--border-subtle)]">
                     <span>Total</span>

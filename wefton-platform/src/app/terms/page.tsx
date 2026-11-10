@@ -149,10 +149,10 @@ export default function TermsPage() {
         <p className="text-base text-[var(--color-muted-foreground)] leading-relaxed">
           If you have any questions about these Terms of Service, please contact us at{' '}
           <a
-            href="mailto:support@weftoncopper.com"
+            href="mailto:admin@weftoncopper.com"
             className="text-[var(--color-accent)] hover:underline"
           >
-            support@weftoncopper.com
+            admin@weftoncopper.com
           </a>
           .
         </p>
