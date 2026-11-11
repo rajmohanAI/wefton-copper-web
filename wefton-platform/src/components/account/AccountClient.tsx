@@ -888,7 +888,7 @@ export default function AccountClient() {
                                 </div>
                                 {!!order.discountAmount && (
                                   <div className="flex justify-between text-emerald-400">
-                                    <span>Discount{order.couponCode ? ` (${order.couponCode})` : ''}</span>
+                                    <span>Discount{order.couponCode ? ` (${order.couponCode})` : order.offerSerial ? ' (repeat-customer offer)' : ''}</span>
                                     <span>-{formatPrice(order.discountAmount)}</span>
                                   </div>
                                 )}

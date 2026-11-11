@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthModalStore } from '@/store/authModalStore';
 import { formatPrice } from '@/lib/utils';
 import Button from '@/components/ui/Button';
-import { FREE_SHIPPING_THRESHOLD, PRICES_INCLUDE_GST } from '@/config/brand';
+import { FREE_SHIPPING_THRESHOLD, PRICES_INCLUDE_GST, SERIAL_OFFER_RUPEES } from '@/config/brand';
 import { formatCouponDiscount } from '@/lib/coupons';
 
 export default function CartDrawer() {
@@ -27,6 +27,8 @@ export default function CartDrawer() {
     getTotal,
     couponCode,
     discountFlat,
+    offerSerial,
+    applySerialOffer,
     getDiscountAmount,
     discount,
     couponError,
@@ -52,6 +54,16 @@ export default function CartDrawer() {
   const freeShippingRemaining = FREE_SHIPPING_THRESHOLD - subtotal;
   const freeShippingProgress = FREE_SHIPPING_THRESHOLD > 0 ? Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100) : 100;
   const isFreeShipping = shipping === 0;
+
+  const handleApplySerial = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const input = (e.target as HTMLFormElement).elements.namedItem('serial') as HTMLInputElement;
+    if (input.value.trim()) {
+      setCouponLoading(true);
+      await applySerialOffer(input.value.trim());
+      setCouponLoading(false);
+    }
+  };
 
   const handleApplyCoupon = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -265,7 +277,7 @@ export default function CartDrawer() {
             {items.length > 0 && (
               <div className="px-6 py-5 border-t border-[var(--border-subtle)] space-y-4">
                 {/* Coupon */}
-                {!couponCode ? (
+                {!couponCode && !offerSerial ? (
                   <div>
                     <form className="flex gap-2" onSubmit={handleApplyCoupon}>
                       <div className="relative flex-1">
@@ -287,6 +299,23 @@ export default function CartDrawer() {
                         {couponLoading ? '...' : 'Apply'}
                       </button>
                     </form>
+                    {/* Repeat customers: a serial from a past purchase */}
+                    <form className="flex gap-2 mt-2" onSubmit={handleApplySerial}>
+                      <input
+                        name="serial"
+                        aria-label="Serial from a Wefton tag"
+                        placeholder={`Have a Wefton tag? Serial for ₹${SERIAL_OFFER_RUPEES} off`}
+                        className="flex-1 min-w-0 h-9 px-3 bg-white/5 border border-white/10 rounded text-xs text-[var(--text-light)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--copper-main)]"
+                      />
+                      <button
+                        type="submit"
+                        disabled={couponLoading}
+                        className="h-9 px-4 text-xs tracking-wider uppercase bg-white/5 border border-white/10 rounded text-[var(--text-muted)] hover:text-[var(--copper-light)] hover:border-[var(--copper-main)] transition-colors disabled:opacity-50"
+                      >
+                        {couponLoading ? '...' : 'Apply'}
+                      </button>
+                    </form>
+                    <p className="text-[10px] text-[var(--text-faint)] mt-1">One offer per order: a coupon or a serial.</p>
                     {/* Inline coupon error */}
                     {couponError && (
                       <p className="text-[11px] text-red-400 mt-1.5">{couponError}</p>
@@ -295,7 +324,7 @@ export default function CartDrawer() {
                 ) : (
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-emerald-400 flex items-center gap-1">
-                      <Tag size={12} /> {couponCode} — {formatCouponDiscount({ discount, discountFlat })} off
+                      <Tag size={12} /> {offerSerial ? 'Repeat-customer offer' : couponCode} — {formatCouponDiscount({ discount, discountFlat })} off
                     </span>
                     <button
                       onClick={removeCoupon}

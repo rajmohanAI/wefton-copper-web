@@ -35,7 +35,8 @@ export async function createOrder(
   discount = 0,
   couponCode = '',
   customerEmail = '',
-  discountFlat = 0
+  discountFlat = 0,
+  offerSerial = ''
 ): Promise<Order> {
   const db = requireDb();
   const { subtotal, discountAmount, shipping, taxes, total } = computeOrderTotals(items, discount, discountFlat);
@@ -56,6 +57,7 @@ export async function createOrder(
     })),
     // Kept so the payment server can re-check the discount.
     couponCode: discountAmount > 0 ? couponCode : '',
+    offerSerial: discountAmount > 0 ? offerSerial : '',
     subtotal,
     discountAmount,
     shipping,

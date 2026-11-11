@@ -149,6 +149,17 @@ export async function deleteCoupon(couponId: string): Promise<void> {
 // Validation (for checkout flow)
 // ============================================================
 
+/** Checks a tag serial for the repeat-customer offer, on the server. */
+export async function validateSerialOffer(serial: string): Promise<{ valid: boolean; serial?: string; error?: string }> {
+  const res = await fetch('/api/offers/serial', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ serial }),
+    cache: 'no-store',
+  });
+  return res.json();
+}
+
 /**
  * Validates a coupon code against the Firestore `coupons` collection.
  *

@@ -11,6 +11,8 @@ import { FieldValue, type DocumentReference, type Firestore } from 'firebase-adm
 import { getAdminDb } from '@/lib/firebaseAdmin';
 import { computeOrderTotals } from '@/lib/orderPricing';
 import { couponWindowError } from '@/lib/coupons';
+import { SERIAL_OFFER_RUPEES } from '@/config/brand';
+import { checkSerialOffer } from '@/services/serialOfferServer';
 import {
   RAZORPAY_CURRENCY,
   createRazorpayClient,
@@ -94,6 +96,11 @@ async function couponDiscount(
   return { percent: coupon.discount || 0, flat: coupon.discountFlat || 0 };
 }
 
+async function serialDiscount(db: Firestore, order: Order): Promise<{ percent: number; flat: number }> {
+  const { valid } = await checkSerialOffer(db, order.offerSerial!, order.orderId);
+  return { percent: 0, flat: valid ? SERIAL_OFFER_RUPEES : 0 };
+}
+
 /**
  * The order total recomputed from current catalog prices and the coupon,
  * ignoring the prices the browser wrote into the order.
@@ -111,7 +118,12 @@ export async function computeTrustedTotal(db: Firestore, order: Order): Promise<
       return { price: catalogPrice(product, line), quantity: line.quantity };
     })
   );
-  const { percent, flat } = await couponDiscount(db, order.couponCode);
+  if (order.offerSerial && order.couponCode) {
+    throw new PaymentError(400, 'An order can have only one offer');
+  }
+  const { percent, flat } = order.offerSerial
+    ? await serialDiscount(db, order)
+    : await couponDiscount(db, order.couponCode);
   return computeOrderTotals(lines, percent, flat).total;
 }
 

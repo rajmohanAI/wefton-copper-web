@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { computeOrderTotals } from '@/lib/orderPricing';
 
 const ordersCreate = vi.fn();
+vi.mock('@/services/serialOfferServer', () => ({ checkSerialOffer: vi.fn() }));
 vi.mock('razorpay', () => ({
   default: vi.fn(function Razorpay() {
     return { orders: { create: ordersCreate } };
@@ -57,6 +58,8 @@ import {
 } from '@/services/razorpayPaymentService';
 
 const SECRET = 'test_secret_not_real';
+import { checkSerialOffer } from '@/services/serialOfferServer';
+
 const UID = 'user-1';
 const ORDER_ID = 'WC-ORDER-1';
 
@@ -153,6 +156,24 @@ describe('prepareRazorpayOrder', () => {
     seed();
     store.coupons.c1.startsAt = '2999-01-01T00:00:00Z';
     await expectPaymentError(prepareRazorpayOrder(UID, ORDER_ID), 409);
+  });
+
+  it('applies ₹120 for a valid serial offer when re-pricing', async () => {
+    seed({ couponCode: '', offerSerial: 'WCP01M0103000001', total: 1680 }); // 1800 less 120
+    vi.mocked(checkSerialOffer).mockResolvedValue({ valid: true, serial: 'WCP01M0103000001' });
+    await prepareRazorpayOrder(UID, ORDER_ID);
+    expect(ordersCreate).toHaveBeenCalledWith(expect.objectContaining({ amount: 168000 }));
+  });
+
+  it('gives no discount for a serial already used', async () => {
+    seed({ couponCode: '', offerSerial: 'WCP01M0103000001', total: 1680 });
+    vi.mocked(checkSerialOffer).mockResolvedValue({ valid: false, error: 'used' });
+    await expectPaymentError(prepareRazorpayOrder(UID, ORDER_ID), 409);
+  });
+
+  it('refuses an order with both a coupon and a serial', async () => {
+    seed({ offerSerial: 'WCP01M0103000001' });
+    await expectPaymentError(prepareRazorpayOrder(UID, ORDER_ID), 400);
   });
 
   it('ignores an expired coupon when re-pricing', async () => {

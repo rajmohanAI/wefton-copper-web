@@ -74,6 +74,7 @@ export default function CheckoutClient() {
     getDiscountAmount,
     discount,
     discountFlat,
+    offerSerial,
     couponCode,
     couponError,
     revalidateCoupon,
@@ -175,7 +176,8 @@ export default function CheckoutClient() {
         discount,
         couponCode,
         user?.email || '',
-        discountFlat
+        discountFlat,
+        offerSerial
       );
       setOrderId(order.orderId);
       setOrderTotal(order.total);
@@ -1140,7 +1142,7 @@ export default function CheckoutClient() {
                 </div>
                 {getDiscountAmount() > 0 && (
                   <div className="flex justify-between text-emerald-400">
-                    <span>Discount{couponCode ? ` (${couponCode})` : ''}</span>
+                    <span>Discount{couponCode ? ` (${couponCode})` : offerSerial ? ' (repeat-customer offer)' : ''}</span>
                     <span>-{formatPrice(getDiscountAmount())}</span>
                   </div>
                 )}

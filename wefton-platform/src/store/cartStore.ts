@@ -5,7 +5,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CartItem } from '@/types';
 import { computeOrderTotals } from '@/lib/orderPricing';
-import { validateCoupon } from '@/services/couponService';
+import { validateCoupon, validateSerialOffer } from '@/services/couponService';
+import { SERIAL_OFFER_RUPEES } from '@/config/brand';
 import { trackAddToCart } from '@/lib/analytics';
 
 interface CartStore {
@@ -15,6 +16,8 @@ interface CartStore {
   discount: number;
   /** Fixed rupees off from the coupon; 0 when it is a percentage. */
   discountFlat: number;
+  /** Tag serial applied for the repeat-customer offer; '' when none. One offer per order. */
+  offerSerial: string;
   couponError: string;
 
   // Actions
@@ -26,6 +29,7 @@ interface CartStore {
   openCart: () => void;
   closeCart: () => void;
   applyCoupon: (code: string) => Promise<void>;
+  applySerialOffer: (serial: string) => Promise<void>;
   removeCoupon: () => void;
   /** Re-checks the applied coupon; drops it if it is no longer valid. */
   revalidateCoupon: () => Promise<void>;
@@ -47,6 +51,7 @@ export const useCartStore = create<CartStore>()(
       couponCode: '',
       discount: 0,
       discountFlat: 0,
+      offerSerial: '',
       couponError: '',
 
       addItem: (newItem) => {
@@ -97,7 +102,7 @@ export const useCartStore = create<CartStore>()(
         }));
       },
 
-      clearCart: () => set({ items: [], couponCode: '', discount: 0, discountFlat: 0, couponError: '' }),
+      clearCart: () => set({ items: [], couponCode: '', discount: 0, discountFlat: 0, offerSerial: '', couponError: '' }),
 
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
       openCart: () => set({ isOpen: true }),
@@ -111,18 +116,36 @@ export const useCartStore = create<CartStore>()(
             couponCode: code.trim().toUpperCase(),
             discount: result.discount ?? 0,
             discountFlat: result.discountFlat ?? 0,
+            offerSerial: '',
             couponError: '',
           });
-        } else {
+        } else if (get().couponCode === code.trim().toUpperCase()) {
+          // The applied coupon stopped being valid.
           set({ couponCode: '', discount: 0, discountFlat: 0, couponError: result.error || 'Invalid or expired coupon code' });
+        } else {
+          // A failed attempt leaves any offer already applied in place.
+          set({ couponError: result.error || 'Invalid or expired coupon code' });
         }
       },
 
-      removeCoupon: () => set({ couponCode: '', discount: 0, discountFlat: 0, couponError: '' }),
+      applySerialOffer: async (serial: string) => {
+        set({ couponError: '' });
+        const result = await validateSerialOffer(serial);
+        if (result.valid && result.serial) {
+          set({ couponCode: '', discount: 0, discountFlat: SERIAL_OFFER_RUPEES, offerSerial: result.serial, couponError: '' });
+        } else if (get().offerSerial && get().offerSerial === serial) {
+          set({ discountFlat: 0, offerSerial: '', couponError: result.error || 'This serial can’t be used' });
+        } else {
+          set({ couponError: result.error || 'This serial can’t be used' });
+        }
+      },
+
+      removeCoupon: () => set({ couponCode: '', discount: 0, discountFlat: 0, offerSerial: '', couponError: '' }),
 
       revalidateCoupon: async () => {
-        const code = get().couponCode;
-        if (code) await get().applyCoupon(code);
+        const { couponCode, offerSerial } = get();
+        if (offerSerial) await get().applySerialOffer(offerSerial);
+        else if (couponCode) await get().applyCoupon(couponCode);
       },
 
       getDiscountAmount: () => computeOrderTotals(get().items, get().discount, get().discountFlat).discountAmount,
@@ -140,7 +163,7 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: 'wefton-cart',
-      partialize: (state) => ({ items: state.items, couponCode: state.couponCode, discount: state.discount, discountFlat: state.discountFlat }),
+      partialize: (state) => ({ items: state.items, couponCode: state.couponCode, discount: state.discount, discountFlat: state.discountFlat, offerSerial: state.offerSerial }),
     }
   )
 );

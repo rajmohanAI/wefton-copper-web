@@ -103,8 +103,12 @@ export interface Order {
   userId: string;
   products: OrderItem[];
   subtotal: number;
-  /** Rupees taken off by the coupon. */
+  /** Rupees taken off by the coupon or serial offer. */
   discountAmount?: number;
+  /** Tag serial used for the repeat-customer offer (an order has a coupon or a serial, never both). */
+  offerSerial?: string;
+  /** Set when another order had already used this serial: needs an admin's look. */
+  offerConflict?: boolean;
   shipping: number;
   taxes: number;
   total: number;

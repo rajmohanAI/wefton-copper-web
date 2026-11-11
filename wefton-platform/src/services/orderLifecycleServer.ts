@@ -26,6 +26,7 @@ import {
   type OverdueOrder,
 } from '@/lib/email/orderEmails';
 import type { Order, OrderItem, OrderStatusEvent, Product } from '@/types';
+import { redeemOrderSerial } from '@/services/serialOfferServer';
 
 export const REMINDER_AFTER_DAYS = 5;
 export const CANCEL_AFTER_DAYS = 10;
@@ -120,7 +121,14 @@ export async function markOrderPlaced(db: Firestore, ref: DocumentReference, now
     return true;
   });
   if (!stamped) return (await ref.get()).data() as Order;
-  return { ...order, ...updates, statusHistory: [...(order.statusHistory || []), event] };
+  // The order is really placed now, so its serial offer is used up.
+  const offerConflict = await redeemOrderSerial(db, ref, order);
+  return {
+    ...order,
+    ...updates,
+    ...(offerConflict ? { offerConflict } : {}),
+    statusHistory: [...(order.statusHistory || []), event],
+  };
 }
 
 /** Sends whichever "order placed" emails haven't gone out yet. */

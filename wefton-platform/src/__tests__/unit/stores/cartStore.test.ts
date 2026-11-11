@@ -1,7 +1,11 @@
 // ============================================================
 // Wefton Copper — Cart Store Unit Tests
 // ============================================================
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+vi.mock('@/services/couponService', () => ({ validateCoupon: vi.fn(), validateSerialOffer: vi.fn() }));
+
+import * as couponService from '@/services/couponService';
 import { useCartStore } from '@/store/cartStore';
 import type { CartItem } from '@/types';
 
@@ -22,7 +26,7 @@ function createCartItem(overrides: Partial<CartItem> = {}): CartItem {
 
 describe('cartStore', () => {
   beforeEach(() => {
-    useCartStore.setState({ items: [], isOpen: false, couponCode: '', discount: 0, couponError: '' });
+    useCartStore.setState({ items: [], isOpen: false, couponCode: '', discount: 0, discountFlat: 0, offerSerial: '', couponError: '' });
   });
 
   describe('addItem', () => {
@@ -127,6 +131,38 @@ describe('cartStore', () => {
       useCartStore.setState({ isOpen: true });
       useCartStore.getState().closeCart();
       expect(useCartStore.getState().isOpen).toBe(false);
+    });
+  });
+
+  describe('one offer per order', () => {
+    it('a serial offer replaces a coupon and gives a flat discount', async () => {
+      vi.mocked(couponService.validateSerialOffer).mockResolvedValue({ valid: true, serial: 'WCP01M0103000001' });
+      useCartStore.setState({ couponCode: 'SAVE10', discount: 10, discountFlat: 0 });
+      useCartStore.getState().addItem(createCartItem({ price: 689, quantity: 1 }));
+      await useCartStore.getState().applySerialOffer('wcp01m0103000001');
+      const state = useCartStore.getState();
+      expect(state.couponCode).toBe('');
+      expect(state.discount).toBe(0);
+      expect(state.offerSerial).toBe('WCP01M0103000001');
+      expect(state.getTotal()).toBe(569);
+    });
+
+    it('a coupon replaces a serial offer', async () => {
+      vi.mocked(couponService.validateCoupon).mockResolvedValue({ valid: true, discount: 10, discountFlat: 0 });
+      useCartStore.setState({ offerSerial: 'WCP01M0103000001', discountFlat: 120 });
+      await useCartStore.getState().applyCoupon('save10');
+      const state = useCartStore.getState();
+      expect(state.offerSerial).toBe('');
+      expect(state.discountFlat).toBe(0);
+      expect(state.couponCode).toBe('SAVE10');
+    });
+
+    it('a failed attempt keeps the offer already applied', async () => {
+      vi.mocked(couponService.validateCoupon).mockResolvedValue({ valid: false, error: 'nope' });
+      useCartStore.setState({ offerSerial: 'WCP01M0103000001', discountFlat: 120 });
+      await useCartStore.getState().applyCoupon('bad');
+      expect(useCartStore.getState().offerSerial).toBe('WCP01M0103000001');
+      expect(useCartStore.getState().couponError).toBe('nope');
     });
   });
 

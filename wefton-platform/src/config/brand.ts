@@ -53,5 +53,7 @@ export const SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'] as const;
 export const SHIPPING_COST = 0;
 export const FREE_SHIPPING_THRESHOLD = 0;
 export const TAX_RATE = 0.05; // 5% GST
+/** Flat rupees off for entering a genuine, unused serial from a Wefton tag. */
+export const SERIAL_OFFER_RUPEES = 120;
 /** Product prices already include GST, so it is never added on top at checkout. */
 export const PRICES_INCLUDE_GST = true;
