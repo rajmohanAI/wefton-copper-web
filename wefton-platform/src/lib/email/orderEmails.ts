@@ -124,7 +124,6 @@ export function adminNewOrderEmail(order: Order): EmailContent {
       <h3 style="font-size:15px;margin:22px 0 8px;">Ship to</h3>
       ${addressBlock(order)}
       <p style="margin:24px 0 0;font-size:13px;color:#6b6661;">Update the order to Closed in the admin panel once it is delivered.
-    ${order.offerConflict ? `<p style="color:#b00020;"><strong>Check this order:</strong> its serial offer (${escapeHtml(order.offerSerial)}) had already been used on another order, so the ₹ discount should not have applied.</p>` : ''}
         Open orders get a daily reminder from day 5 and are cancelled automatically after 10 days without a status update.</p>
       <p style="margin:16px 0 0;"><a href="${SITE}/admin" style="display:inline-block;padding:10px 24px;background:${COPPER};color:#fff;text-decoration:none;border-radius:6px;">Open admin panel</a></p>
     `),

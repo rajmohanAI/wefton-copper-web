@@ -4,7 +4,7 @@
 // serial is marked used when the order is placed, in serialRedemptions,
 // which only the Admin SDK can read or write.
 // ============================================================
-import { FieldValue, type DocumentReference, type Firestore } from 'firebase-admin/firestore';
+import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { parseSerial } from '@/lib/serialgen';
 import { checkSerial } from '@/services/serialServer';
 import type { Order } from '@/types';
@@ -31,25 +31,18 @@ export async function checkSerialOffer(db: Firestore, input: string, orderId?: s
   ]);
   if (!genuine) return { valid: false, error: 'We couldn’t find this serial' };
   if (redemption.exists && redemption.get('orderId') !== orderId) {
-    return { valid: false, error: 'This serial has already been used for an offer' };
+    return { valid: false, error: 'The offer for this serial has already been redeemed' };
   }
   return { valid: true, serial: parsed.serial };
 }
 
-/**
- * Marks an order's serial as used. Returns true when another order got there
- * first (two checkouts at once): the order is flagged for the admin to review.
- */
-export async function redeemOrderSerial(db: Firestore, ref: DocumentReference, order: Order): Promise<boolean> {
-  if (!order.offerSerial) return false;
+/** Marks an order's serial as used, for good: a cancelled order does not give it back. */
+export async function redeemOrderSerial(db: Firestore, order: Order): Promise<void> {
+  if (!order.offerSerial) return;
   const redemptionRef = db.collection(REDEMPTIONS).doc(order.offerSerial);
-  return db.runTransaction(async (tx) => {
+  await db.runTransaction(async (tx) => {
     const existing = await tx.get(redemptionRef);
-    if (existing.exists && existing.get('orderId') !== order.orderId) {
-      tx.update(ref, { offerConflict: true });
-      return true;
-    }
+    if (existing.exists) return;
     tx.set(redemptionRef, { orderId: order.orderId, userId: order.userId, redeemedAt: FieldValue.serverTimestamp() });
-    return false;
   });
 }

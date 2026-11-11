@@ -107,8 +107,6 @@ export interface Order {
   discountAmount?: number;
   /** Tag serial used for the repeat-customer offer (an order has a coupon or a serial, never both). */
   offerSerial?: string;
-  /** Set when another order had already used this serial: needs an admin's look. */
-  offerConflict?: boolean;
   shipping: number;
   taxes: number;
   total: number;

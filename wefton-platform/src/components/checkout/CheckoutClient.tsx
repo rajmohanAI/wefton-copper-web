@@ -169,6 +169,16 @@ export default function CheckoutClient() {
     setOrderCreating(true);
     setError('');
     try {
+      // Someone else may have redeemed this serial since it was applied.
+      if (offerSerial) {
+        await revalidateCoupon();
+        const latest = useCartStore.getState();
+        if (!latest.offerSerial) {
+          setError(`${latest.couponError}. The discount was removed; please review your total.`);
+          orderCreationRef.current = false;
+          return;
+        }
+      }
       const order = await createOrder(
         user?.uid || 'guest',
         items,

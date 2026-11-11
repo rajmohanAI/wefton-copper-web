@@ -2,7 +2,7 @@
 // Wefton Copper — Repeat-customer serial offer
 // ============================================================
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DocumentReference, Firestore } from 'firebase-admin/firestore';
+import type { Firestore } from 'firebase-admin/firestore';
 
 vi.mock('firebase-admin/firestore', () => ({ FieldValue: { serverTimestamp: () => 'now' } }));
 vi.mock('@/services/serialServer', () => ({ checkSerial: vi.fn() }));
@@ -24,7 +24,6 @@ const tx = {
   set: vi.fn((ref: { id: string }, data: { orderId: string }) => {
     redemptions[ref.id] = data;
   }),
-  update: vi.fn(),
 };
 const db = {
   collection: () => ({
@@ -32,7 +31,6 @@ const db = {
   }),
   runTransaction: (fn: (t: typeof tx) => unknown) => fn(tx),
 } as unknown as Firestore;
-const orderRef = { id: 'order-doc' } as unknown as DocumentReference;
 const order = (orderId: string) => ({ orderId, userId: 'u1', offerSerial: SERIAL }) as Order;
 
 beforeEach(() => {
@@ -57,7 +55,7 @@ describe('checkSerialOffer', () => {
 
   it('refuses a serial already used', async () => {
     redemptions[SERIAL] = { orderId: 'other' };
-    expect((await checkSerialOffer(db, SERIAL)).error).toMatch(/already been used/);
+    expect((await checkSerialOffer(db, SERIAL)).error).toMatch(/already been redeemed/);
   });
 
   it('lets an order re-check its own redemption', async () => {
@@ -68,19 +66,18 @@ describe('checkSerialOffer', () => {
 
 describe('redeemOrderSerial', () => {
   it('marks the serial used', async () => {
-    await expect(redeemOrderSerial(db, orderRef, order('o1'))).resolves.toBe(false);
+    await redeemOrderSerial(db, order('o1'));
     expect(redemptions[SERIAL].orderId).toBe('o1');
   });
 
   it('does nothing for an order without a serial', async () => {
-    await expect(redeemOrderSerial(db, orderRef, { orderId: 'o1' } as Order)).resolves.toBe(false);
+    await redeemOrderSerial(db, { orderId: 'o1' } as Order);
     expect(tx.set).not.toHaveBeenCalled();
   });
 
-  it('flags the order when another order used the serial first', async () => {
+  it('keeps the first redemption when another order got there first', async () => {
     redemptions[SERIAL] = { orderId: 'first' };
-    await expect(redeemOrderSerial(db, orderRef, order('second'))).resolves.toBe(true);
-    expect(tx.update).toHaveBeenCalledWith(orderRef, { offerConflict: true });
+    await redeemOrderSerial(db, order('second'));
     expect(redemptions[SERIAL].orderId).toBe('first');
   });
 });

@@ -122,13 +122,8 @@ export async function markOrderPlaced(db: Firestore, ref: DocumentReference, now
   });
   if (!stamped) return (await ref.get()).data() as Order;
   // The order is really placed now, so its serial offer is used up.
-  const offerConflict = await redeemOrderSerial(db, ref, order);
-  return {
-    ...order,
-    ...updates,
-    ...(offerConflict ? { offerConflict } : {}),
-    statusHistory: [...(order.statusHistory || []), event],
-  };
+  await redeemOrderSerial(db, order);
+  return { ...order, ...updates, statusHistory: [...(order.statusHistory || []), event] };
 }
 
 /** Sends whichever "order placed" emails haven't gone out yet. */
