@@ -143,6 +143,7 @@ export const couponSchema = z.object({
     .int('Rupee discount must be a whole number')
     .min(0, 'Discount cannot be negative')
     .default(0),
+  flag: z.enum(['A', 'S']).default('S'),
   active: z.boolean().default(true),
   startsAt: z.string().datetime().nullable().optional(),
   expiresAt: z.string().datetime().nullable().optional(),

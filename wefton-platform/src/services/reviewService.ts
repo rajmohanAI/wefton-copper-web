@@ -40,6 +40,13 @@ export async function getProductReviews(productId: string): Promise<Review[]> {
   return snap.docs.map((d) => ({ reviewId: d.id, ...(d.data() as Omit<Review, 'reviewId'>) }));
 }
 
+/** Product IDs this user has already reviewed. */
+export async function getReviewedProductIds(userId: string): Promise<string[]> {
+  const db = requireDb();
+  const snap = await getDocs(query(collection(db, REVIEWS_COL), where('userId', '==', userId)));
+  return snap.docs.map((d) => d.get('productId') as string);
+}
+
 /**
  * Adds a new review and atomically updates the product's `ratings` (average)
  * and `reviewsCount` fields using a Firestore transaction.
