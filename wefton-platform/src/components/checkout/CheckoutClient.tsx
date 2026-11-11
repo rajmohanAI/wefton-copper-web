@@ -169,25 +169,22 @@ export default function CheckoutClient() {
     setOrderCreating(true);
     setError('');
     try {
-      // Someone else may have redeemed this serial since it was applied.
-      if (offerSerial) {
-        await revalidateCoupon();
-        const latest = useCartStore.getState();
-        if (!latest.offerSerial) {
-          setError(`${latest.couponError}. The discount was removed; please review your total.`);
-          orderCreationRef.current = false;
-          return;
-        }
+      // Someone else may have redeemed this serial since it was applied. If so,
+      // the order goes ahead at full price and the customer is told why.
+      if (offerSerial) await revalidateCoupon();
+      const latest = useCartStore.getState();
+      if (offerSerial && !latest.offerSerial) {
+        setError(`${latest.couponError}. The discount was removed; please review your total.`);
       }
       const order = await createOrder(
         user?.uid || 'guest',
         items,
         confirmedAddress,
-        discount,
-        couponCode,
+        latest.discount,
+        latest.couponCode,
         user?.email || '',
-        discountFlat,
-        offerSerial
+        latest.discountFlat,
+        latest.offerSerial
       );
       setOrderId(order.orderId);
       setOrderTotal(order.total);
