@@ -65,14 +65,33 @@ const STEPS = [
 
 export default function CheckoutClient() {
   const router = useRouter();
-  const { items, getSubtotal, getShipping, getTax, getTotal, discount, couponCode, clearCart } =
-    useCartStore();
+  const {
+    items,
+    getSubtotal,
+    getShipping,
+    getTax,
+    getTotal,
+    getDiscountAmount,
+    discount,
+    discountFlat,
+    couponCode,
+    couponError,
+    revalidateCoupon,
+    clearCart,
+  } = useCartStore();
   const { user } = useAuth();
   const [step, setStep] = useState<Step>('address');
   const [confirmedAddress, setConfirmedAddress] = useState<Address | null>(null);
   const [orderId, setOrderId] = useState('');
   const [error, setError] = useState('');
   const [saveAddress, setSaveAddress] = useState(false);
+
+  // The coupon may have been applied a while ago: check it still works.
+  useEffect(() => {
+    revalidateCoupon().catch(() => {
+      /* offline: the payment server re-checks it anyway */
+    });
+  }, [revalidateCoupon]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [savingAddress, setSavingAddress] = useState(false);
   const [tosAccepted, setTosAccepted] = useState(false);
@@ -155,7 +174,8 @@ export default function CheckoutClient() {
         confirmedAddress,
         discount,
         couponCode,
-        user?.email || ''
+        user?.email || '',
+        discountFlat
       );
       setOrderId(order.orderId);
       setOrderTotal(order.total);
@@ -1118,14 +1138,13 @@ export default function CheckoutClient() {
                   <span>Subtotal</span>
                   <span>{formatPrice(getSubtotal())}</span>
                 </div>
-                {discount > 0 && (
+                {getDiscountAmount() > 0 && (
                   <div className="flex justify-between text-emerald-400">
-                    <span>Discount</span>
-                    <span>
-                      -{formatPrice((getSubtotal() * discount) / 100)}
-                    </span>
+                    <span>Discount{couponCode ? ` (${couponCode})` : ''}</span>
+                    <span>-{formatPrice(getDiscountAmount())}</span>
                   </div>
                 )}
+                {couponError && <p className="text-red-400">{couponError}. The discount was removed.</p>}
                 <div className="flex justify-between text-[var(--text-muted)]">
                   <span>Shipping</span>
                   <span>

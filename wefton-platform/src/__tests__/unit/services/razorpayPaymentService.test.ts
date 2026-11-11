@@ -142,6 +142,19 @@ describe('prepareRazorpayOrder', () => {
     expect(ordersCreate).not.toHaveBeenCalled();
   });
 
+  it('applies a fixed rupee coupon when re-pricing', async () => {
+    seed({ total: 1700 }); // 800 + 2 x 500, less 100
+    store.coupons.c1 = { code: 'SAVE10', discount: 0, discountFlat: 100, active: true, expiresAt: null };
+    await prepareRazorpayOrder(UID, ORDER_ID);
+    expect(ordersCreate).toHaveBeenCalledWith(expect.objectContaining({ amount: 170000 }));
+  });
+
+  it('ignores a coupon that has not started when re-pricing', async () => {
+    seed();
+    store.coupons.c1.startsAt = '2999-01-01T00:00:00Z';
+    await expectPaymentError(prepareRazorpayOrder(UID, ORDER_ID), 409);
+  });
+
   it('ignores an expired coupon when re-pricing', async () => {
     seed();
     store.coupons.c1.expiresAt = '2000-01-01T00:00:00Z';

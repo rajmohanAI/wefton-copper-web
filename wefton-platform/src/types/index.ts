@@ -103,6 +103,8 @@ export interface Order {
   userId: string;
   products: OrderItem[];
   subtotal: number;
+  /** Rupees taken off by the coupon. */
+  discountAmount?: number;
   shipping: number;
   taxes: number;
   total: number;
@@ -209,8 +211,13 @@ export interface WishlistItem {
 export interface Coupon {
   couponId: string;
   code: string;
+  /** Percentage off; 0 when the coupon is a fixed rupee discount. */
   discount: number;
+  /** Fixed rupees off; unset or 0 when the coupon is a percentage. */
+  discountFlat?: number;
   active: boolean;
+  /** First moment the coupon works; unset on older coupons, meaning already started. */
+  startsAt?: string | null;
   expiresAt: string | null;
   createdAt: string;
   updatedAt: string;

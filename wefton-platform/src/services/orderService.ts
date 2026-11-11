@@ -34,10 +34,11 @@ export async function createOrder(
   shippingAddress: Address,
   discount = 0,
   couponCode = '',
-  customerEmail = ''
+  customerEmail = '',
+  discountFlat = 0
 ): Promise<Order> {
   const db = requireDb();
-  const { subtotal, shipping, taxes, total } = computeOrderTotals(items, discount);
+  const { subtotal, discountAmount, shipping, taxes, total } = computeOrderTotals(items, discount, discountFlat);
 
   const orderData = {
     orderId: generateOrderId(),
@@ -54,8 +55,9 @@ export async function createOrder(
       variantId: i.variantId || '',
     })),
     // Kept so the payment server can re-check the discount.
-    couponCode: discount > 0 ? couponCode : '',
+    couponCode: discountAmount > 0 ? couponCode : '',
     subtotal,
+    discountAmount,
     shipping,
     taxes,
     total,

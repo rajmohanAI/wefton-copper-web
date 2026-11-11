@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 import { couponSchema } from '@/lib/schemas';
+import { couponWindowError } from '@/lib/coupons';
 import type { Coupon } from '@/types';
 
 const COUPONS_COL = 'coupons';
@@ -22,6 +23,7 @@ const COUPONS_COL = 'coupons';
 export interface CouponValidationResult {
   valid: boolean;
   discount?: number;
+  discountFlat?: number;
   error?: string;
 }
 
@@ -86,7 +88,14 @@ export async function couponCodeExists(code: string): Promise<boolean> {
  * Requirements: 13.2, 13.3, 13.4
  */
 export async function createCoupon(
-  data: { code: string; discount: number; active?: boolean; expiresAt?: string | null }
+  data: {
+    code: string;
+    discount: number;
+    discountFlat?: number;
+    active?: boolean;
+    startsAt?: string | null;
+    expiresAt?: string | null;
+  }
 ): Promise<string> {
   const db = requireDb();
 
@@ -106,16 +115,16 @@ export async function createCoupon(
 }
 
 /**
- * Updates a coupon's discount, active status, or expiry date.
+ * Updates a coupon's discount, active status, or validity dates.
  * The coupon code is read-only and cannot be changed.
  *
  * @param couponId - The Firestore document ID of the coupon
- * @param data - Partial update with only discount, active, and/or expiresAt
+ * @param data - Partial update of the discount, active status and dates
  * Requirements: 13.5
  */
 export async function updateCoupon(
   couponId: string,
-  data: Partial<Pick<Coupon, 'discount' | 'active' | 'expiresAt'>>
+  data: Partial<Pick<Coupon, 'discount' | 'discountFlat' | 'active' | 'startsAt' | 'expiresAt'>>
 ): Promise<void> {
   const db = requireDb();
 
@@ -154,7 +163,7 @@ export async function deleteCoupon(couponId: string): Promise<void> {
 export async function validateCoupon(code: string): Promise<CouponValidationResult> {
   const db = requireDb();
 
-  const normalizedCode = code.toUpperCase();
+  const normalizedCode = code.trim().toUpperCase();
 
   const q = query(
     collection(db, COUPONS_COL),
@@ -171,16 +180,8 @@ export async function validateCoupon(code: string): Promise<CouponValidationResu
   const couponDoc = snap.docs[0];
   const coupon = couponDoc.data() as Coupon;
 
-  // Check expiration — expiresAt can be a Firestore Timestamp or a string date
-  if (coupon.expiresAt) {
-    const expiresDate = typeof coupon.expiresAt === 'string'
-      ? new Date(coupon.expiresAt)
-      : (coupon.expiresAt as unknown as { toDate: () => Date }).toDate();
+  const windowError = couponWindowError(coupon);
+  if (windowError) return { valid: false, error: windowError };
 
-    if (expiresDate.getTime() < Date.now()) {
-      return { valid: false, error: 'Coupon has expired' };
-    }
-  }
-
-  return { valid: true, discount: coupon.discount };
+  return { valid: true, discount: coupon.discount || 0, discountFlat: coupon.discountFlat || 0 };
 }
