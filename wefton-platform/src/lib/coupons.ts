@@ -1,0 +1,86 @@
+// ============================================================
+// Wefton Copper — Coupon rules (pure logic)
+// ============================================================
+// A coupon is either a percentage or a fixed rupee discount, never both,
+// and is valid from the start of its start date to the end of its end
+// date, India time. Shared by the admin form, the cart and the payment
+// server, so they always agree.
+import type { Coupon } from '@/types';
+
+export type CouponWindow = 'open' | 'scheduled' | 'expired';
+
+const IST_OFFSET = '+05:30';
+
+/** A stored date: an ISO string, or a Firestore Timestamp on older coupons. */
+function toDate(raw: unknown): Date | null {
+  if (!raw) return null;
+  if (typeof raw === 'string') return new Date(raw);
+  return (raw as { toDate: () => Date }).toDate();
+}
+
+/** Where `now` falls in the coupon's dates. No start date means already started. */
+export function couponWindow(coupon: Pick<Coupon, 'startsAt' | 'expiresAt'>, now = new Date()): CouponWindow {
+  const start = toDate(coupon.startsAt);
+  const end = toDate(coupon.expiresAt);
+  if (end && end.getTime() < now.getTime()) return 'expired';
+  if (start && start.getTime() > now.getTime()) return 'scheduled';
+  return 'open';
+}
+
+/** Why a coupon can't be used right now, or null when it can. */
+export function couponWindowError(coupon: Pick<Coupon, 'startsAt' | 'expiresAt'>, now = new Date()): string | null {
+  const window = couponWindow(coupon, now);
+  if (window === 'expired') return 'Coupon has expired';
+  if (window === 'scheduled') return 'This coupon is not active yet';
+  return null;
+}
+
+/** "10%" or "₹100". */
+export function formatCouponDiscount(coupon: { discount?: number; discountFlat?: number }): string {
+  return coupon.discountFlat ? `₹${coupon.discountFlat}` : `${coupon.discount ?? 0}%`;
+}
+
+/** Start of a yyyy-mm-dd day in India, as an ISO string. */
+export function istDayStart(date: string): string {
+  return new Date(`${date}T00:00:00.000${IST_OFFSET}`).toISOString();
+}
+
+/** End of a yyyy-mm-dd day in India, as an ISO string. */
+export function istDayEnd(date: string): string {
+  return new Date(`${date}T23:59:59.999${IST_OFFSET}`).toISOString();
+}
+
+/** A stored date as yyyy-mm-dd in India, for a date input. */
+export function toIstDateInput(raw: unknown): string {
+  const date = toDate(raw);
+  if (!date) return '';
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(date);
+}
+
+export interface CouponFormValues {
+  code: string;
+  startDate: string;
+  endDate: string;
+  rupees: string;
+  percent: string;
+}
+
+/** Checks the admin form; returns the first problem, or null. */
+export function validateCouponForm(v: CouponFormValues): string | null {
+  const code = v.code.trim();
+  if (!code) return 'Coupon ID is required';
+  if (!/^[A-Za-z0-9]+$/.test(code)) return 'Coupon ID can only have letters and numbers';
+  if (code.length > 20) return 'Coupon ID must be 20 characters or less';
+  if (!v.startDate) return 'Start date is required';
+  if (!v.endDate) return 'End date is required';
+  if (v.endDate < v.startDate) return 'End date cannot be before the start date';
+  if (v.rupees && v.percent) return 'Enter either a rupee discount or a percentage, not both';
+  if (!v.rupees && !v.percent) return 'Enter a rupee discount or a percentage';
+  if (v.rupees && !(Number.isInteger(Number(v.rupees)) && Number(v.rupees) >= 1)) {
+    return 'Rupee discount must be a whole number of at least 1';
+  }
+  if (v.percent && !(Number.isInteger(Number(v.percent)) && Number(v.percent) >= 1 && Number(v.percent) <= 100)) {
+    return 'Percentage must be a whole number from 1 to 100';
+  }
+  return null;
+}

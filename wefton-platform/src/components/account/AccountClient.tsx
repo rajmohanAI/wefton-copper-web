@@ -886,6 +886,12 @@ export default function AccountClient() {
                                   <span>Subtotal</span>
                                   <span>{formatPrice(order.subtotal)}</span>
                                 </div>
+                                {!!order.discountAmount && (
+                                  <div className="flex justify-between text-emerald-400">
+                                    <span>Discount{order.couponCode ? ` (${order.couponCode})` : ''}</span>
+                                    <span>-{formatPrice(order.discountAmount)}</span>
+                                  </div>
+                                )}
                                 <div className="flex justify-between text-[var(--text-muted)]">
                                   <span>Shipping</span>
                                   <span>{order.shipping === 0 ? 'Free' : formatPrice(order.shipping)}</span>

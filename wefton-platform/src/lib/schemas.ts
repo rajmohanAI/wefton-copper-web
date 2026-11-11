@@ -123,8 +123,9 @@ export type ProductFormData = z.infer<typeof productFormSchema>;
 
 /**
  * Coupon validation schema
- * Validates coupon code (uppercase alphanumeric, max 20 chars),
- * discount (integer 1–100%), active status, and optional expiry date.
+ * Validates coupon code (letters and numbers, max 20 chars, stored uppercase),
+ * a discount that is either a percentage or fixed rupees (not both), active
+ * status, and start and end dates.
  * Requirements: 13.2, 13.3, 13.4
  */
 export const couponSchema = z.object({
@@ -132,13 +133,27 @@ export const couponSchema = z.object({
     .min(1, 'Code is required')
     .max(20, 'Code must be 20 characters or less')
     .transform(v => v.toUpperCase())
-    .refine(v => /^[A-Z0-9_-]+$/.test(v), 'Code must be alphanumeric'),
+    .refine(v => /^[A-Z0-9]+$/.test(v), 'Code must be letters and numbers only'),
   discount: z.number()
     .int('Discount must be a whole number')
-    .min(1, 'Minimum discount is 1%')
-    .max(100, 'Maximum discount is 100%'),
+    .min(0, 'Discount cannot be negative')
+    .max(100, 'Maximum discount is 100%')
+    .default(0),
+  discountFlat: z.number()
+    .int('Rupee discount must be a whole number')
+    .min(0, 'Discount cannot be negative')
+    .default(0),
   active: z.boolean().default(true),
+  startsAt: z.string().datetime().nullable().optional(),
   expiresAt: z.string().datetime().nullable().optional(),
-});
+})
+  .refine((c) => (c.discount > 0) !== (c.discountFlat > 0), {
+    message: 'Enter either a rupee discount or a percentage, not both',
+    path: ['discount'],
+  })
+  .refine((c) => !c.startsAt || !c.expiresAt || c.startsAt <= c.expiresAt, {
+    message: 'End date cannot be before the start date',
+    path: ['expiresAt'],
+  });
 
 export type CouponFormData = z.infer<typeof couponSchema>;

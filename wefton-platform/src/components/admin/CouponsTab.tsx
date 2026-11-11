@@ -19,6 +19,14 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 import type { Coupon } from '@/types';
+import {
+  couponWindow,
+  formatCouponDiscount,
+  istDayEnd,
+  istDayStart,
+  toIstDateInput,
+  validateCouponForm,
+} from '@/lib/coupons';
 
 // ============================================================
 // Coupon Form Modal (inline — Create / Edit)
@@ -31,30 +39,27 @@ interface CouponFormProps {
   editingCoupon: Coupon | null;
 }
 
+const FIELD =
+  'w-full h-9 px-3 rounded bg-[var(--wc-canvas)] border border-[var(--wc-line)] text-sm text-[var(--text-light)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--copper-main)] disabled:opacity-50 disabled:cursor-not-allowed';
+const LABEL = 'block text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider';
+
 function CouponFormModal({ open, onClose, onSuccess, editingCoupon }: CouponFormProps) {
   const [code, setCode] = useState('');
-  const [discount, setDiscount] = useState<number | ''>('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [rupees, setRupees] = useState('');
+  const [percent, setPercent] = useState('');
   const [active, setActive] = useState(true);
-  const [expiresAt, setExpiresAt] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (editingCoupon) {
-      setCode(editingCoupon.code);
-      setDiscount(editingCoupon.discount);
-      setActive(editingCoupon.active);
-      setExpiresAt(
-        editingCoupon.expiresAt
-          ? editingCoupon.expiresAt.slice(0, 10) // date portion only for input[type=date]
-          : ''
-      );
-    } else {
-      setCode('');
-      setDiscount('');
-      setActive(true);
-      setExpiresAt('');
-    }
+    setCode(editingCoupon?.code ?? '');
+    setStartDate(toIstDateInput(editingCoupon?.startsAt));
+    setEndDate(toIstDateInput(editingCoupon?.expiresAt));
+    setRupees(editingCoupon?.discountFlat ? String(editingCoupon.discountFlat) : '');
+    setPercent(editingCoupon?.discount ? String(editingCoupon.discount) : '');
+    setActive(editingCoupon?.active ?? true);
     setError('');
   }, [editingCoupon, open]);
 
@@ -62,40 +67,25 @@ function CouponFormModal({ open, onClose, onSuccess, editingCoupon }: CouponForm
     e.preventDefault();
     setError('');
 
-    // Client-side validation
-    const trimmedCode = code.trim().toUpperCase();
-    if (!trimmedCode) {
-      setError('Code is required');
-      return;
-    }
-    if (!/^[A-Z0-9_-]+$/.test(trimmedCode)) {
-      setError('Code must be alphanumeric (letters, numbers, _ and -)');
-      return;
-    }
-    if (discount === '' || discount < 1 || discount > 100) {
-      setError('Discount must be between 1 and 100');
+    const problem = validateCouponForm({ code, startDate, endDate, rupees, percent });
+    if (problem) {
+      setError(problem);
       return;
     }
 
     setLoading(true);
     try {
-      const expiresAtValue = expiresAt
-        ? new Date(expiresAt + 'T23:59:59.999Z').toISOString()
-        : null;
-
+      const values = {
+        discount: percent ? Number(percent) : 0,
+        discountFlat: rupees ? Number(rupees) : 0,
+        active,
+        startsAt: istDayStart(startDate),
+        expiresAt: istDayEnd(endDate),
+      };
       if (editingCoupon) {
-        await updateCoupon(editingCoupon.couponId, {
-          discount: Number(discount),
-          active,
-          expiresAt: expiresAtValue,
-        });
+        await updateCoupon(editingCoupon.couponId, values);
       } else {
-        await createCoupon({
-          code: trimmedCode,
-          discount: Number(discount),
-          active,
-          expiresAt: expiresAtValue,
-        });
+        await createCoupon({ code: code.trim().toUpperCase(), ...values });
       }
       onSuccess();
       onClose();
@@ -117,62 +107,90 @@ function CouponFormModal({ open, onClose, onSuccess, editingCoupon }: CouponForm
       />
 
       {/* Modal content */}
-      <div className="relative w-[90vw] max-w-md bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-lg shadow-xl p-6">
+      <div className="relative w-[90vw] max-w-md bg-[var(--wc-surface)] text-[var(--text-light)] border border-[var(--wc-line)] rounded-lg shadow-xl p-6">
         <h3 className="text-base font-medium text-[var(--text-light)] mb-4">
-          {editingCoupon ? 'Edit Coupon' : 'Create Coupon'}
+          {editingCoupon ? 'Edit Offer' : 'Create Offer'}
         </h3>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Code field */}
           <div>
-            <label className="block text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">
-              Code *
-            </label>
+            <label htmlFor="coupon-code" className={LABEL}>Coupon ID *</label>
             <input
+              id="coupon-code"
               type="text"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               disabled={!!editingCoupon}
+              maxLength={20}
               placeholder="e.g. SUMMER25"
-              className="w-full h-9 px-3 rounded bg-white/5 border border-white/10 text-sm text-[var(--text-light)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--copper-main)]/50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`${FIELD} font-mono`}
             />
-            {editingCoupon && (
-              <p className="text-[10px] text-[var(--text-faint)] mt-0.5">
-                Code cannot be changed after creation
-              </p>
-            )}
+            <p className="text-[10px] text-[var(--text-faint)] mt-0.5">
+              {editingCoupon
+                ? 'The Coupon ID cannot be changed after creation'
+                : 'Letters and numbers only. Customers can type it in upper or lower case.'}
+            </p>
           </div>
 
-          {/* Discount field */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="coupon-start" className={LABEL}>Start date *</label>
+              <input id="coupon-start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={FIELD} />
+            </div>
+            <div>
+              <label htmlFor="coupon-end" className={LABEL}>End date *</label>
+              <input id="coupon-end" type="date" value={endDate} min={startDate || undefined} onChange={(e) => setEndDate(e.target.value)} className={FIELD} />
+            </div>
+          </div>
+
           <div>
-            <label className="block text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">
-              Discount (%) *
-            </label>
-            <input
-              type="number"
-              value={discount}
-              onChange={(e) =>
-                setDiscount(e.target.value === '' ? '' : Number(e.target.value))
-              }
-              min={1}
-              max={100}
-              placeholder="1–100"
-              className="w-full h-9 px-3 rounded bg-white/5 border border-white/10 text-sm text-[var(--text-light)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--copper-main)]/50"
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="coupon-rupees" className={LABEL}>Discount (₹)</label>
+                <input
+                  id="coupon-rupees"
+                  type="number"
+                  min={1}
+                  value={rupees}
+                  onChange={(e) => setRupees(e.target.value)}
+                  disabled={!!percent}
+                  placeholder="e.g. 100"
+                  className={FIELD}
+                />
+              </div>
+              <div>
+                <label htmlFor="coupon-percent" className={LABEL}>Discount (%)</label>
+                <input
+                  id="coupon-percent"
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={percent}
+                  onChange={(e) => setPercent(e.target.value)}
+                  disabled={!!rupees}
+                  placeholder="1–100"
+                  className={FIELD}
+                />
+              </div>
+            </div>
+            <p className="text-[10px] text-[var(--text-faint)] mt-0.5">
+              Fill in one of these. Clear it to use the other.
+            </p>
           </div>
 
           {/* Active toggle */}
           <div className="flex items-center justify-between">
             <label className="text-xs text-[var(--text-muted)] uppercase tracking-wider">
-              Active
+              Enabled
             </label>
             <button
               type="button"
               role="switch"
               aria-checked={active}
+              aria-label="Enabled"
               onClick={() => setActive(!active)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                active ? 'bg-emerald-500' : 'bg-white/20'
+                active ? 'bg-emerald-500' : 'bg-black/20'
               }`}
             >
               <span
@@ -183,22 +201,9 @@ function CouponFormModal({ open, onClose, onSuccess, editingCoupon }: CouponForm
             </button>
           </div>
 
-          {/* Expiry date */}
-          <div>
-            <label className="block text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wider">
-              Expiry Date (optional)
-            </label>
-            <input
-              type="date"
-              value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
-              className="w-full h-9 px-3 rounded bg-white/5 border border-white/10 text-sm text-[var(--text-light)] focus:outline-none focus:border-[var(--copper-main)]/50"
-            />
-          </div>
-
           {/* Error message */}
           {error && (
-            <p className="text-xs text-red-400">{error}</p>
+            <p className="text-xs text-red-500">{error}</p>
           )}
 
           {/* Actions */}
@@ -220,6 +225,15 @@ function CouponFormModal({ open, onClose, onSuccess, editingCoupon }: CouponForm
       </div>
     </div>
   );
+}
+
+/** Status shown in the table. */
+function couponBadge(coupon: Coupon): { label: string; variant: 'success' | 'error' | 'warning' } {
+  if (!coupon.active) return { label: 'Disabled', variant: 'error' };
+  const window = couponWindow(coupon);
+  if (window === 'expired') return { label: 'Expired', variant: 'error' };
+  if (window === 'scheduled') return { label: 'Scheduled', variant: 'warning' };
+  return { label: 'Active', variant: 'success' };
 }
 
 // ============================================================
@@ -305,17 +319,15 @@ export default function CouponsTab() {
     }
   };
 
-  const formatExpiryDate = (dateStr: string | null) => {
-    if (!dateStr) return '—';
-    try {
-      return new Date(dateStr).toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      });
-    } catch {
-      return '—';
-    }
+  const formatDate = (raw: unknown) => {
+    const date = toIstDateInput(raw);
+    if (!date) return '—';
+    return new Date(`${date}T12:00:00+05:30`).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'Asia/Kolkata',
+    });
   };
 
   if (loading) {
@@ -331,10 +343,10 @@ export default function CouponsTab() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-light text-[var(--text-light)]">
-          Coupons ({coupons.length})
+          Offers ({coupons.length})
         </h2>
         <Button variant="copper" size="sm" onClick={handleCreate}>
-          <Plus size={14} /> Create Coupon
+          <Plus size={14} /> Create Offer
         </Button>
       </div>
 
@@ -342,21 +354,21 @@ export default function CouponsTab() {
       {coupons.length === 0 ? (
         <div className="glass-card p-8 text-center">
           <Ticket size={40} className="text-[var(--text-faint)] mx-auto mb-4" />
-          <p className="text-[var(--text-muted)] mb-4">No coupons yet</p>
+          <p className="text-[var(--text-muted)] mb-4">No offers yet</p>
           <Button variant="copper" onClick={handleCreate}>
-            <Plus size={14} /> Create First Coupon
+            <Plus size={14} /> Create First Offer
           </Button>
         </div>
       ) : (
         <div className="space-y-2">
           {/* Table header */}
-          <div className="hidden md:grid grid-cols-[1fr_100px_100px_130px_80px] gap-3 px-4 py-2 text-[10px] font-medium tracking-wider uppercase text-[var(--text-muted)]">
+          <div className="hidden md:grid grid-cols-[minmax(0,1fr)_90px_90px_110px_110px_80px] gap-3 px-4 py-2 text-[10px] font-medium tracking-wider uppercase text-[var(--text-muted)]">
             <button
               type="button"
               onClick={() => handleSort('code')}
               className="flex items-center gap-1 hover:text-[var(--text-light)] transition-colors text-left"
             >
-              Code
+              Coupon ID
               <SortIcon field="code" currentField={sortField} currentDir={sortDir} />
             </button>
             <button
@@ -368,12 +380,13 @@ export default function CouponsTab() {
               <SortIcon field="discount" currentField={sortField} currentDir={sortDir} />
             </button>
             <span>Status</span>
+            <span>Starts</span>
             <button
               type="button"
               onClick={() => handleSort('expiresAt')}
               className="flex items-center gap-1 hover:text-[var(--text-light)] transition-colors text-left"
             >
-              Expires
+              Ends
               <SortIcon field="expiresAt" currentField={sortField} currentDir={sortDir} />
             </button>
             <span>Actions</span>
@@ -383,7 +396,7 @@ export default function CouponsTab() {
           {coupons.map((coupon) => (
             <div
               key={coupon.couponId}
-              className="glass-card p-4 md:grid md:grid-cols-[1fr_100px_100px_130px_80px] md:gap-3 md:items-center"
+              className="glass-card p-4 md:grid md:grid-cols-[minmax(0,1fr)_90px_90px_110px_110px_80px] md:gap-3 md:items-center"
             >
               {/* Code */}
               <div>
@@ -394,34 +407,31 @@ export default function CouponsTab() {
 
               {/* Discount */}
               <span className="text-xs text-[var(--copper-light)]">
-                {coupon.discount}%
+                {formatCouponDiscount(coupon)}
               </span>
 
               {/* Active Status */}
               <div>
-                <Badge variant={coupon.active ? 'success' : 'error'}>
-                  {coupon.active ? 'Active' : 'Inactive'}
-                </Badge>
+                <Badge variant={couponBadge(coupon).variant}>{couponBadge(coupon).label}</Badge>
               </div>
 
-              {/* Expiry Date */}
-              <span className="text-xs text-[var(--text-muted)]">
-                {formatExpiryDate(coupon.expiresAt)}
-              </span>
+              {/* Dates */}
+              <span className="text-xs text-[var(--text-muted)]">{formatDate(coupon.startsAt)}</span>
+              <span className="text-xs text-[var(--text-muted)]">{formatDate(coupon.expiresAt)}</span>
 
               {/* Actions */}
               <div className="flex items-center gap-2 mt-2 md:mt-0">
                 <button
                   onClick={() => handleEdit(coupon)}
                   className="p-1.5 rounded hover:bg-white/10 text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
-                  title="Edit coupon"
+                  title="Edit offer"
                 >
                   <Edit2 size={14} />
                 </button>
                 <button
                   onClick={() => setDeleteTarget(coupon)}
                   className="p-1.5 rounded hover:bg-red-500/10 text-[var(--text-muted)] hover:text-red-400 transition-colors"
-                  title="Delete coupon"
+                  title="Delete offer"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -443,7 +453,7 @@ export default function CouponsTab() {
       <DeleteConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
-        title="Delete Coupon"
+        title="Delete Offer"
         description={`Are you sure you want to delete coupon "${deleteTarget?.code}"? This action cannot be undone.`}
         onConfirm={handleDeleteConfirm}
         loading={deleting}
