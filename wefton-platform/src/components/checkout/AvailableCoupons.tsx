@@ -16,8 +16,6 @@ import type { Coupon } from '@/types';
 
 export default function AvailableCoupons({ className = '' }: { className?: string }) {
   const { items, couponCode, applyCoupon, removeCoupon } = useCartStore();
-  // Set by the product-serial offer (₹120). One offer per order, so a coupon replaces it.
-  const offerSerial = useCartStore((s) => (s as { offerSerial?: string }).offerSerial ?? '');
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [applying, setApplying] = useState('');
 
@@ -52,11 +50,6 @@ export default function AvailableCoupons({ className = '' }: { className?: strin
       <p className="text-[10px] tracking-widest uppercase text-[var(--text-muted)] mb-2">
         Available offers
       </p>
-      {offerSerial && (
-        <p className="text-[10px] text-[var(--text-muted)] mb-2">
-          One offer per order: applying a coupon replaces your serial offer.
-        </p>
-      )}
       <ul className="space-y-2" aria-label="Available coupons">
         {available.map((coupon, i) => {
           const applied = couponCode === coupon.code;
