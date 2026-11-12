@@ -19,10 +19,13 @@ export interface OrderTotals {
   total: number;
 }
 
-/** @param discountPercent coupon discount in percent (0–100) */
-export function computeOrderTotals(lines: PricedLine[], discountPercent = 0): OrderTotals {
+/**
+ * @param discountPercent coupon discount in percent (0–100)
+ * @param discountFlat coupon discount in rupees; never more than the subtotal
+ */
+export function computeOrderTotals(lines: PricedLine[], discountPercent = 0, discountFlat = 0): OrderTotals {
   const subtotal = lines.reduce((s, l) => s + l.price * l.quantity, 0);
-  const discountAmount = (subtotal * discountPercent) / 100;
+  const discountAmount = discountFlat > 0 ? Math.min(discountFlat, subtotal) : (subtotal * discountPercent) / 100;
   const shipping = SHIPPING_COST > 0 && subtotal < FREE_SHIPPING_THRESHOLD ? SHIPPING_COST : 0;
   const taxes = PRICES_INCLUDE_GST ? 0 : Math.round((subtotal - discountAmount) * TAX_RATE);
   const total = subtotal - discountAmount + shipping + taxes;

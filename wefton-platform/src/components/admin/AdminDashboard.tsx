@@ -215,7 +215,7 @@ export default function AdminDashboard() {
               className="flex items-center gap-2 px-4 py-2.5 rounded text-sm transition-colors data-[state=active]:bg-[var(--copper-main)]/10 data-[state=active]:text-[var(--copper-light)] data-[state=active]:border data-[state=active]:border-[var(--copper-main)]/20 text-[var(--text-muted)] hover:text-[var(--text-light)] hover:bg-white/5"
             >
               <Ticket size={15} />
-              Coupons
+              Offers
             </Tabs.Trigger>
             <Tabs.Trigger
               value="returns"

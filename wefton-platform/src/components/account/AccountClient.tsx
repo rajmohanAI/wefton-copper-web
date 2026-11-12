@@ -28,6 +28,8 @@ import { getFirebaseAuth, getFirebaseDb, getFirebaseStorage } from '@/lib/fireba
 import { useAuthStore } from '@/store/authStore';
 import { useAuth } from '@/hooks/useAuth';
 import { getUserOrders } from '@/services/orderService';
+import { getReviewedProductIds } from '@/services/reviewService';
+import OrderReviewDialog, { type ReviewTarget } from './OrderReviewDialog';
 import { setupRecaptcha, sendOTP, verifyOTP } from '@/services/authService';
 import { formatPrice, toDate } from '@/lib/utils';
 import { addressSchema, type AddressFormData } from '@/lib/schemas';
@@ -47,6 +49,9 @@ const ORDER_STATUS_VARIANT: Record<string, 'copper' | 'success' | 'warning' | 'e
   closed: 'success',
   cancelled: 'error',
 };
+
+/** Customers can review a product once its order has reached them. */
+const REVIEWABLE_STATUSES: Order['orderStatus'][] = ['delivered', 'closed'];
 
 export default function AccountClient() {
   const router = useRouter();
@@ -99,6 +104,9 @@ export default function AccountClient() {
     }
   }, [user]);
 
+  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
+  const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
+
   // Redirect unauthenticated users
   useEffect(() => {
     if (!loading && !user) {
@@ -111,6 +119,9 @@ export default function AccountClient() {
   const handleTabChange = (value: string) => {
     if (value === 'orders' && user) {
       setOrdersLoading(true);
+      getReviewedProductIds(user.uid)
+        .then((ids) => setReviewedIds(new Set(ids)))
+        .catch(() => setReviewedIds(new Set()));
       getUserOrders(user.uid)
         .then((fetchedOrders) => {
           // Sort by createdAt descending
@@ -862,6 +873,18 @@ export default function AccountClient() {
                                         Qty: <span className="text-[var(--text-light)]">{item.quantity}</span>
                                       </p>
                                     </div>
+                                    {REVIEWABLE_STATUSES.includes(order.orderStatus) &&
+                                      (reviewedIds.has(item.productId) ? (
+                                        <p className="mt-2 text-xs text-emerald-500">Reviewed. Thank you!</p>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => setReviewTarget({ productId: item.productId, title: item.title })}
+                                          className="mt-2 text-xs text-[var(--copper-light)] hover:underline"
+                                        >
+                                          Rate and review
+                                        </button>
+                                      ))}
                                   </div>
 
                                   {/* Item Price */}
@@ -886,6 +909,12 @@ export default function AccountClient() {
                                   <span>Subtotal</span>
                                   <span>{formatPrice(order.subtotal)}</span>
                                 </div>
+                                {!!order.discountAmount && (
+                                  <div className="flex justify-between text-emerald-400">
+                                    <span>Discount{order.couponCode ? ` (${order.couponCode})` : ''}</span>
+                                    <span>-{formatPrice(order.discountAmount)}</span>
+                                  </div>
+                                )}
                                 <div className="flex justify-between text-[var(--text-muted)]">
                                   <span>Shipping</span>
                                   <span>{order.shipping === 0 ? 'Free' : formatPrice(order.shipping)}</span>
@@ -900,6 +929,20 @@ export default function AccountClient() {
                                 </div>
                               </div>
                             </div>
+
+                            {/* Scratch card coupon this order earned */}
+                            {order.rewardCoupon?.code && (
+                              <div className="mt-4 p-3 rounded-lg border border-[var(--copper-main)]/30 bg-[var(--copper-main)]/10 text-xs">
+                                <p className="text-[var(--text-muted)] mb-1">
+                                  {order.orderStatus === 'cancelled'
+                                    ? 'Reward coupon (no longer valid: this order was cancelled)'
+                                    : `Reward coupon: ${order.rewardCoupon.label} off a future order`}
+                                </p>
+                                <p className={`font-mono font-semibold tracking-wider ${order.orderStatus === 'cancelled' ? 'line-through text-[var(--text-faint)]' : 'text-[var(--copper-light)]'}`}>
+                                  {order.rewardCoupon.code}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))
@@ -1110,6 +1153,14 @@ export default function AccountClient() {
           </div>
         </div>
       </div>
+      {user && (
+        <OrderReviewDialog
+          target={reviewTarget}
+          user={user}
+          onClose={() => setReviewTarget(null)}
+          onReviewed={(id) => setReviewedIds((prev) => new Set(prev).add(id))}
+        />
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@
 import { FieldValue, type DocumentReference, type Firestore } from 'firebase-admin/firestore';
 import { getAdminDb } from '@/lib/firebaseAdmin';
 import { computeOrderTotals } from '@/lib/orderPricing';
+import { couponUseError } from '@/lib/coupons';
 import {
   RAZORPAY_CURRENCY,
   createRazorpayClient,
@@ -75,23 +76,22 @@ function catalogPrice(product: Product, line: OrderItem): number {
   return variant?.price || product.price;
 }
 
-async function couponDiscount(db: Firestore, code: string | undefined): Promise<number> {
-  if (!code) return 0;
+async function couponDiscount(
+  db: Firestore,
+  code: string | undefined
+): Promise<{ percent: number; flat: number }> {
+  const none = { percent: 0, flat: 0 };
+  if (!code) return none;
   const snap = await db
     .collection('coupons')
     .where('code', '==', code.toUpperCase())
     .where('active', '==', true)
     .limit(1)
     .get();
-  if (snap.empty) return 0;
+  if (snap.empty) return none;
   const coupon = snap.docs[0].data() as Coupon;
-  if (coupon.expiresAt) {
-    const raw = coupon.expiresAt as unknown;
-    const expires =
-      typeof raw === 'string' ? new Date(raw) : (raw as { toDate: () => Date }).toDate();
-    if (expires.getTime() < Date.now()) return 0;
-  }
-  return coupon.discount || 0;
+  if (couponUseError(coupon)) return none;
+  return { percent: coupon.discount || 0, flat: coupon.discountFlat || 0 };
 }
 
 /**
@@ -111,8 +111,8 @@ export async function computeTrustedTotal(db: Firestore, order: Order): Promise<
       return { price: catalogPrice(product, line), quantity: line.quantity };
     })
   );
-  const discount = await couponDiscount(db, order.couponCode);
-  return computeOrderTotals(lines, discount).total;
+  const { percent, flat } = await couponDiscount(db, order.couponCode);
+  return computeOrderTotals(lines, percent, flat).total;
 }
 
 export async function prepareRazorpayOrder(

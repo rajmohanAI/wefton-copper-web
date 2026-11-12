@@ -4,22 +4,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as fc from 'fast-check';
 
-// Mock Firebase before importing the service
-vi.mock('@/lib/firebase', () => ({
-  getFirebaseDb: vi.fn(() => ({})),
-}));
+import type { Firestore } from 'firebase-admin/firestore';
+import { checkCouponCode } from '@/services/couponServer';
 
-vi.mock('firebase/firestore', () => ({
-  collection: vi.fn(),
-  getDocs: vi.fn(),
-  query: vi.fn(),
-  where: vi.fn(),
-}));
+const mockedGetDocs = vi.fn();
 
-import { validateCoupon } from '@/services/couponService';
-import { getDocs } from 'firebase/firestore';
-
-const mockedGetDocs = vi.mocked(getDocs);
+// The chain checkCouponCode calls: collection().where().where().limit().get()
+const chain = { where: () => chain, limit: () => chain, get: mockedGetDocs };
+const db = { collection: () => chain } as unknown as Firestore;
+const validateCoupon = (code: string) => checkCouponCode(db, code);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -36,7 +29,7 @@ describe('Feature: wefton-copper-platform, Property 4: Coupon validation logic',
   it('Property 4: valid active non-expired coupon returns { valid: true, discount }', async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.string({ minLength: 1, maxLength: 20 }),
+        fc.stringMatching(/^[A-Za-z0-9]{1,20}$/),
         fc.integer({ min: 1, max: 100 }),
         async (code, discount) => {
           // Mock a valid, active, non-expired coupon
@@ -67,7 +60,7 @@ describe('Feature: wefton-copper-platform, Property 4: Coupon validation logic',
   it('Property 4: non-existent coupon code returns { valid: false }', async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.string({ minLength: 1, maxLength: 20 }),
+        fc.stringMatching(/^[A-Za-z0-9]{1,20}$/),
         async (code) => {
           // Mock empty result (coupon not found)
           mockedGetDocs.mockResolvedValueOnce({
@@ -87,7 +80,7 @@ describe('Feature: wefton-copper-platform, Property 4: Coupon validation logic',
   it('Property 4: expired coupon returns { valid: false, error: "Coupon has expired" }', async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.string({ minLength: 1, maxLength: 20 }),
+        fc.stringMatching(/^[A-Za-z0-9]{1,20}$/),
         fc.integer({ min: 1, max: 100 }),
         async (code, discount) => {
           // Mock an expired coupon (expiresAt in the past)

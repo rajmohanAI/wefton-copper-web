@@ -52,3 +52,19 @@ export async function verifyRazorpayPayment(
 ): Promise<void> {
   await postJson('/api/payments/razorpay/verify', { orderId, ...response });
 }
+
+/** True when the server offers the dev-only mock "Submit Payment". */
+export async function isMockPaymentEnabled(): Promise<boolean> {
+  try {
+    const res = await fetch('/api/payments/mock', { cache: 'no-store' });
+    if (!res.ok) return false;
+    return ((await res.json()) as { enabled?: boolean }).enabled === true;
+  } catch {
+    return false;
+  }
+}
+
+/** Dev testing: marks the order paid without a real payment. Admins only. */
+export async function submitMockPayment(orderId: string): Promise<void> {
+  await postJson('/api/payments/mock', { orderId });
+}
