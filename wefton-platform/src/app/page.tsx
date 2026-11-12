@@ -80,7 +80,7 @@ export default function HomePage() {
       'Premium Cotton Fabric essentials. Redefining the global standard for essential wear, starting from the thread up.',
     sameAs: [
       'https://www.instagram.com/weftoncopper',
-      'https://www.facebook.com/weftoncopper',
+      'https://www.facebook.com/profile.php?id=61596562648320',
       'https://twitter.com/weftoncopper',
     ],
     contactPoint: {

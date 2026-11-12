@@ -6,6 +6,7 @@
 
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirebaseStorage } from '@/lib/firebase';
+import { shrinkImageForUpload } from '@/lib/imageResize';
 import type { ProductImage } from '@/types';
 
 export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
@@ -53,9 +54,15 @@ export async function uploadProductImages(
 
   for (const [index, file] of files.entries()) {
     try {
-      const filename = `${Date.now()}-${file.name}`;
+      // Scaled down to the largest size the site shows, so pages load fast.
+      const upload = await shrinkImageForUpload(file);
+      const filename = `${Date.now()}-${upload.name}`;
       const storageRef = ref(storage, `products/${productId}/${filename}`);
-      await uploadBytes(storageRef, file);
+      // Images never change at a given path, so browsers and CDNs may keep them.
+      await uploadBytes(storageRef, upload, {
+        contentType: upload.type,
+        cacheControl: 'public, max-age=31536000, immutable',
+      });
       const url = await getDownloadURL(storageRef);
       const color = colors?.[index];
       uploaded.push({

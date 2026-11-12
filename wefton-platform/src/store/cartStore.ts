@@ -13,6 +13,8 @@ interface CartStore {
   isOpen: boolean;
   couponCode: string;
   discount: number;
+  /** Fixed rupees off from the coupon; 0 when it is a percentage. */
+  discountFlat: number;
   couponError: string;
 
   // Actions
@@ -25,6 +27,9 @@ interface CartStore {
   closeCart: () => void;
   applyCoupon: (code: string) => Promise<void>;
   removeCoupon: () => void;
+  /** Re-checks the applied coupon; drops it if it is no longer valid. */
+  revalidateCoupon: () => Promise<void>;
+  getDiscountAmount: () => number;
 
   // Computed
   getItemCount: () => number;
@@ -41,6 +46,7 @@ export const useCartStore = create<CartStore>()(
       isOpen: false,
       couponCode: '',
       discount: 0,
+      discountFlat: 0,
       couponError: '',
 
       addItem: (newItem) => {
@@ -91,7 +97,7 @@ export const useCartStore = create<CartStore>()(
         }));
       },
 
-      clearCart: () => set({ items: [], couponCode: '', discount: 0, couponError: '' }),
+      clearCart: () => set({ items: [], couponCode: '', discount: 0, discountFlat: 0, couponError: '' }),
 
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
       openCart: () => set({ isOpen: true }),
@@ -101,28 +107,40 @@ export const useCartStore = create<CartStore>()(
         set({ couponError: '' });
         const result = await validateCoupon(code);
         if (result.valid) {
-          set({ couponCode: code.trim().toUpperCase(), discount: result.discount, couponError: '' });
+          set({
+            couponCode: code.trim().toUpperCase(),
+            discount: result.discount ?? 0,
+            discountFlat: result.discountFlat ?? 0,
+            couponError: '',
+          });
         } else {
-          set({ couponCode: '', discount: 0, couponError: result.error || 'Invalid or expired coupon code' });
+          set({ couponCode: '', discount: 0, discountFlat: 0, couponError: result.error || 'Invalid or expired coupon code' });
         }
       },
 
-      removeCoupon: () => set({ couponCode: '', discount: 0, couponError: '' }),
+      removeCoupon: () => set({ couponCode: '', discount: 0, discountFlat: 0, couponError: '' }),
+
+      revalidateCoupon: async () => {
+        const code = get().couponCode;
+        if (code) await get().applyCoupon(code);
+      },
+
+      getDiscountAmount: () => computeOrderTotals(get().items, get().discount, get().discountFlat).discountAmount,
 
       getItemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
 
       getSubtotal: () =>
         get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
 
-      getShipping: () => computeOrderTotals(get().items, get().discount).shipping,
+      getShipping: () => computeOrderTotals(get().items, get().discount, get().discountFlat).shipping,
 
-      getTax: () => computeOrderTotals(get().items, get().discount).taxes,
+      getTax: () => computeOrderTotals(get().items, get().discount, get().discountFlat).taxes,
 
-      getTotal: () => computeOrderTotals(get().items, get().discount).total,
+      getTotal: () => computeOrderTotals(get().items, get().discount, get().discountFlat).total,
     }),
     {
       name: 'wefton-cart',
-      partialize: (state) => ({ items: state.items, couponCode: state.couponCode, discount: state.discount }),
+      partialize: (state) => ({ items: state.items, couponCode: state.couponCode, discount: state.discount, discountFlat: state.discountFlat }),
     }
   )
 );

@@ -12,6 +12,8 @@ import { useAuthModalStore } from '@/store/authModalStore';
 import { formatPrice } from '@/lib/utils';
 import Button from '@/components/ui/Button';
 import { FREE_SHIPPING_THRESHOLD, PRICES_INCLUDE_GST } from '@/config/brand';
+import { formatCouponDiscount } from '@/lib/coupons';
+import AvailableCoupons from '@/components/checkout/AvailableCoupons';
 
 export default function CartDrawer() {
   const {
@@ -25,6 +27,8 @@ export default function CartDrawer() {
     getTax,
     getTotal,
     couponCode,
+    discountFlat,
+    getDiscountAmount,
     discount,
     couponError,
     applyCoupon,
@@ -292,7 +296,7 @@ export default function CartDrawer() {
                 ) : (
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-emerald-400 flex items-center gap-1">
-                      <Tag size={12} /> {couponCode} — {discount}% off
+                      <Tag size={12} /> {couponCode} — {formatCouponDiscount({ discount, discountFlat })} off
                     </span>
                     <button
                       onClick={removeCoupon}
@@ -303,16 +307,18 @@ export default function CartDrawer() {
                   </div>
                 )}
 
+                <AvailableCoupons />
+
                 {/* Totals */}
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between text-[var(--text-muted)]">
                     <span>Subtotal</span>
                     <span>{formatPrice(subtotal)}</span>
                   </div>
-                  {discount > 0 && (
+                  {getDiscountAmount() > 0 && (
                     <div className="flex justify-between text-emerald-400">
-                      <span>Discount ({discount}%)</span>
-                      <span>-{formatPrice((subtotal * discount) / 100)}</span>
+                      <span>Discount ({formatCouponDiscount({ discount, discountFlat })})</span>
+                      <span>-{formatPrice(getDiscountAmount())}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-[var(--text-muted)]">

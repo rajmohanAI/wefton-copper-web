@@ -22,7 +22,7 @@ interface FeaturedProductsProps {
  * (e.g., homepage "Featured Collection" or product detail "You May Also Like").
  *
  * Shows a "Coming Soon" placeholder when no products are available.
- * "Add to Cart" on each ProductCard adds the default variant and opens the CartDrawer.
+ * "Choose Options" on each ProductCard opens the product page to pick size and colour.
  */
 export default function FeaturedProducts({
   title = 'Featured Collection',

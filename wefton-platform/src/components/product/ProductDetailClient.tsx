@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo, type MouseEvent, type TouchEvent } from 'react';
 import dynamic from 'next/dynamic';
-import Image from 'next/image';
+import Image, { getImageProps } from 'next/image';
 import Link from 'next/link';
 import {
   Heart,
@@ -37,6 +37,10 @@ import type { Product } from '@/types';
 import { SIZES } from '@/config/brand';
 import { cn } from '@/lib/utils';
 import { findVariant, imagesForColor, initialColor, primaryImage, variantColors } from '@/lib/productImages';
+
+/** Main gallery photo: shared with the background preload so both fetch the same file. */
+const MAIN_IMAGE_SIZES = '(max-width: 1024px) 100vw, 50vw';
+const MAIN_IMAGE_QUALITY = 75;
 
 interface ProductDetailClientProps {
   product: Product;
@@ -106,6 +110,41 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
   const isWishlisted = has(product.productId);
   const discount = getDiscountPercent(product.price, product.comparePrice || 0);
 
+  // Fetch every colour's main photo in the background once the page is up, so a
+  // colour switch shows its photo at once instead of waiting for it to load.
+  useEffect(() => {
+    const allImages = product.images ?? [];
+    const colorNames = variantColors(product.variants ?? []).map((c) => c.color);
+    // Only each colour's main photo (what a switch shows first), to keep the
+    // extra download small on mobile data.
+    const urls = [...new Set(colorNames.map((c) => imagesForColor(allImages, c)[0]?.url))]
+      .filter((u): u is string => !!u);
+    if (urls.length < 2) return;
+
+    const loaders: HTMLImageElement[] = [];
+    const start = () => {
+      for (const url of urls) {
+        // Same sizes and quality as the main photo, so the browser picks the
+        // same file it will later show.
+        const { props } = getImageProps({ src: url, alt: '', fill: true, sizes: MAIN_IMAGE_SIZES, quality: MAIN_IMAGE_QUALITY });
+        const img = new window.Image();
+        img.decoding = 'async';
+        if (props.sizes) img.sizes = props.sizes;
+        if (props.srcSet) img.srcset = props.srcSet;
+        img.src = props.src;
+        loaders.push(img);
+      }
+    };
+    const w = window as Window & { requestIdleCallback?: (cb: () => void) => number; cancelIdleCallback?: (id: number) => void };
+    const idleId = w.requestIdleCallback ? w.requestIdleCallback(start) : undefined;
+    const timeoutId = idleId === undefined ? window.setTimeout(start, 1200) : undefined;
+    return () => {
+      if (idleId !== undefined) w.cancelIdleCallback?.(idleId);
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+      loaders.forEach((img) => { img.src = ''; img.srcset = ''; });
+    };
+  }, [product.images, product.variants]);
+
   const selectColor = (color: string) => {
     setSelectedColor(color);
     setSelectedImage(0);
@@ -113,6 +152,24 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
     const v = findVariant(product.variants ?? [], color, selectedSize || undefined);
     if (selectedSize && (!v || v.size !== selectedSize || v.inventory === 0)) setSelectedSize('');
   };
+
+  // Sizes offered in the selected colour (all sizes when the product has no colours)
+  const colorVariants = (product.variants ?? []).filter((v) => !selectedColor || !v.color || v.color === selectedColor);
+  const availableSizes = product.variants?.length
+    ? [...new Set(colorVariants.map((v) => v.size).filter(Boolean))]
+    : SIZES;
+
+  // One swatch per colour
+  const colors = variantColors(product.variants ?? []);
+
+  // Add to Cart stays disabled until every option the product offers is chosen:
+  // a colour (when it comes in colours), a size, and a quantity of at least 1.
+  const missingOption =
+    colors.length > 0 && !selectedColor ? 'colour'
+    : availableSizes.length > 0 && !selectedSize ? 'size'
+    : quantity < 1 ? 'quantity'
+    : null;
+  const optionsChosen = missingOption === null;
 
   const currentPrice = selectedVariant?.price || product.price;
   const currentInventory = selectedVariant?.inventory ?? product.inventory;
@@ -174,10 +231,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
   }, [gallery.length]);
 
   const handleAddToCart = () => {
-    if (!selectedSize && product.variants?.length > 0) {
-      alert('Please select a size');
-      return;
-    }
+    if (!optionsChosen) return;
     setAdding(true);
     addItem({
       productId: product.productId,
@@ -209,10 +263,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
   };
 
   const handleTryOn = () => {
-    if (!selectedSize && product.variants?.length > 0) {
-      alert('Please select a size');
-      return;
-    }
+    if (!optionsChosen) return;
     setTryOnOpen(true);
   };
 
@@ -220,15 +271,6 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
     setSelectedImage((i) => (i - 1 + gallery.length) % gallery.length);
   const nextImage = () =>
     setSelectedImage((i) => (i + 1) % gallery.length);
-
-  // Sizes offered in the selected colour (all sizes when the product has no colours)
-  const colorVariants = (product.variants ?? []).filter((v) => !selectedColor || !v.color || v.color === selectedColor);
-  const availableSizes = product.variants?.length
-    ? [...new Set(colorVariants.map((v) => v.size).filter(Boolean))]
-    : SIZES;
-
-  // One swatch per colour
-  const colors = variantColors(product.variants ?? []);
 
   // JSON-LD structured data
   const jsonLd = getProductJsonLd(product);
@@ -292,9 +334,9 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
                         ? { transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%` }
                         : undefined
                     }
-                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    sizes={MAIN_IMAGE_SIZES}
                     priority
-                    quality={75}
+                    quality={MAIN_IMAGE_QUALITY}
                   />
                 )}
               </div>
@@ -519,7 +561,8 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
                 fullWidth
                 onClick={handleAddToCart}
                 loading={adding}
-                disabled={currentInventory === 0}
+                disabled={currentInventory === 0 || !optionsChosen}
+                aria-describedby={missingOption ? 'add-to-cart-hint' : undefined}
               >
                 {added ? (
                   <>
@@ -527,6 +570,8 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
                   </>
                 ) : currentInventory === 0 ? (
                   'Sold Out'
+                ) : missingOption ? (
+                  `Select ${missingOption}`
                 ) : (
                   <>
                     <ShoppingBag size={16} /> Add to Cart
@@ -556,6 +601,12 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
               </button>
             </div>
 
+            {missingOption && currentInventory > 0 && (
+              <p id="add-to-cart-hint" className="-mt-3 text-xs text-[var(--text-muted)]">
+                Please select a {missingOption} to add this item to your cart.
+              </p>
+            )}
+
             {/* Try On */}
             {TRYON_ENABLED && (
               <Button
@@ -563,7 +614,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
                 size="lg"
                 fullWidth
                 onClick={handleTryOn}
-                disabled={currentInventory === 0}
+                disabled={currentInventory === 0 || !optionsChosen}
               >
                 <Sparkles size={16} /> Try On
               </Button>

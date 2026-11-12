@@ -89,6 +89,8 @@ export interface Address {
   addressId: string;
   name: string;
   phone: string;
+  /** Where order emails go. Older saved addresses have none. */
+  email?: string;
   line1: string;
   line2?: string;
   city: string;
@@ -103,13 +105,17 @@ export interface Order {
   userId: string;
   products: OrderItem[];
   subtotal: number;
+  /** Rupees taken off by the coupon. */
+  discountAmount?: number;
   shipping: number;
   taxes: number;
   total: number;
   paymentStatus: 'pending' | 'uploaded' | 'verified' | 'failed' | 'refund_due' | 'refunded';
   orderStatus: 'placed' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'closed' | 'cancelled';
   shippingAddress: Address;
-  paymentMethod: 'qr' | 'razorpay' | 'stripe' | 'cod';
+  paymentMethod: 'qr' | 'razorpay' | 'stripe' | 'cod' | 'mock';
+  /** Paid with the dev-only mock "Submit Payment"; no money was taken. */
+  mockPayment?: boolean;
   paymentReference?: string;
   paymentScreenshot?: string;
   couponCode?: string;
@@ -137,6 +143,17 @@ export interface Order {
   autoCancelledAt?: string;
   statusHistory?: OrderStatusEvent[];
   notifications?: OrderNotifications;
+  /** The scratch card coupon this order earned (coupon doc id is the code). */
+  rewardCoupon?: RewardCoupon;
+}
+
+export interface RewardCoupon {
+  code: string;
+  /** "10%" or "₹100". */
+  label: string;
+  startsAt: string;
+  expiresAt: string;
+  issuedAt: string;
 }
 
 export interface OrderStatusEvent {
@@ -209,11 +226,29 @@ export interface WishlistItem {
 export interface Coupon {
   couponId: string;
   code: string;
+  /** Percentage off; 0 when the coupon is a fixed rupee discount. */
   discount: number;
+  /** Fixed rupees off; unset or 0 when the coupon is a percentage. */
+  discountFlat?: number;
+  /** 'S' = shown to all customers; 'A' = private, shared with specific customers. Unset = private. */
+  flag?: 'A' | 'S';
   active: boolean;
+  /** First moment the coupon works; unset on older coupons, meaning already started. */
+  startsAt?: string | null;
   expiresAt: string | null;
   createdAt: string;
   updatedAt: string;
+
+  // ── Scratch card coupons (issued after an order is placed) ──
+  /** 'scratch' for coupons earned on a scratch card; unset for coupons made in Offers. */
+  source?: 'scratch';
+  /** Order that earned it; cancelling that order switches the coupon off. */
+  sourceOrderId?: string;
+  /** Set when an order paid with it is placed; a scratch coupon works once. */
+  usedAt?: string;
+  usedByOrderId?: string;
+  /** Set when the order that earned it was cancelled. */
+  invalidatedAt?: string;
 }
 
 export interface NewsletterSubscriber {
