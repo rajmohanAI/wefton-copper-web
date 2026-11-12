@@ -13,6 +13,7 @@ import { formatPrice } from '@/lib/utils';
 import Button from '@/components/ui/Button';
 import { FREE_SHIPPING_THRESHOLD, PRICES_INCLUDE_GST } from '@/config/brand';
 import { formatCouponDiscount } from '@/lib/coupons';
+import AvailableCoupons from '@/components/checkout/AvailableCoupons';
 
 export default function CartDrawer() {
   const {
@@ -305,6 +306,8 @@ export default function CartDrawer() {
                     </button>
                   </div>
                 )}
+
+                <AvailableCoupons />
 
                 {/* Totals */}
                 <div className="space-y-2 text-xs">

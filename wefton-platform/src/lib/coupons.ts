@@ -89,3 +89,34 @@ export function validateCouponForm(v: CouponFormValues): string | null {
   }
   return null;
 }
+
+/** Rupees a coupon would take off these cart lines. */
+export function couponSavings(
+  coupon: Pick<Coupon, 'discount' | 'discountFlat'>,
+  lines: { price: number; quantity: number }[]
+): number {
+  const subtotal = lines.reduce((s, l) => s + l.price * l.quantity, 0);
+  if (coupon.discountFlat) return Math.min(coupon.discountFlat, subtotal);
+  return (subtotal * (coupon.discount || 0)) / 100;
+}
+
+/**
+ * The coupons a customer may pick from: enabled, flagged 'S' (shown to all),
+ * and inside their dates right now. Biggest saving on this cart first.
+ */
+export function pickAvailableCoupons<T extends Pick<Coupon, 'active' | 'flag' | 'startsAt' | 'expiresAt' | 'discount' | 'discountFlat'>>(
+  coupons: T[],
+  lines: { price: number; quantity: number }[],
+  now = new Date()
+): T[] {
+  return coupons
+    .filter((c) => c.active && isPublicCoupon(c) && couponWindow(c, now) === 'open')
+    .sort((a, b) => couponSavings(b, lines) - couponSavings(a, lines));
+}
+
+/** "Valid till 30 Nov", in India time; null when the coupon has no end date. */
+export function formatCouponEnd(raw: unknown): string | null {
+  const date = toDate(raw);
+  if (!date) return null;
+  return `Valid till ${new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short' }).format(date)}`;
+}

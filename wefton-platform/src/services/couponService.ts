@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 import { couponSchema } from '@/lib/schemas';
+import { couponWindow, isPublicCoupon } from '@/lib/coupons';
 import type { Coupon } from '@/types';
 
 const COUPONS_COL = 'coupons';
@@ -168,4 +169,21 @@ export async function validateCoupon(code: string): Promise<CouponValidationResu
     cache: 'no-store',
   });
   return (await res.json()) as CouponValidationResult;
+}
+
+/**
+ * Coupons any customer can see at checkout: enabled, flagged 'S', and inside
+ * their dates. 'A' coupons are shared privately and never listed.
+ */
+export async function getAvailableCoupons(now = new Date()): Promise<Coupon[]> {
+  const db = requireDb();
+  const q = query(
+    collection(db, COUPONS_COL),
+    where('active', '==', true),
+    where('flag', '==', 'S')
+  );
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => ({ couponId: d.id, ...(d.data() as Omit<Coupon, 'couponId'>) }))
+    .filter((c) => isPublicCoupon(c) && couponWindow(c, now) === 'open');
 }
