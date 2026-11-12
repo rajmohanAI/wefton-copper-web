@@ -166,6 +166,21 @@ describe('runDailyOrderChecks', () => {
     expect(sentSubjects().some((s) => s.includes('auto-cancelled'))).toBe(true);
   });
 
+  it('switches off the scratch card coupon of an auto-cancelled order', async () => {
+    const rewardCoupon = { code: 'ABCDEFGHJKMNPQRS', label: '10%', startsAt: daysAgo(10), expiresAt: daysAgo(-19), issuedAt: daysAgo(11) };
+    order('A', { placedAt: daysAgo(11), statusUpdatedAt: daysAgo(10), notifications: sentFlags, rewardCoupon });
+    store.set('coupons/ABCDEFGHJKMNPQRS', { code: 'ABCDEFGHJKMNPQRS', active: true, source: 'scratch' });
+    await runDailyOrderChecks(db, NOW, send);
+    expect(store.get('coupons/ABCDEFGHJKMNPQRS')).toMatchObject({ active: false, invalidatedAt: NOW.toISOString() });
+  });
+
+  it('marks a scratch card coupon used when the order paying with it is placed', async () => {
+    order('A', { couponCode: 'ABCDEFGHJKMNPQRS' });
+    store.set('coupons/ABCDEFGHJKMNPQRS', { code: 'ABCDEFGHJKMNPQRS', active: true, source: 'scratch' });
+    await markOrderPlaced(db, docRef('orders/A') as never, NOW);
+    expect(store.get('coupons/ABCDEFGHJKMNPQRS')).toMatchObject({ usedAt: NOW.toISOString(), usedByOrderId: 'A' });
+  });
+
   it('does not cancel when the admin updated the status recently, or once shipped', async () => {
     order('A', { placedAt: daysAgo(12), statusUpdatedAt: daysAgo(3), notifications: sentFlags });
     order('B', { placedAt: daysAgo(12), statusUpdatedAt: daysAgo(11), orderStatus: 'shipped', notifications: sentFlags });

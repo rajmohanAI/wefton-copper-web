@@ -6,7 +6,6 @@ import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useWishlistStore } from '@/store/wishlistStore';
-import { useCartStore } from '@/store/cartStore';
 import { useAuth } from '@/hooks/useAuth';
 import { getProductById } from '@/services/productService';
 import { formatPrice } from '@/lib/utils';
@@ -19,12 +18,10 @@ import { primaryImage } from '@/lib/productImages';
 
 export default function WishlistClient() {
   const { items, toggle, syncFromFirestore } = useWishlistStore();
-  const { addItem, openCart } = useCartStore();
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
-  const [addingIds, setAddingIds] = useState<Set<string>>(new Set());
 
   // Sync wishlist from Firestore for authenticated users
   useEffect(() => {
@@ -58,27 +55,7 @@ export default function WishlistClient() {
     });
   };
 
-  const handleAddToCart = (product: Product) => {
-    if (product.inventory === 0) return;
-    setAddingIds((prev) => new Set(prev).add(product.productId));
-    addItem({
-      productId: product.productId,
-      title: product.title,
-      slug: product.slug,
-      image: primaryImage(product)?.url || '/placeholder.jpg',
-      price: product.price,
-      quantity: 1,
-      inventory: product.inventory,
-    });
-    openCart();
-    setTimeout(() => {
-      setAddingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(product.productId);
-        return next;
-      });
-    }, 800);
-  };
+
 
   return (
     <div className="min-h-screen pt-[var(--nav-height)]">
@@ -125,7 +102,6 @@ export default function WishlistClient() {
               {products.map((product) => {
                 const isOutOfStock = product.inventory === 0;
                 const isRemoving = removingIds.has(product.productId);
-                const isAdding = addingIds.has(product.productId);
                 const mainImage = primaryImage(product);
 
                 return (
@@ -223,19 +199,20 @@ export default function WishlistClient() {
 
                       {/* Action Buttons */}
                       <div className="flex gap-2 mt-auto pt-4">
-                        <button
-                          onClick={() => handleAddToCart(product)}
-                          disabled={isOutOfStock || isAdding}
-                          className="flex-1 h-9 flex items-center justify-center gap-2 rounded text-xs tracking-wider uppercase font-medium transition-all duration-200 bg-[var(--copper-main)] text-white hover:bg-[var(--copper-light)] disabled:opacity-50 disabled:cursor-not-allowed"
-                          aria-label={isOutOfStock ? 'Out of Stock' : `Add ${product.title} to cart`}
-                        >
-                          {isAdding ? (
-                            <span className="h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                          ) : (
-                            <ShoppingBag size={13} />
-                          )}
-                          {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
-                        </button>
+                        {isOutOfStock ? (
+                          <span className="flex-1 h-9 flex items-center justify-center gap-2 rounded text-xs tracking-wider uppercase font-medium bg-[var(--copper-main)] text-white opacity-50 cursor-not-allowed">
+                            <ShoppingBag size={13} /> Out of Stock
+                          </span>
+                        ) : (
+                          // Size and colour are chosen on the product page before adding to cart.
+                          <Link
+                            href={`/products/${product.slug}`}
+                            className="flex-1 h-9 flex items-center justify-center gap-2 rounded text-xs tracking-wider uppercase font-medium transition-all duration-200 bg-[var(--copper-main)] text-white hover:bg-[var(--copper-light)]"
+                            aria-label={`Choose size and colour for ${product.title}`}
+                          >
+                            <ShoppingBag size={13} /> Choose Options
+                          </Link>
+                        )}
 
                         <button
                           onClick={() => handleRemoveFromWishlist(product.productId)}

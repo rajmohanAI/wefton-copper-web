@@ -16,6 +16,15 @@ describe('computeOrderTotals', () => {
     expect(t.total).toBe(1378);
   });
 
+  it('applies a fixed rupee discount, never below zero', () => {
+    const t = computeOrderTotals([{ price: 689, quantity: 1 }], 0, 100);
+    expect(t.discountAmount).toBe(100);
+    expect(t.total).toBe(589);
+    const free = computeOrderTotals([{ price: 689, quantity: 1 }], 0, 5000);
+    expect(free.discountAmount).toBe(689);
+    expect(free.total).toBe(0);
+  });
+
   it('applies the percentage discount', () => {
     const t = computeOrderTotals([{ price: 689, quantity: 2 }], 10);
     expect(t.discountAmount).toBeCloseTo(137.8);

@@ -23,7 +23,9 @@ import {
 import { useCartStore } from '@/store/cartStore';
 import { useAuth } from '@/hooks/useAuth';
 import { getFirebaseDb } from '@/lib/firebase';
-import { addressSchema, fileUploadSchema, type AddressFormData } from '@/lib/schemas';
+import { checkoutAddressSchema, fileUploadSchema, type CheckoutAddressFormData } from '@/lib/schemas';
+import AvailableCoupons from '@/components/checkout/AvailableCoupons';
+import ScratchCard from '@/components/checkout/ScratchCard';
 import { createOrder, uploadPaymentScreenshot, notifyOrderPlaced } from '@/services/orderService';
 import { formatPrice } from '@/lib/utils';
 import { trackPurchase } from '@/lib/analytics';
@@ -35,6 +37,8 @@ import {
 } from '@/lib/razorpay/checkout';
 import {
   isOnlinePaymentEnabled,
+  isMockPaymentEnabled,
+  submitMockPayment,
   createRazorpayOrder,
   verifyRazorpayPayment,
 } from '@/services/onlinePaymentService';
@@ -65,14 +69,33 @@ const STEPS = [
 
 export default function CheckoutClient() {
   const router = useRouter();
-  const { items, getSubtotal, getShipping, getTax, getTotal, discount, couponCode, clearCart } =
-    useCartStore();
+  const {
+    items,
+    getSubtotal,
+    getShipping,
+    getTax,
+    getTotal,
+    getDiscountAmount,
+    discount,
+    discountFlat,
+    couponCode,
+    couponError,
+    revalidateCoupon,
+    clearCart,
+  } = useCartStore();
   const { user } = useAuth();
   const [step, setStep] = useState<Step>('address');
   const [confirmedAddress, setConfirmedAddress] = useState<Address | null>(null);
   const [orderId, setOrderId] = useState('');
   const [error, setError] = useState('');
   const [saveAddress, setSaveAddress] = useState(false);
+
+  // The coupon may have been applied a while ago: check it still works.
+  useEffect(() => {
+    revalidateCoupon().catch(() => {
+      /* offline: the payment server re-checks it anyway */
+    });
+  }, [revalidateCoupon]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [savingAddress, setSavingAddress] = useState(false);
   const [tosAccepted, setTosAccepted] = useState(false);
@@ -98,6 +121,21 @@ export default function CheckoutClient() {
   const [payingOnline, setPayingOnline] = useState(false);
   const [paidOnline, setPaidOnline] = useState(false);
   const [onlineError, setOnlineError] = useState('');
+  // Dev testing only: the server turns this on, and only for admins.
+  const [mockEnabled, setMockEnabled] = useState(false);
+  const [mockPaying, setMockPaying] = useState(false);
+  const [mockError, setMockError] = useState('');
+  const showMockPayment = mockEnabled && user?.role === 'admin';
+
+  useEffect(() => {
+    let cancelled = false;
+    isMockPaymentEnabled().then((enabled) => {
+      if (!cancelled) setMockEnabled(enabled);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,11 +152,12 @@ export default function CheckoutClient() {
   // Saved addresses from user profile
   const savedAddresses: Address[] = user?.addresses ?? [];
 
-  const form = useForm<AddressFormData>({
-    resolver: zodResolver(addressSchema),
+  const form = useForm<CheckoutAddressFormData>({
+    resolver: zodResolver(checkoutAddressSchema),
     defaultValues: {
       name: '',
       phone: '',
+      email: user?.email || '',
       line1: '',
       line2: '',
       city: '',
@@ -127,6 +166,12 @@ export default function CheckoutClient() {
       country: 'India',
     },
   });
+
+  // Sign-in can finish after the form is set up: fill in the account's email
+  // then, unless the shopper has already typed one.
+  useEffect(() => {
+    if (user?.email && !form.getValues('email')) form.setValue('email', user.email);
+  }, [user?.email, form]);
 
   // Redirect if cart is empty (except on confirmation step)
   useEffect(() => {
@@ -155,7 +200,8 @@ export default function CheckoutClient() {
         confirmedAddress,
         discount,
         couponCode,
-        user?.email || ''
+        confirmedAddress.email || user?.email || '',
+        discountFlat
       );
       setOrderId(order.orderId);
       setOrderTotal(order.total);
@@ -250,7 +296,7 @@ export default function CheckoutClient() {
           order_id: rzpOrder.razorpayOrderId,
           prefill: {
             name: confirmedAddress?.name || user?.name || '',
-            email: user?.email || '',
+            email: confirmedAddress?.email || user?.email || '',
             contact: confirmedAddress?.phone || user?.phone || '',
           },
           notes: { orderId },
@@ -284,6 +330,22 @@ export default function CheckoutClient() {
     }
   };
 
+  // Dev testing: mark the order paid without a real payment.
+  const handleMockPayment = async () => {
+    if (!orderId || mockPaying) return;
+    setMockPaying(true);
+    setMockError('');
+    try {
+      await submitMockPayment(orderId);
+      setPaidOnline(true);
+      completeCheckout();
+    } catch (e: unknown) {
+      setMockError(e instanceof Error ? e.message : 'Mock payment failed');
+    } finally {
+      setMockPaying(false);
+    }
+  };
+
   // Handle screenshot upload and advance to Step 3
   const handleUploadScreenshot = async () => {
     if (!selectedFile || !paymentReference.trim() || !orderId || !user?.uid) return;
@@ -306,6 +368,8 @@ export default function CheckoutClient() {
     form.reset({
       name: address.name,
       phone: address.phone,
+      // Addresses saved before the email field have none: use the account's.
+      email: address.email || user?.email || '',
       line1: address.line1,
       line2: address.line2 || '',
       city: address.city,
@@ -327,6 +391,7 @@ export default function CheckoutClient() {
       addressId: selectedAddressId || crypto.randomUUID(),
       name: data.name,
       phone: data.phone,
+      email: data.email.trim(),
       line1: data.line1,
       line2: data.line2,
       city: data.city,
@@ -494,6 +559,15 @@ export default function CheckoutClient() {
                         error={form.formState.errors.phone?.message}
                       />
                     </div>
+                    <Input
+                      label="Email"
+                      type="email"
+                      autoComplete="email"
+                      inputMode="email"
+                      placeholder="For your order confirmation and updates"
+                      {...form.register('email')}
+                      error={form.formState.errors.email?.message}
+                    />
                     <Input
                       label="Address Line 1"
                       placeholder="House no., Street, Area"
@@ -669,6 +743,19 @@ export default function CheckoutClient() {
                       ? 'Scan the QR code below to complete your payment via UPI'
                       : 'Choose how you would like to pay'}
                   </p>
+
+                  {orderCreated && showMockPayment && (
+                    <div className="mb-6 p-4 rounded-lg border border-dashed border-amber-500/60 bg-amber-500/10">
+                      <p className="text-xs font-medium text-amber-500 uppercase tracking-wider mb-1">Dev testing only</p>
+                      <p className="text-xs text-[var(--text-muted)] mb-3">
+                        Marks this order paid without taking any money. Shown only to admins on the dev site.
+                      </p>
+                      <Button variant="copper" size="sm" onClick={handleMockPayment} loading={mockPaying} disabled={mockPaying}>
+                        Submit Payment
+                      </Button>
+                      {mockError && <p className="text-xs text-red-500 mt-2">{mockError}</p>}
+                    </div>
+                  )}
 
                   {orderCreating || (orderCreated && onlineStatus === 'checking') ? (
                     <div className="flex flex-col items-center gap-4 py-8">
@@ -985,6 +1072,9 @@ export default function CheckoutClient() {
                   </div>
                 </motion.div>
 
+                {/* Scratch card coupon for the next order */}
+                {orderId && <ScratchCard orderId={orderId} />}
+
                 {/* Itemised Summary */}
                 {confirmedItems.length > 0 && (
                   <motion.div
@@ -1113,19 +1203,23 @@ export default function CheckoutClient() {
                 ))}
               </div>
 
+              {/* Coupons can change only before the order is created on the payment step */}
+              {step === 'address' && (
+                <AvailableCoupons className="border-t border-[var(--border-subtle)] pt-4 mb-4" />
+              )}
+
               <div className="space-y-2 text-xs border-t border-[var(--border-subtle)] pt-4">
                 <div className="flex justify-between text-[var(--text-muted)]">
                   <span>Subtotal</span>
                   <span>{formatPrice(getSubtotal())}</span>
                 </div>
-                {discount > 0 && (
+                {getDiscountAmount() > 0 && (
                   <div className="flex justify-between text-emerald-400">
-                    <span>Discount</span>
-                    <span>
-                      -{formatPrice((getSubtotal() * discount) / 100)}
-                    </span>
+                    <span>Discount{couponCode ? ` (${couponCode})` : ''}</span>
+                    <span>-{formatPrice(getDiscountAmount())}</span>
                   </div>
                 )}
+                {couponError && <p className="text-red-400">{couponError}. The discount was removed.</p>}
                 <div className="flex justify-between text-[var(--text-muted)]">
                   <span>Shipping</span>
                   <span>

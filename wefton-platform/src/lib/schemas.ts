@@ -27,6 +27,16 @@ export const addressSchema = z.object({
 export type AddressFormData = z.infer<typeof addressSchema>;
 
 /**
+ * Checkout delivery address: the address plus a required email, where the
+ * order confirmation and order updates are sent.
+ */
+export const checkoutAddressSchema = addressSchema.extend({
+  email: z.string().trim().min(1, 'Email is required').email('Please enter a valid email address'),
+});
+
+export type CheckoutAddressFormData = z.infer<typeof checkoutAddressSchema>;
+
+/**
  * Review submission validation schema
  * Validates rating (1–5 integer) and comment (10–500 chars)
  * Requirements: 15.6
@@ -123,8 +133,9 @@ export type ProductFormData = z.infer<typeof productFormSchema>;
 
 /**
  * Coupon validation schema
- * Validates coupon code (uppercase alphanumeric, max 20 chars),
- * discount (integer 1–100%), active status, and optional expiry date.
+ * Validates coupon code (letters and numbers, max 20 chars, stored uppercase),
+ * a discount that is either a percentage or fixed rupees (not both), active
+ * status, and start and end dates.
  * Requirements: 13.2, 13.3, 13.4
  */
 export const couponSchema = z.object({
@@ -132,13 +143,28 @@ export const couponSchema = z.object({
     .min(1, 'Code is required')
     .max(20, 'Code must be 20 characters or less')
     .transform(v => v.toUpperCase())
-    .refine(v => /^[A-Z0-9_-]+$/.test(v), 'Code must be alphanumeric'),
+    .refine(v => /^[A-Z0-9]+$/.test(v), 'Code must be letters and numbers only'),
   discount: z.number()
     .int('Discount must be a whole number')
-    .min(1, 'Minimum discount is 1%')
-    .max(100, 'Maximum discount is 100%'),
+    .min(0, 'Discount cannot be negative')
+    .max(100, 'Maximum discount is 100%')
+    .default(0),
+  discountFlat: z.number()
+    .int('Rupee discount must be a whole number')
+    .min(0, 'Discount cannot be negative')
+    .default(0),
+  flag: z.enum(['A', 'S']).default('S'),
   active: z.boolean().default(true),
+  startsAt: z.string().datetime().nullable().optional(),
   expiresAt: z.string().datetime().nullable().optional(),
-});
+})
+  .refine((c) => (c.discount > 0) !== (c.discountFlat > 0), {
+    message: 'Enter either a rupee discount or a percentage, not both',
+    path: ['discount'],
+  })
+  .refine((c) => !c.startsAt || !c.expiresAt || c.startsAt <= c.expiresAt, {
+    message: 'End date cannot be before the start date',
+    path: ['expiresAt'],
+  });
 
 export type CouponFormData = z.infer<typeof couponSchema>;

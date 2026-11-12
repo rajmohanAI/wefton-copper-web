@@ -25,6 +25,7 @@ import {
   customerDelayEmail,
   type OverdueOrder,
 } from '@/lib/email/orderEmails';
+import { invalidateRewardCoupon, redeemScratchCoupon } from '@/services/scratchCouponServer';
 import type { Order, OrderItem, OrderStatusEvent, Product } from '@/types';
 
 export const REMINDER_AFTER_DAYS = 5;
@@ -120,6 +121,10 @@ export async function markOrderPlaced(db: Firestore, ref: DocumentReference, now
     return true;
   });
   if (!stamped) return (await ref.get()).data() as Order;
+  // A scratch card coupon works once: this order uses it up.
+  await redeemScratchCoupon(db, order, now).catch((error) =>
+    console.error(`[Coupons] Marking ${order.couponCode} used by ${order.orderId} failed:`, error)
+  );
   return { ...order, ...updates, statusHistory: [...(order.statusHistory || []), event] };
 }
 
@@ -201,6 +206,9 @@ export async function runDailyOrderChecks(db: Firestore, now = new Date(), send:
         statusHistory: FieldValue.arrayUnion(event),
         updatedAt: FieldValue.serverTimestamp(),
       });
+      await invalidateRewardCoupon(db, order, now).catch((error) =>
+        console.error(`[Coupons] Switching off the reward coupon of ${order.orderId} failed:`, error)
+      );
       const cancelled: Order = { ...order, orderStatus: 'cancelled', paymentStatus };
       cancelledToday.push(cancelled);
       result.cancelled++;

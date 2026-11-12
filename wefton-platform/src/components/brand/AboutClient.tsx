@@ -45,7 +45,7 @@ const SOCIAL_LINKS = [
   {
     name: 'Facebook',
     icon: Facebook,
-    href: 'https://facebook.com/weftoncopper',
+    href: 'https://www.facebook.com/profile.php?id=61596562648320',
   },
   {
     name: 'Twitter',
@@ -337,13 +337,13 @@ export default function AboutClient() {
               </a>
 
               <a
-                href="tel:+918056135201"
+                href="tel:+918056189511"
                 className="flex items-center gap-3 text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors group"
               >
                 <div className="w-10 h-10 rounded-full bg-[var(--copper-main)]/10 flex items-center justify-center group-hover:bg-[var(--copper-main)]/20 transition-colors">
                   <Phone size={18} className="text-[var(--copper-light)]" />
                 </div>
-                <span className="text-sm">+91 80561 35201</span>
+                <span className="text-sm">+91 80561 89511</span>
               </a>
             </div>
 
