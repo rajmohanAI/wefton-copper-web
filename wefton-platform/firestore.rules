@@ -79,9 +79,11 @@ service cloud.firestore {
     }
 
     // ── Coupons ───────────────────────────────────────────────
-    // Public read, admin-only write (Requirement 37.5)
+    // Customers may list only coupons flagged 'S'. Private ('A') coupons are
+    // checked on the server (/api/coupons/validate), never read from the browser.
     match /coupons/{couponId} {
-      allow read: if true;
+      allow get: if isAdmin();
+      allow list: if isAdmin() || resource.data.flag == 'S';
       allow write: if isAdmin();
     }
 

@@ -35,6 +35,11 @@ export function couponWindowError(coupon: Pick<Coupon, 'startsAt' | 'expiresAt'>
   return null;
 }
 
+/** Only 'S' coupons are listed to customers; 'A' ones work only if you know the code. */
+export function isPublicCoupon(coupon: Pick<Coupon, 'flag'>): boolean {
+  return coupon.flag === 'S';
+}
+
 /** "10%" or "₹100". */
 export function formatCouponDiscount(coupon: { discount?: number; discountFlat?: number }): string {
   return coupon.discountFlat ? `₹${coupon.discountFlat}` : `${coupon.discount ?? 0}%`;

@@ -6,6 +6,7 @@ import {
   couponWindow,
   couponWindowError,
   formatCouponDiscount,
+  isPublicCoupon,
   istDayEnd,
   istDayStart,
   toIstDateInput,
@@ -93,5 +94,13 @@ describe('coupon schema', () => {
     expect(couponSchema.safeParse({ ...base, discount: 0, discountFlat: 100 }).success).toBe(true);
     expect(couponSchema.safeParse({ ...base, discount: 10, discountFlat: 100 }).success).toBe(false);
     expect(couponSchema.safeParse({ ...base, discount: 0, discountFlat: 0 }).success).toBe(false);
+  });
+});
+
+describe('coupon flag', () => {
+  it('lists only coupons flagged S', () => {
+    expect(isPublicCoupon({ flag: 'S' })).toBe(true);
+    expect(isPublicCoupon({ flag: 'A' })).toBe(false);
+    expect(isPublicCoupon({})).toBe(false);
   });
 });

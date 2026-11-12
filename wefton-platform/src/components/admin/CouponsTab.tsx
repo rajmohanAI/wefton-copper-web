@@ -22,6 +22,7 @@ import type { Coupon } from '@/types';
 import {
   couponWindow,
   formatCouponDiscount,
+  isPublicCoupon,
   istDayEnd,
   istDayStart,
   toIstDateInput,
@@ -49,6 +50,7 @@ function CouponFormModal({ open, onClose, onSuccess, editingCoupon }: CouponForm
   const [endDate, setEndDate] = useState('');
   const [rupees, setRupees] = useState('');
   const [percent, setPercent] = useState('');
+  const [flag, setFlag] = useState<'A' | 'S'>('S');
   const [active, setActive] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -59,6 +61,7 @@ function CouponFormModal({ open, onClose, onSuccess, editingCoupon }: CouponForm
     setEndDate(toIstDateInput(editingCoupon?.expiresAt));
     setRupees(editingCoupon?.discountFlat ? String(editingCoupon.discountFlat) : '');
     setPercent(editingCoupon?.discount ? String(editingCoupon.discount) : '');
+    setFlag(editingCoupon ? (editingCoupon.flag ?? 'A') : 'S');
     setActive(editingCoupon?.active ?? true);
     setError('');
   }, [editingCoupon, open]);
@@ -78,6 +81,7 @@ function CouponFormModal({ open, onClose, onSuccess, editingCoupon }: CouponForm
       const values = {
         discount: percent ? Number(percent) : 0,
         discountFlat: rupees ? Number(rupees) : 0,
+        flag,
         active,
         startsAt: istDayStart(startDate),
         expiresAt: istDayEnd(endDate),
@@ -176,6 +180,14 @@ function CouponFormModal({ open, onClose, onSuccess, editingCoupon }: CouponForm
             <p className="text-[10px] text-[var(--text-faint)] mt-0.5">
               Fill in one of these. Clear it to use the other.
             </p>
+          </div>
+
+          <div>
+            <label htmlFor="coupon-flag" className={LABEL}>Who can see it</label>
+            <select id="coupon-flag" value={flag} onChange={(e) => setFlag(e.target.value as 'A' | 'S')} className={FIELD}>
+              <option value="S">S: shown to all customers</option>
+              <option value="A">A: private, share the code with specific customers</option>
+            </select>
           </div>
 
           {/* Active toggle */}
@@ -362,7 +374,7 @@ export default function CouponsTab() {
       ) : (
         <div className="space-y-2">
           {/* Table header */}
-          <div className="hidden md:grid grid-cols-[minmax(0,1fr)_90px_90px_110px_110px_80px] gap-3 px-4 py-2 text-[10px] font-medium tracking-wider uppercase text-[var(--text-muted)]">
+          <div className="hidden md:grid grid-cols-[minmax(0,1fr)_90px_60px_90px_110px_110px_80px] gap-3 px-4 py-2 text-[10px] font-medium tracking-wider uppercase text-[var(--text-muted)]">
             <button
               type="button"
               onClick={() => handleSort('code')}
@@ -379,6 +391,7 @@ export default function CouponsTab() {
               Discount
               <SortIcon field="discount" currentField={sortField} currentDir={sortDir} />
             </button>
+            <span>Flag</span>
             <span>Status</span>
             <span>Starts</span>
             <button
@@ -396,7 +409,7 @@ export default function CouponsTab() {
           {coupons.map((coupon) => (
             <div
               key={coupon.couponId}
-              className="glass-card p-4 md:grid md:grid-cols-[minmax(0,1fr)_90px_90px_110px_110px_80px] md:gap-3 md:items-center"
+              className="glass-card p-4 md:grid md:grid-cols-[minmax(0,1fr)_90px_60px_90px_110px_110px_80px] md:gap-3 md:items-center"
             >
               {/* Code */}
               <div>
@@ -408,6 +421,11 @@ export default function CouponsTab() {
               {/* Discount */}
               <span className="text-xs text-[var(--copper-light)]">
                 {formatCouponDiscount(coupon)}
+              </span>
+
+              {/* Flag */}
+              <span className="text-xs font-mono text-[var(--text-muted)]" title={isPublicCoupon(coupon) ? 'Shown to all customers' : 'Private: shared by code'}>
+                {coupon.flag ?? 'A'}
               </span>
 
               {/* Active Status */}

@@ -28,6 +28,8 @@ import { getFirebaseAuth, getFirebaseDb, getFirebaseStorage } from '@/lib/fireba
 import { useAuthStore } from '@/store/authStore';
 import { useAuth } from '@/hooks/useAuth';
 import { getUserOrders } from '@/services/orderService';
+import { getReviewedProductIds } from '@/services/reviewService';
+import OrderReviewDialog, { type ReviewTarget } from './OrderReviewDialog';
 import { setupRecaptcha, sendOTP, verifyOTP } from '@/services/authService';
 import { formatPrice, toDate } from '@/lib/utils';
 import { addressSchema, type AddressFormData } from '@/lib/schemas';
@@ -47,6 +49,9 @@ const ORDER_STATUS_VARIANT: Record<string, 'copper' | 'success' | 'warning' | 'e
   closed: 'success',
   cancelled: 'error',
 };
+
+/** Customers can review a product once its order has reached them. */
+const REVIEWABLE_STATUSES: Order['orderStatus'][] = ['delivered', 'closed'];
 
 export default function AccountClient() {
   const router = useRouter();
@@ -99,6 +104,9 @@ export default function AccountClient() {
     }
   }, [user]);
 
+  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
+  const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
+
   // Redirect unauthenticated users
   useEffect(() => {
     if (!loading && !user) {
@@ -111,6 +119,9 @@ export default function AccountClient() {
   const handleTabChange = (value: string) => {
     if (value === 'orders' && user) {
       setOrdersLoading(true);
+      getReviewedProductIds(user.uid)
+        .then((ids) => setReviewedIds(new Set(ids)))
+        .catch(() => setReviewedIds(new Set()));
       getUserOrders(user.uid)
         .then((fetchedOrders) => {
           // Sort by createdAt descending
@@ -862,6 +873,18 @@ export default function AccountClient() {
                                         Qty: <span className="text-[var(--text-light)]">{item.quantity}</span>
                                       </p>
                                     </div>
+                                    {REVIEWABLE_STATUSES.includes(order.orderStatus) &&
+                                      (reviewedIds.has(item.productId) ? (
+                                        <p className="mt-2 text-xs text-emerald-500">Reviewed. Thank you!</p>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => setReviewTarget({ productId: item.productId, title: item.title })}
+                                          className="mt-2 text-xs text-[var(--copper-light)] hover:underline"
+                                        >
+                                          Rate and review
+                                        </button>
+                                      ))}
                                   </div>
 
                                   {/* Item Price */}
@@ -1116,6 +1139,14 @@ export default function AccountClient() {
           </div>
         </div>
       </div>
+      {user && (
+        <OrderReviewDialog
+          target={reviewTarget}
+          user={user}
+          onClose={() => setReviewTarget(null)}
+          onReviewed={(id) => setReviewedIds((prev) => new Set(prev).add(id))}
+        />
+      )}
     </div>
   );
 }

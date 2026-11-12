@@ -15,7 +15,6 @@ import {
 } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 import { couponSchema } from '@/lib/schemas';
-import { couponWindowError } from '@/lib/coupons';
 import type { Coupon } from '@/types';
 
 const COUPONS_COL = 'coupons';
@@ -92,6 +91,7 @@ export async function createCoupon(
     code: string;
     discount: number;
     discountFlat?: number;
+    flag?: 'A' | 'S';
     active?: boolean;
     startsAt?: string | null;
     expiresAt?: string | null;
@@ -124,7 +124,7 @@ export async function createCoupon(
  */
 export async function updateCoupon(
   couponId: string,
-  data: Partial<Pick<Coupon, 'discount' | 'discountFlat' | 'active' | 'startsAt' | 'expiresAt'>>
+  data: Partial<Pick<Coupon, 'discount' | 'discountFlat' | 'flag' | 'active' | 'startsAt' | 'expiresAt'>>
 ): Promise<void> {
   const db = requireDb();
 
@@ -161,27 +161,11 @@ export async function deleteCoupon(couponId: string): Promise<void> {
  * @returns A promise resolving to the validation result
  */
 export async function validateCoupon(code: string): Promise<CouponValidationResult> {
-  const db = requireDb();
-
-  const normalizedCode = code.trim().toUpperCase();
-
-  const q = query(
-    collection(db, COUPONS_COL),
-    where('code', '==', normalizedCode),
-    where('active', '==', true)
-  );
-
-  const snap = await getDocs(q);
-
-  if (snap.empty) {
-    return { valid: false, error: 'Invalid coupon code' };
-  }
-
-  const couponDoc = snap.docs[0];
-  const coupon = couponDoc.data() as Coupon;
-
-  const windowError = couponWindowError(coupon);
-  if (windowError) return { valid: false, error: windowError };
-
-  return { valid: true, discount: coupon.discount || 0, discountFlat: coupon.discountFlat || 0 };
+  const res = await fetch('/api/coupons/validate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code }),
+    cache: 'no-store',
+  });
+  return (await res.json()) as CouponValidationResult;
 }

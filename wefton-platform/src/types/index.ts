@@ -215,6 +215,8 @@ export interface Coupon {
   discount: number;
   /** Fixed rupees off; unset or 0 when the coupon is a percentage. */
   discountFlat?: number;
+  /** 'S' = shown to all customers; 'A' = private, shared with specific customers. Unset = private. */
+  flag?: 'A' | 'S';
   active: boolean;
   /** First moment the coupon works; unset on older coupons, meaning already started. */
   startsAt?: string | null;
