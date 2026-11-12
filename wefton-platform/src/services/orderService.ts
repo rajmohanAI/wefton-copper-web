@@ -67,6 +67,7 @@ export async function createOrder(
       addressId: shippingAddress.addressId || '',
       name: shippingAddress.name || '',
       phone: shippingAddress.phone || '',
+      email: shippingAddress.email || '',
       line1: shippingAddress.line1 || '',
       line2: shippingAddress.line2 || '',
       city: shippingAddress.city || '',

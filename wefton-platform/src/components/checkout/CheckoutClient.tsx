@@ -23,7 +23,7 @@ import {
 import { useCartStore } from '@/store/cartStore';
 import { useAuth } from '@/hooks/useAuth';
 import { getFirebaseDb } from '@/lib/firebase';
-import { addressSchema, fileUploadSchema, type AddressFormData } from '@/lib/schemas';
+import { checkoutAddressSchema, fileUploadSchema, type CheckoutAddressFormData } from '@/lib/schemas';
 import AvailableCoupons from '@/components/checkout/AvailableCoupons';
 import { createOrder, uploadPaymentScreenshot, notifyOrderPlaced } from '@/services/orderService';
 import { formatPrice } from '@/lib/utils';
@@ -134,11 +134,12 @@ export default function CheckoutClient() {
   // Saved addresses from user profile
   const savedAddresses: Address[] = user?.addresses ?? [];
 
-  const form = useForm<AddressFormData>({
-    resolver: zodResolver(addressSchema),
+  const form = useForm<CheckoutAddressFormData>({
+    resolver: zodResolver(checkoutAddressSchema),
     defaultValues: {
       name: '',
       phone: '',
+      email: user?.email || '',
       line1: '',
       line2: '',
       city: '',
@@ -147,6 +148,12 @@ export default function CheckoutClient() {
       country: 'India',
     },
   });
+
+  // Sign-in can finish after the form is set up: fill in the account's email
+  // then, unless the shopper has already typed one.
+  useEffect(() => {
+    if (user?.email && !form.getValues('email')) form.setValue('email', user.email);
+  }, [user?.email, form]);
 
   // Redirect if cart is empty (except on confirmation step)
   useEffect(() => {
@@ -175,7 +182,7 @@ export default function CheckoutClient() {
         confirmedAddress,
         discount,
         couponCode,
-        user?.email || '',
+        confirmedAddress.email || user?.email || '',
         discountFlat
       );
       setOrderId(order.orderId);
@@ -271,7 +278,7 @@ export default function CheckoutClient() {
           order_id: rzpOrder.razorpayOrderId,
           prefill: {
             name: confirmedAddress?.name || user?.name || '',
-            email: user?.email || '',
+            email: confirmedAddress?.email || user?.email || '',
             contact: confirmedAddress?.phone || user?.phone || '',
           },
           notes: { orderId },
@@ -327,6 +334,8 @@ export default function CheckoutClient() {
     form.reset({
       name: address.name,
       phone: address.phone,
+      // Addresses saved before the email field have none: use the account's.
+      email: address.email || user?.email || '',
       line1: address.line1,
       line2: address.line2 || '',
       city: address.city,
@@ -348,6 +357,7 @@ export default function CheckoutClient() {
       addressId: selectedAddressId || crypto.randomUUID(),
       name: data.name,
       phone: data.phone,
+      email: data.email.trim(),
       line1: data.line1,
       line2: data.line2,
       city: data.city,
@@ -515,6 +525,15 @@ export default function CheckoutClient() {
                         error={form.formState.errors.phone?.message}
                       />
                     </div>
+                    <Input
+                      label="Email"
+                      type="email"
+                      autoComplete="email"
+                      inputMode="email"
+                      placeholder="For your order confirmation and updates"
+                      {...form.register('email')}
+                      error={form.formState.errors.email?.message}
+                    />
                     <Input
                       label="Address Line 1"
                       placeholder="House no., Street, Area"
