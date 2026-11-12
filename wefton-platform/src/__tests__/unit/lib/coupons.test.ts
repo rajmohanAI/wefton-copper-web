@@ -3,12 +3,15 @@
 // ============================================================
 import { describe, expect, it } from 'vitest';
 import {
+  couponSavings,
   couponWindow,
   couponWindowError,
   formatCouponDiscount,
+  formatCouponEnd,
   isPublicCoupon,
   istDayEnd,
   istDayStart,
+  pickAvailableCoupons,
   toIstDateInput,
   validateCouponForm,
 } from '@/lib/coupons';
@@ -102,5 +105,42 @@ describe('coupon flag', () => {
     expect(isPublicCoupon({ flag: 'S' })).toBe(true);
     expect(isPublicCoupon({ flag: 'A' })).toBe(false);
     expect(isPublicCoupon({})).toBe(false);
+  });
+});
+
+describe('coupons shown at checkout', () => {
+  const now = new Date('2026-11-15T06:00:00Z');
+  const base = { active: true, flag: 'S' as const, startsAt: istDayStart('2026-11-11'), expiresAt: istDayEnd('2026-11-30') };
+  const cart = [{ price: 1000, quantity: 2 }];
+
+  it('lists only enabled, public coupons inside their dates', () => {
+    const coupons = [
+      { ...base, code: 'OPEN', discount: 10 },
+      { ...base, code: 'PRIVATE', discount: 10, flag: 'A' as const },
+      { ...base, code: 'NOFLAG', discount: 10, flag: undefined },
+      { ...base, code: 'OFF', discount: 10, active: false },
+      { ...base, code: 'LATER', discount: 10, startsAt: istDayStart('2026-12-01') },
+      { ...base, code: 'GONE', discount: 10, expiresAt: istDayEnd('2026-11-14') },
+    ];
+    expect(pickAvailableCoupons(coupons, cart, now).map((c) => c.code)).toEqual(['OPEN']);
+  });
+
+  it('puts the biggest saving on this cart first', () => {
+    const coupons = [
+      { ...base, code: 'FLAT150', discount: 0, discountFlat: 150 },
+      { ...base, code: 'PCT10', discount: 10 },
+      { ...base, code: 'FLAT100', discount: 0, discountFlat: 100 },
+    ];
+    expect(pickAvailableCoupons(coupons, cart, now).map((c) => c.code)).toEqual(['PCT10', 'FLAT150', 'FLAT100']);
+  });
+
+  it('works out the saving, never more than the cart', () => {
+    expect(couponSavings({ discount: 10 }, cart)).toBe(200);
+    expect(couponSavings({ discount: 0, discountFlat: 5000 }, cart)).toBe(2000);
+  });
+
+  it('shows the last day in India time', () => {
+    expect(formatCouponEnd(istDayEnd('2026-11-30'))).toBe('Valid till 30 Nov');
+    expect(formatCouponEnd(null)).toBeNull();
   });
 });

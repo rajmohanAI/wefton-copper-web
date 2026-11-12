@@ -24,6 +24,7 @@ import { useCartStore } from '@/store/cartStore';
 import { useAuth } from '@/hooks/useAuth';
 import { getFirebaseDb } from '@/lib/firebase';
 import { addressSchema, fileUploadSchema, type AddressFormData } from '@/lib/schemas';
+import AvailableCoupons from '@/components/checkout/AvailableCoupons';
 import { createOrder, uploadPaymentScreenshot, notifyOrderPlaced } from '@/services/orderService';
 import { formatPrice } from '@/lib/utils';
 import { trackPurchase } from '@/lib/analytics';
@@ -1132,6 +1133,11 @@ export default function CheckoutClient() {
                   </div>
                 ))}
               </div>
+
+              {/* Coupons can change only before the order is created on the payment step */}
+              {step === 'address' && (
+                <AvailableCoupons className="border-t border-[var(--border-subtle)] pt-4 mb-4" />
+              )}
 
               <div className="space-y-2 text-xs border-t border-[var(--border-subtle)] pt-4">
                 <div className="flex justify-between text-[var(--text-muted)]">
