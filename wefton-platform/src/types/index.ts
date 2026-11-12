@@ -141,6 +141,17 @@ export interface Order {
   autoCancelledAt?: string;
   statusHistory?: OrderStatusEvent[];
   notifications?: OrderNotifications;
+  /** The scratch card coupon this order earned (coupon doc id is the code). */
+  rewardCoupon?: RewardCoupon;
+}
+
+export interface RewardCoupon {
+  code: string;
+  /** "10%" or "₹100". */
+  label: string;
+  startsAt: string;
+  expiresAt: string;
+  issuedAt: string;
 }
 
 export interface OrderStatusEvent {
@@ -225,6 +236,17 @@ export interface Coupon {
   expiresAt: string | null;
   createdAt: string;
   updatedAt: string;
+
+  // ── Scratch card coupons (issued after an order is placed) ──
+  /** 'scratch' for coupons earned on a scratch card; unset for coupons made in Offers. */
+  source?: 'scratch';
+  /** Order that earned it; cancelling that order switches the coupon off. */
+  sourceOrderId?: string;
+  /** Set when an order paid with it is placed; a scratch coupon works once. */
+  usedAt?: string;
+  usedByOrderId?: string;
+  /** Set when the order that earned it was cancelled. */
+  invalidatedAt?: string;
 }
 
 export interface NewsletterSubscriber {

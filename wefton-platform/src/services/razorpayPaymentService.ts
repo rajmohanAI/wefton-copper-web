@@ -10,7 +10,7 @@
 import { FieldValue, type DocumentReference, type Firestore } from 'firebase-admin/firestore';
 import { getAdminDb } from '@/lib/firebaseAdmin';
 import { computeOrderTotals } from '@/lib/orderPricing';
-import { couponWindowError } from '@/lib/coupons';
+import { couponUseError } from '@/lib/coupons';
 import {
   RAZORPAY_CURRENCY,
   createRazorpayClient,
@@ -90,7 +90,7 @@ async function couponDiscount(
     .get();
   if (snap.empty) return none;
   const coupon = snap.docs[0].data() as Coupon;
-  if (couponWindowError(coupon)) return none;
+  if (couponUseError(coupon)) return none;
   return { percent: coupon.discount || 0, flat: coupon.discountFlat || 0 };
 }
 

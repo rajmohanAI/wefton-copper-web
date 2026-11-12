@@ -105,6 +105,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ── Shop settings (e.g. scratch card coupon amount) ───────
+    // Read by the server with the Admin SDK; only admins edit them here.
+    match /settings/{docId} {
+      allow read, write: if isAdmin();
+    }
+
     // ── Search config (trending terms) ────────────────────────
     match /search_config/{docId} {
       allow read: if true;

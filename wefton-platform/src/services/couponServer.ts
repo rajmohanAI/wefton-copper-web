@@ -4,7 +4,7 @@
 // is checked here with the Admin SDK.
 // ============================================================
 import type { Firestore } from 'firebase-admin/firestore';
-import { couponWindowError } from '@/lib/coupons';
+import { couponUseError } from '@/lib/coupons';
 import type { Coupon } from '@/types';
 
 export interface CouponCheck {
@@ -28,7 +28,7 @@ export async function checkCouponCode(db: Firestore, code: string): Promise<Coup
   if (snap.empty) return { valid: false, error: 'Invalid coupon code' };
 
   const coupon = snap.docs[0].data() as Coupon;
-  const windowError = couponWindowError(coupon);
+  const windowError = couponUseError(coupon);
   if (windowError) return { valid: false, error: windowError };
   return { valid: true, discount: coupon.discount || 0, discountFlat: coupon.discountFlat || 0 };
 }

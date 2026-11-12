@@ -6,6 +6,7 @@ import {
   Edit2,
   Trash2,
   Ticket,
+  Gift,
   ArrowUp,
   ArrowDown,
 } from 'lucide-react';
@@ -14,6 +15,8 @@ import {
   createCoupon,
   updateCoupon,
   deleteCoupon,
+  getScratchSettings,
+  saveScratchSettings,
 } from '@/services/couponService';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -23,7 +26,10 @@ import {
   couponWindow,
   formatCouponDiscount,
   isPublicCoupon,
+  isScratchCoupon,
   istDayEnd,
+  SCRATCH_STARTS_AFTER_HOURS,
+  SCRATCH_VALID_DAYS,
   istDayStart,
   toIstDateInput,
   validateCouponForm,
@@ -241,6 +247,8 @@ function CouponFormModal({ open, onClose, onSuccess, editingCoupon }: CouponForm
 
 /** Status shown in the table. */
 function couponBadge(coupon: Coupon): { label: string; variant: 'success' | 'error' | 'warning' } {
+  if (coupon.invalidatedAt) return { label: 'Cancelled', variant: 'error' };
+  if (isScratchCoupon(coupon) && coupon.usedAt) return { label: 'Used', variant: 'warning' };
   if (!coupon.active) return { label: 'Disabled', variant: 'error' };
   const window = couponWindow(coupon);
   if (window === 'expired') return { label: 'Expired', variant: 'error' };
@@ -267,6 +275,93 @@ function SortIcon({ field, currentField, currentDir }: { field: SortField; curre
 }
 
 // ============================================================
+// Scratch card coupon settings
+// ============================================================
+
+function ScratchSettingsPanel() {
+  const [loaded, setLoaded] = useState(false);
+  const [enabled, setEnabled] = useState(true);
+  const [rupees, setRupees] = useState('');
+  const [percent, setPercent] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
+
+  useEffect(() => {
+    getScratchSettings()
+      .then((s) => {
+        setEnabled(s.enabled);
+        setRupees(s.discountFlat ? String(s.discountFlat) : '');
+        setPercent(s.discountFlat ? '' : String(s.discount));
+      })
+      .catch((err) => console.error('Failed to load scratch card settings:', err))
+      .finally(() => setLoaded(true));
+  }, []);
+
+  const handleSave = async () => {
+    setMessage(null);
+    if (rupees && percent) return setMessage({ text: 'Enter either a rupee discount or a percentage, not both', error: true });
+    if (!rupees && !percent) return setMessage({ text: 'Enter a rupee discount or a percentage', error: true });
+    if (rupees && !(Number.isInteger(Number(rupees)) && Number(rupees) >= 1)) {
+      return setMessage({ text: 'Rupee discount must be a whole number of at least 1', error: true });
+    }
+    if (percent && !(Number.isInteger(Number(percent)) && Number(percent) >= 1 && Number(percent) <= 100)) {
+      return setMessage({ text: 'Percentage must be a whole number from 1 to 100', error: true });
+    }
+    setSaving(true);
+    try {
+      await saveScratchSettings({ enabled, discount: percent ? Number(percent) : 0, discountFlat: rupees ? Number(rupees) : 0 });
+      setMessage({ text: 'Saved. New scratch cards use this from now on.', error: false });
+    } catch (err) {
+      setMessage({ text: err instanceof Error ? err.message : 'Could not save', error: true });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="glass-card p-4 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Gift size={16} className="text-[var(--copper-light)]" />
+          <h3 className="text-sm font-medium text-[var(--text-light)]">Scratch card after each order</h3>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          aria-label="Scratch cards enabled"
+          disabled={!loaded}
+          onClick={() => setEnabled(!enabled)}
+          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${enabled ? 'bg-emerald-500' : 'bg-black/20'}`}
+        >
+          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${enabled ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
+        </button>
+      </div>
+      <p className="text-xs text-[var(--text-muted)]">
+        Every placed order gets a 16-character coupon on a scratch card. It works once, for anyone who has the code,
+        from {SCRATCH_STARTS_AFTER_HOURS} hours after the order till {SCRATCH_VALID_DAYS} days after it, and stops working if that order is cancelled.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+        <div>
+          <label htmlFor="scratch-rupees" className={LABEL}>Discount (₹)</label>
+          <input id="scratch-rupees" type="number" min={1} value={rupees} disabled={!loaded || !!percent}
+            onChange={(e) => setRupees(e.target.value)} placeholder="e.g. 100" className={FIELD} />
+        </div>
+        <div>
+          <label htmlFor="scratch-percent" className={LABEL}>Discount (%)</label>
+          <input id="scratch-percent" type="number" min={1} max={100} value={percent} disabled={!loaded || !!rupees}
+            onChange={(e) => setPercent(e.target.value)} placeholder="1–100" className={FIELD} />
+        </div>
+        <Button variant="copper" size="sm" onClick={handleSave} loading={saving} disabled={!loaded}>
+          Save
+        </Button>
+      </div>
+      {message && <p className={`text-xs ${message.error ? 'text-red-500' : 'text-emerald-500'}`}>{message.text}</p>}
+    </div>
+  );
+}
+
+// ============================================================
 // Main CouponsTab Component
 // ============================================================
 
@@ -279,6 +374,7 @@ export default function CouponsTab() {
   const [deleting, setDeleting] = useState(false);
   const [sortField, setSortField] = useState<SortField>('code');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [showScratch, setShowScratch] = useState(false);
 
   const fetchCoupons = useCallback(async () => {
     setLoading(true);
@@ -342,6 +438,9 @@ export default function CouponsTab() {
     });
   };
 
+  const scratchCount = coupons.filter(isScratchCoupon).length;
+  const shownCoupons = showScratch ? coupons.filter(isScratchCoupon) : coupons.filter((c) => !isScratchCoupon(c));
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -355,15 +454,38 @@ export default function CouponsTab() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-light text-[var(--text-light)]">
-          Offers ({coupons.length})
+          {showScratch ? 'Scratch card coupons' : 'Offers'} ({shownCoupons.length})
         </h2>
         <Button variant="copper" size="sm" onClick={handleCreate}>
           <Plus size={14} /> Create Offer
         </Button>
       </div>
 
+      <ScratchSettingsPanel />
+
+      <div className="flex items-center gap-4 border-b border-[var(--border-subtle)] text-sm">
+        {([false, true] as const).map((scratch) => (
+          <button
+            key={String(scratch)}
+            type="button"
+            onClick={() => setShowScratch(scratch)}
+            className={`pb-2 px-1 border-b-2 transition-colors ${
+              showScratch === scratch
+                ? 'border-[var(--copper-light)] text-[var(--copper-light)]'
+                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-light)]'
+            }`}
+          >
+            {scratch ? `Scratch card coupons (${scratchCount})` : `Offers (${coupons.length - scratchCount})`}
+          </button>
+        ))}
+      </div>
+
       {/* Empty state */}
-      {coupons.length === 0 ? (
+      {shownCoupons.length === 0 && showScratch ? (
+        <div className="glass-card p-8 text-center text-sm text-[var(--text-muted)]">
+          No scratch card coupons yet. Each placed order adds one here.
+        </div>
+      ) : shownCoupons.length === 0 ? (
         <div className="glass-card p-8 text-center">
           <Ticket size={40} className="text-[var(--text-faint)] mx-auto mb-4" />
           <p className="text-[var(--text-muted)] mb-4">No offers yet</p>
@@ -406,16 +528,22 @@ export default function CouponsTab() {
           </div>
 
           {/* Coupon rows */}
-          {coupons.map((coupon) => (
+          {shownCoupons.map((coupon) => (
             <div
               key={coupon.couponId}
               className="glass-card p-4 md:grid md:grid-cols-[minmax(0,1fr)_90px_60px_90px_110px_110px_80px] md:gap-3 md:items-center"
             >
               {/* Code */}
               <div>
-                <p className="text-sm text-[var(--text-light)] font-mono font-medium">
+                <p className="text-sm text-[var(--text-light)] font-mono font-medium break-all">
                   {coupon.code}
                 </p>
+                {isScratchCoupon(coupon) && (
+                  <p className="text-[10px] text-[var(--text-faint)] mt-0.5">
+                    From order {coupon.sourceOrderId || '—'}
+                    {coupon.usedByOrderId ? ` · used on ${coupon.usedByOrderId}` : ''}
+                  </p>
+                )}
               </div>
 
               {/* Discount */}
@@ -439,13 +567,13 @@ export default function CouponsTab() {
 
               {/* Actions */}
               <div className="flex items-center gap-2 mt-2 md:mt-0">
-                <button
+                {!isScratchCoupon(coupon) && <button
                   onClick={() => handleEdit(coupon)}
                   className="p-1.5 rounded hover:bg-white/10 text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
                   title="Edit offer"
                 >
                   <Edit2 size={14} />
-                </button>
+                </button>}
                 <button
                   onClick={() => setDeleteTarget(coupon)}
                   className="p-1.5 rounded hover:bg-red-500/10 text-[var(--text-muted)] hover:text-red-400 transition-colors"
