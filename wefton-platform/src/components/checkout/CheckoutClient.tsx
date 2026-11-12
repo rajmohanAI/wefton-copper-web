@@ -37,6 +37,8 @@ import {
 } from '@/lib/razorpay/checkout';
 import {
   isOnlinePaymentEnabled,
+  isMockPaymentEnabled,
+  submitMockPayment,
   createRazorpayOrder,
   verifyRazorpayPayment,
 } from '@/services/onlinePaymentService';
@@ -119,6 +121,21 @@ export default function CheckoutClient() {
   const [payingOnline, setPayingOnline] = useState(false);
   const [paidOnline, setPaidOnline] = useState(false);
   const [onlineError, setOnlineError] = useState('');
+  // Dev testing only: the server turns this on, and only for admins.
+  const [mockEnabled, setMockEnabled] = useState(false);
+  const [mockPaying, setMockPaying] = useState(false);
+  const [mockError, setMockError] = useState('');
+  const showMockPayment = mockEnabled && user?.role === 'admin';
+
+  useEffect(() => {
+    let cancelled = false;
+    isMockPaymentEnabled().then((enabled) => {
+      if (!cancelled) setMockEnabled(enabled);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -310,6 +327,22 @@ export default function CheckoutClient() {
     } catch (e: unknown) {
       setOnlineError(e instanceof Error ? e.message : 'Could not start online payment');
       setPayingOnline(false);
+    }
+  };
+
+  // Dev testing: mark the order paid without a real payment.
+  const handleMockPayment = async () => {
+    if (!orderId || mockPaying) return;
+    setMockPaying(true);
+    setMockError('');
+    try {
+      await submitMockPayment(orderId);
+      setPaidOnline(true);
+      completeCheckout();
+    } catch (e: unknown) {
+      setMockError(e instanceof Error ? e.message : 'Mock payment failed');
+    } finally {
+      setMockPaying(false);
     }
   };
 
@@ -710,6 +743,19 @@ export default function CheckoutClient() {
                       ? 'Scan the QR code below to complete your payment via UPI'
                       : 'Choose how you would like to pay'}
                   </p>
+
+                  {orderCreated && showMockPayment && (
+                    <div className="mb-6 p-4 rounded-lg border border-dashed border-amber-500/60 bg-amber-500/10">
+                      <p className="text-xs font-medium text-amber-500 uppercase tracking-wider mb-1">Dev testing only</p>
+                      <p className="text-xs text-[var(--text-muted)] mb-3">
+                        Marks this order paid without taking any money. Shown only to admins on the dev site.
+                      </p>
+                      <Button variant="copper" size="sm" onClick={handleMockPayment} loading={mockPaying} disabled={mockPaying}>
+                        Submit Payment
+                      </Button>
+                      {mockError && <p className="text-xs text-red-500 mt-2">{mockError}</p>}
+                    </div>
+                  )}
 
                   {orderCreating || (orderCreated && onlineStatus === 'checking') ? (
                     <div className="flex flex-col items-center gap-4 py-8">

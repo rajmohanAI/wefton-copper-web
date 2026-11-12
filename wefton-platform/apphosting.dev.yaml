@@ -9,3 +9,9 @@ env:
     availability:
       - BUILD
       - RUNTIME
+  # Dev testing: offers admins a mock "Submit Payment" at checkout that marks
+  # the order paid without taking money. Never set this in production.
+  - variable: MOCK_PAYMENTS_ENABLED
+    value: "true"
+    availability:
+      - RUNTIME

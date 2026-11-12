@@ -113,7 +113,9 @@ export interface Order {
   paymentStatus: 'pending' | 'uploaded' | 'verified' | 'failed' | 'refund_due' | 'refunded';
   orderStatus: 'placed' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'closed' | 'cancelled';
   shippingAddress: Address;
-  paymentMethod: 'qr' | 'razorpay' | 'stripe' | 'cod';
+  paymentMethod: 'qr' | 'razorpay' | 'stripe' | 'cod' | 'mock';
+  /** Paid with the dev-only mock "Submit Payment"; no money was taken. */
+  mockPayment?: boolean;
   paymentReference?: string;
   paymentScreenshot?: string;
   couponCode?: string;
