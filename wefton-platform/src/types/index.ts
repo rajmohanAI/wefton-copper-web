@@ -89,6 +89,8 @@ export interface Address {
   addressId: string;
   name: string;
   phone: string;
+  /** Where order emails go. Older saved addresses have none. */
+  email?: string;
   line1: string;
   line2?: string;
   city: string;

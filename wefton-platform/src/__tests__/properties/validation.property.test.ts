@@ -3,7 +3,7 @@
 // ============================================================
 import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
-import { addressSchema, fileUploadSchema, reviewSchema } from '@/lib/schemas';
+import { addressSchema, checkoutAddressSchema, fileUploadSchema, reviewSchema } from '@/lib/schemas';
 
 describe('Feature: wefton-copper-platform, Property 5: Address form validation', () => {
   /**
@@ -322,5 +322,33 @@ describe('Feature: wefton-copper-platform, Property 7: Review form validation', 
       }),
       { numRuns: 100 }
     );
+  });
+});
+
+describe('Checkout address email', () => {
+  const base = {
+    name: 'Asha',
+    phone: '9876543210',
+    line1: '12 Anna Salai',
+    city: 'Chennai',
+    state: 'Tamil Nadu',
+    pincode: '600002',
+    country: 'India',
+  };
+
+  it('requires an email at checkout', () => {
+    expect(checkoutAddressSchema.safeParse(base).success).toBe(false);
+    expect(checkoutAddressSchema.safeParse({ ...base, email: '' }).success).toBe(false);
+    expect(checkoutAddressSchema.safeParse({ ...base, email: 'not-an-email' }).success).toBe(false);
+  });
+
+  it('accepts a valid email, ignoring surrounding spaces', () => {
+    const r = checkoutAddressSchema.safeParse({ ...base, email: ' asha@example.com ' });
+    expect(r.success).toBe(true);
+    expect(r.success && r.data.email).toBe('asha@example.com');
+  });
+
+  it('leaves saved addresses on the account page without an email valid', () => {
+    expect(addressSchema.safeParse(base).success).toBe(true);
   });
 });

@@ -27,6 +27,16 @@ export const addressSchema = z.object({
 export type AddressFormData = z.infer<typeof addressSchema>;
 
 /**
+ * Checkout delivery address: the address plus a required email, where the
+ * order confirmation and order updates are sent.
+ */
+export const checkoutAddressSchema = addressSchema.extend({
+  email: z.string().trim().min(1, 'Email is required').email('Please enter a valid email address'),
+});
+
+export type CheckoutAddressFormData = z.infer<typeof checkoutAddressSchema>;
+
+/**
  * Review submission validation schema
  * Validates rating (1–5 integer) and comment (10–500 chars)
  * Requirements: 15.6
