@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Heart, ShoppingBag, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { formatPrice, getDiscountPercent, cn } from '@/lib/utils';
 import StarRating from '@/components/ui/StarRating';
@@ -19,11 +19,9 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, priority = false }: ProductCardProps) {
   const [hovered, setHovered] = useState(false);
-  const [adding, setAdding] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  const { addItem, openCart } = useCartStore();
   const { toggle, has } = useWishlistStore();
   const isWishlisted = has(product.productId);
   const discount = getDiscountPercent(product.price, product.comparePrice || 0);
@@ -47,22 +45,16 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
     setCurrentImageIndex((i) => (i + 1) % images.length);
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const router = useRouter();
+
+  // Every garment needs a size (and colour, where it has several), so the
+  // card sends the shopper to the product page to choose them instead of
+  // adding a default variant straight to the cart.
+  const handleChooseOptions = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (isOutOfStock) return;
-    setAdding(true);
-    addItem({
-      productId: product.productId,
-      title: product.title,
-      slug: product.slug,
-      image: images[0]?.url || '/placeholder.jpg',
-      price: product.price,
-      quantity: 1,
-      inventory: product.inventory,
-    });
-    openCart();
-    setTimeout(() => setAdding(false), 800);
+    router.push(`/products/${product.slug}`);
   };
 
   const handleWishlist = (e: React.MouseEvent) => {
@@ -183,20 +175,16 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             )}
           >
             <button
-              onClick={handleAddToCart}
-              disabled={isOutOfStock || adding}
+              onClick={handleChooseOptions}
+              disabled={isOutOfStock}
               className={cn(
                 'flex-1 h-9 flex items-center justify-center gap-2 rounded text-xs tracking-wider uppercase font-medium transition-all duration-200',
                 'bg-[var(--copper-main)] text-white hover:bg-[var(--copper-light)]',
                 'disabled:opacity-50 disabled:cursor-not-allowed'
               )}
             >
-              {adding ? (
-                <span className="h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-              ) : (
-                <ShoppingBag size={13} />
-              )}
-              {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+              <ShoppingBag size={13} />
+              {isOutOfStock ? 'Out of Stock' : 'Choose Options'}
             </button>
             <Link
               href={`/products/${product.slug}`}
