@@ -929,6 +929,20 @@ export default function AccountClient() {
                                 </div>
                               </div>
                             </div>
+
+                            {/* Scratch card coupon this order earned */}
+                            {order.rewardCoupon?.code && (
+                              <div className="mt-4 p-3 rounded-lg border border-[var(--copper-main)]/30 bg-[var(--copper-main)]/10 text-xs">
+                                <p className="text-[var(--text-muted)] mb-1">
+                                  {order.orderStatus === 'cancelled'
+                                    ? 'Reward coupon (no longer valid: this order was cancelled)'
+                                    : `Reward coupon: ${order.rewardCoupon.label} off a future order`}
+                                </p>
+                                <p className={`font-mono font-semibold tracking-wider ${order.orderStatus === 'cancelled' ? 'line-through text-[var(--text-faint)]' : 'text-[var(--copper-light)]'}`}>
+                                  {order.rewardCoupon.code}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))

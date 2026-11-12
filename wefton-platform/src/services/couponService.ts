@@ -187,3 +187,4 @@ export async function getAvailableCoupons(now = new Date()): Promise<Coupon[]> {
     .map((d) => ({ couponId: d.id, ...(d.data() as Omit<Coupon, 'couponId'>) }))
     .filter((c) => isPublicCoupon(c) && couponWindow(c, now) === 'open');
 }
+

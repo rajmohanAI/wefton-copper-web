@@ -120,3 +120,52 @@ export function formatCouponEnd(raw: unknown): string | null {
   if (!date) return null;
   return `Valid till ${new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short' }).format(date)}`;
 }
+
+// ============================================================
+// Scratch card coupons
+// ============================================================
+// Every placed order earns one: a 16-character code, private (flag 'A'),
+// not tied to any customer, usable once, from 24 hours after it is issued
+// until 30 days after it is issued. Cancelling the order that earned it
+// switches it off.
+
+export const SCRATCH_CODE_LENGTH = 16;
+export const SCRATCH_STARTS_AFTER_HOURS = 24;
+export const SCRATCH_VALID_DAYS = 30;
+/** What every scratch card coupon takes off: a fixed ₹100. */
+export const SCRATCH_DISCOUNT_FLAT = 100;
+
+/** Letters and digits, minus 0/O and 1/I/L so a code is easy to read back. */
+const SCRATCH_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+/** A random scratch card code. `randomInt(n)` must return 0..n-1. */
+export function generateScratchCode(randomInt: (n: number) => number): string {
+  let code = '';
+  for (let i = 0; i < SCRATCH_CODE_LENGTH; i++) code += SCRATCH_ALPHABET[randomInt(SCRATCH_ALPHABET.length)];
+  return code;
+}
+
+/** When a scratch coupon issued at `issuedAt` starts and stops working. */
+export function scratchCouponDates(issuedAt: Date): { startsAt: string; expiresAt: string } {
+  const hour = 60 * 60 * 1000;
+  return {
+    startsAt: new Date(issuedAt.getTime() + SCRATCH_STARTS_AFTER_HOURS * hour).toISOString(),
+    expiresAt: new Date(issuedAt.getTime() + SCRATCH_VALID_DAYS * 24 * hour).toISOString(),
+  };
+}
+
+/**
+ * Why a coupon can't be used right now, or null when it can: its dates,
+ * and for a scratch card coupon whether it was already used.
+ */
+export function couponUseError(
+  coupon: Pick<Coupon, 'startsAt' | 'expiresAt' | 'source' | 'usedAt'>,
+  now = new Date()
+): string | null {
+  if (coupon.source === 'scratch' && coupon.usedAt) return 'This coupon has already been used';
+  return couponWindowError(coupon, now);
+}
+
+export function isScratchCoupon(coupon: Pick<Coupon, 'source'>): boolean {
+  return coupon.source === 'scratch';
+}

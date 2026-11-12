@@ -25,6 +25,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { getFirebaseDb } from '@/lib/firebase';
 import { checkoutAddressSchema, fileUploadSchema, type CheckoutAddressFormData } from '@/lib/schemas';
 import AvailableCoupons from '@/components/checkout/AvailableCoupons';
+import ScratchCard from '@/components/checkout/ScratchCard';
 import { createOrder, uploadPaymentScreenshot, notifyOrderPlaced } from '@/services/orderService';
 import { formatPrice } from '@/lib/utils';
 import { trackPurchase } from '@/lib/analytics';
@@ -1024,6 +1025,9 @@ export default function CheckoutClient() {
                     </div>
                   </div>
                 </motion.div>
+
+                {/* Scratch card coupon for the next order */}
+                {orderId && <ScratchCard orderId={orderId} />}
 
                 {/* Itemised Summary */}
                 {confirmedItems.length > 0 && (

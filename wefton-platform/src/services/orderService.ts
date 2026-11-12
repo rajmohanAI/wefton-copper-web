@@ -13,10 +13,11 @@ import {
   orderBy,
   serverTimestamp,
   arrayUnion,
+  writeBatch,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirebaseAuth, getFirebaseDb, getFirebaseStorage } from '@/lib/firebase';
-import type { Order, CartItem, Address, OrderStatusEvent } from '@/types';
+import type { Order, CartItem, Address, OrderStatusEvent, RewardCoupon } from '@/types';
 import { generateOrderId } from '@/lib/utils';
 import { computeOrderTotals } from '@/lib/orderPricing';
 
@@ -163,7 +164,35 @@ export async function updateOrderStatus(
   };
   if (orderStatus === 'closed') updates.closedAt = at;
   if (paymentStatus) updates.paymentStatus = paymentStatus;
-  await updateDoc(doc(db, ORDERS_COL, docId), updates);
+  const orderRef = doc(db, ORDERS_COL, docId);
+
+  // Cancelling an order switches off the scratch card coupon it earned, in the same write.
+  const rewardCode = orderStatus === 'cancelled'
+    ? ((await getDoc(orderRef)).data() as Order | undefined)?.rewardCoupon?.code
+    : undefined;
+  if (!rewardCode) {
+    await updateDoc(orderRef, updates);
+    return;
+  }
+  const batch = writeBatch(db);
+  batch.update(orderRef, updates);
+  batch.update(doc(db, 'coupons', rewardCode), { active: false, invalidatedAt: at, updatedAt: at });
+  await batch.commit();
+}
+
+/** Asks the server for the scratch card coupon this order earned. Null when there is none. */
+export async function fetchRewardCoupon(orderId: string): Promise<RewardCoupon | null> {
+  const token = await getFirebaseAuth()?.currentUser?.getIdToken();
+  if (!token) throw new Error('Please sign in again');
+  const res = await fetch('/api/orders/reward', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ orderId }),
+    cache: 'no-store',
+  });
+  const data = (await res.json().catch(() => ({}))) as { reward?: RewardCoupon | null; error?: string };
+  if (!res.ok) throw new Error(data.error || 'Could not load your reward');
+  return data.reward ?? null;
 }
 
 /**
