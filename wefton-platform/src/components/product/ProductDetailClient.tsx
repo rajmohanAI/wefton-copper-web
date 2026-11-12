@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo, type MouseEvent, type TouchEvent } from 'react';
 import dynamic from 'next/dynamic';
-import Image from 'next/image';
+import Image, { getImageProps } from 'next/image';
 import Link from 'next/link';
 import {
   Heart,
@@ -37,6 +37,10 @@ import type { Product } from '@/types';
 import { SIZES } from '@/config/brand';
 import { cn } from '@/lib/utils';
 import { findVariant, imagesForColor, initialColor, primaryImage, variantColors } from '@/lib/productImages';
+
+/** Main gallery photo: shared with the background preload so both fetch the same file. */
+const MAIN_IMAGE_SIZES = '(max-width: 1024px) 100vw, 50vw';
+const MAIN_IMAGE_QUALITY = 75;
 
 interface ProductDetailClientProps {
   product: Product;
@@ -105,6 +109,41 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
   const { toggle, has } = useWishlistStore();
   const isWishlisted = has(product.productId);
   const discount = getDiscountPercent(product.price, product.comparePrice || 0);
+
+  // Fetch every colour's main photo in the background once the page is up, so a
+  // colour switch shows its photo at once instead of waiting for it to load.
+  useEffect(() => {
+    const allImages = product.images ?? [];
+    const colorNames = variantColors(product.variants ?? []).map((c) => c.color);
+    // Only each colour's main photo (what a switch shows first), to keep the
+    // extra download small on mobile data.
+    const urls = [...new Set(colorNames.map((c) => imagesForColor(allImages, c)[0]?.url))]
+      .filter((u): u is string => !!u);
+    if (urls.length < 2) return;
+
+    const loaders: HTMLImageElement[] = [];
+    const start = () => {
+      for (const url of urls) {
+        // Same sizes and quality as the main photo, so the browser picks the
+        // same file it will later show.
+        const { props } = getImageProps({ src: url, alt: '', fill: true, sizes: MAIN_IMAGE_SIZES, quality: MAIN_IMAGE_QUALITY });
+        const img = new window.Image();
+        img.decoding = 'async';
+        if (props.sizes) img.sizes = props.sizes;
+        if (props.srcSet) img.srcset = props.srcSet;
+        img.src = props.src;
+        loaders.push(img);
+      }
+    };
+    const w = window as Window & { requestIdleCallback?: (cb: () => void) => number; cancelIdleCallback?: (id: number) => void };
+    const idleId = w.requestIdleCallback ? w.requestIdleCallback(start) : undefined;
+    const timeoutId = idleId === undefined ? window.setTimeout(start, 1200) : undefined;
+    return () => {
+      if (idleId !== undefined) w.cancelIdleCallback?.(idleId);
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+      loaders.forEach((img) => { img.src = ''; img.srcset = ''; });
+    };
+  }, [product.images, product.variants]);
 
   const selectColor = (color: string) => {
     setSelectedColor(color);
@@ -292,9 +331,9 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
                         ? { transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%` }
                         : undefined
                     }
-                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    sizes={MAIN_IMAGE_SIZES}
                     priority
-                    quality={75}
+                    quality={MAIN_IMAGE_QUALITY}
                   />
                 )}
               </div>
