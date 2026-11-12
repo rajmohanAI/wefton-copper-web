@@ -15,8 +15,6 @@ import {
   createCoupon,
   updateCoupon,
   deleteCoupon,
-  getScratchSettings,
-  saveScratchSettings,
 } from '@/services/couponService';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -28,6 +26,7 @@ import {
   isPublicCoupon,
   isScratchCoupon,
   istDayEnd,
+  SCRATCH_DISCOUNT_FLAT,
   SCRATCH_STARTS_AFTER_HOURS,
   SCRATCH_VALID_DAYS,
   istDayStart,
@@ -278,85 +277,16 @@ function SortIcon({ field, currentField, currentDir }: { field: SortField; curre
 // Scratch card coupon settings
 // ============================================================
 
-function ScratchSettingsPanel() {
-  const [loaded, setLoaded] = useState(false);
-  const [enabled, setEnabled] = useState(true);
-  const [rupees, setRupees] = useState('');
-  const [percent, setPercent] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
-
-  useEffect(() => {
-    getScratchSettings()
-      .then((s) => {
-        setEnabled(s.enabled);
-        setRupees(s.discountFlat ? String(s.discountFlat) : '');
-        setPercent(s.discountFlat ? '' : String(s.discount));
-      })
-      .catch((err) => console.error('Failed to load scratch card settings:', err))
-      .finally(() => setLoaded(true));
-  }, []);
-
-  const handleSave = async () => {
-    setMessage(null);
-    if (rupees && percent) return setMessage({ text: 'Enter either a rupee discount or a percentage, not both', error: true });
-    if (!rupees && !percent) return setMessage({ text: 'Enter a rupee discount or a percentage', error: true });
-    if (rupees && !(Number.isInteger(Number(rupees)) && Number(rupees) >= 1)) {
-      return setMessage({ text: 'Rupee discount must be a whole number of at least 1', error: true });
-    }
-    if (percent && !(Number.isInteger(Number(percent)) && Number(percent) >= 1 && Number(percent) <= 100)) {
-      return setMessage({ text: 'Percentage must be a whole number from 1 to 100', error: true });
-    }
-    setSaving(true);
-    try {
-      await saveScratchSettings({ enabled, discount: percent ? Number(percent) : 0, discountFlat: rupees ? Number(rupees) : 0 });
-      setMessage({ text: 'Saved. New scratch cards use this from now on.', error: false });
-    } catch (err) {
-      setMessage({ text: err instanceof Error ? err.message : 'Could not save', error: true });
-    } finally {
-      setSaving(false);
-    }
-  };
-
+/** How scratch card coupons work; the amount is fixed in code. */
+function ScratchInfo() {
   return (
-    <div className="glass-card p-4 space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Gift size={16} className="text-[var(--copper-light)]" />
-          <h3 className="text-sm font-medium text-[var(--text-light)]">Scratch card after each order</h3>
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={enabled}
-          aria-label="Scratch cards enabled"
-          disabled={!loaded}
-          onClick={() => setEnabled(!enabled)}
-          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${enabled ? 'bg-emerald-500' : 'bg-black/20'}`}
-        >
-          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${enabled ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
-        </button>
-      </div>
+    <div className="glass-card p-4 flex gap-3">
+      <Gift size={16} className="text-[var(--copper-light)] flex-shrink-0 mt-0.5" />
       <p className="text-xs text-[var(--text-muted)]">
-        Every placed order gets a 16-character coupon on a scratch card. It works once, for anyone who has the code,
-        from {SCRATCH_STARTS_AFTER_HOURS} hours after the order till {SCRATCH_VALID_DAYS} days after it, and stops working if that order is cancelled.
+        Every placed order gets a 16-character coupon for ₹{SCRATCH_DISCOUNT_FLAT} off on a scratch card. It works once,
+        for anyone who has the code, from {SCRATCH_STARTS_AFTER_HOURS} hours after the order till {SCRATCH_VALID_DAYS} days
+        after it, and stops working if that order is cancelled.
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
-        <div>
-          <label htmlFor="scratch-rupees" className={LABEL}>Discount (₹)</label>
-          <input id="scratch-rupees" type="number" min={1} value={rupees} disabled={!loaded || !!percent}
-            onChange={(e) => setRupees(e.target.value)} placeholder="e.g. 100" className={FIELD} />
-        </div>
-        <div>
-          <label htmlFor="scratch-percent" className={LABEL}>Discount (%)</label>
-          <input id="scratch-percent" type="number" min={1} max={100} value={percent} disabled={!loaded || !!rupees}
-            onChange={(e) => setPercent(e.target.value)} placeholder="1–100" className={FIELD} />
-        </div>
-        <Button variant="copper" size="sm" onClick={handleSave} loading={saving} disabled={!loaded}>
-          Save
-        </Button>
-      </div>
-      {message && <p className={`text-xs ${message.error ? 'text-red-500' : 'text-emerald-500'}`}>{message.text}</p>}
     </div>
   );
 }
@@ -461,7 +391,7 @@ export default function CouponsTab() {
         </Button>
       </div>
 
-      <ScratchSettingsPanel />
+      {showScratch && <ScratchInfo />}
 
       <div className="flex items-center gap-4 border-b border-[var(--border-subtle)] text-sm">
         {([false, true] as const).map((scratch) => (

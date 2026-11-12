@@ -7,9 +7,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  getDoc,
   getDocs,
-  setDoc,
   query,
   where,
   orderBy,
@@ -17,7 +15,7 @@ import {
 } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 import { couponSchema } from '@/lib/schemas';
-import { couponWindow, isPublicCoupon, normalizeScratchSettings, type ScratchCouponSettings } from '@/lib/coupons';
+import { couponWindow, isPublicCoupon } from '@/lib/coupons';
 import type { Coupon } from '@/types';
 
 const COUPONS_COL = 'coupons';
@@ -190,19 +188,3 @@ export async function getAvailableCoupons(now = new Date()): Promise<Coupon[]> {
     .filter((c) => isPublicCoupon(c) && couponWindow(c, now) === 'open');
 }
 
-// ============================================================
-// Scratch card coupon settings (admin)
-// ============================================================
-
-const SCRATCH_SETTINGS = ['settings', 'scratchCoupon'] as const;
-
-/** What a scratch card coupon gives; the defaults until an admin saves something. */
-export async function getScratchSettings(): Promise<ScratchCouponSettings> {
-  const snap = await getDoc(doc(requireDb(), ...SCRATCH_SETTINGS));
-  return normalizeScratchSettings(snap.exists() ? (snap.data() as Partial<ScratchCouponSettings>) : null);
-}
-
-/** Applies to coupons issued from now on; coupons already issued keep their amount. */
-export async function saveScratchSettings(settings: ScratchCouponSettings): Promise<void> {
-  await setDoc(doc(requireDb(), ...SCRATCH_SETTINGS), { ...settings, updatedAt: serverTimestamp() });
-}

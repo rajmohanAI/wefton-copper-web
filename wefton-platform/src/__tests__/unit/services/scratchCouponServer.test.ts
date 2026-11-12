@@ -12,7 +12,6 @@ import { checkCouponCode } from '@/services/couponServer';
 import {
   couponUseError,
   generateScratchCode,
-  normalizeScratchSettings,
   scratchCouponDates,
 } from '@/lib/coupons';
 
@@ -84,21 +83,15 @@ describe('scratch code and dates', () => {
     expect(new Date(startsAt).getTime() - NOW.getTime()).toBe(24 * HOUR);
     expect(new Date(expiresAt).getTime() - NOW.getTime()).toBe(30 * 24 * HOUR);
   });
-
-  it('falls back to 10% for missing or invalid settings', () => {
-    expect(normalizeScratchSettings(null)).toEqual({ enabled: true, discount: 10, discountFlat: 0 });
-    expect(normalizeScratchSettings({ enabled: false, discount: 500 })).toEqual({ enabled: false, discount: 10, discountFlat: 0 });
-    expect(normalizeScratchSettings({ enabled: true, discount: 0, discountFlat: 150 })).toEqual({ enabled: true, discount: 0, discountFlat: 150 });
-  });
 });
 
 describe('issueRewardCoupon', () => {
   it('issues one private coupon per order, not tied to the customer', async () => {
     const reward = await issueRewardCoupon(db, docRef('orders/A') as never, NOW, random);
     expect(reward?.code).toMatch(/^[A-Z0-9]{16}$/);
-    expect(reward?.label).toBe('10%');
+    expect(reward?.label).toBe('₹100');
     const coupon = store.get(`coupons/${reward!.code}`)!;
-    expect(coupon).toMatchObject({ code: reward!.code, flag: 'A', active: true, source: 'scratch', sourceOrderId: 'WC-A', discount: 10 });
+    expect(coupon).toMatchObject({ code: reward!.code, flag: 'A', active: true, source: 'scratch', sourceOrderId: 'WC-A', discount: 0, discountFlat: 100 });
     expect(coupon).not.toHaveProperty('userId');
     expect((store.get('orders/A')!.rewardCoupon as { code: string }).code).toBe(reward!.code);
 
@@ -107,20 +100,11 @@ describe('issueRewardCoupon', () => {
     expect([...store.keys()].filter((k) => k.startsWith('coupons/'))).toHaveLength(1);
   });
 
-  it('uses the amount saved in Offers', async () => {
-    store.set('settings/scratchCoupon', { enabled: true, discount: 0, discountFlat: 100 });
-    const reward = await issueRewardCoupon(db, docRef('orders/A') as never, NOW, random);
-    expect(reward?.label).toBe('₹100');
-    expect(store.get(`coupons/${reward!.code}`)).toMatchObject({ discount: 0, discountFlat: 100 });
-  });
-
-  it('issues nothing for unplaced or cancelled orders, or when switched off', async () => {
+  it('issues nothing for unplaced or cancelled orders', async () => {
     store.set('orders/B', { orderId: 'WC-B', orderStatus: 'placed' });
     store.set('orders/C', { orderId: 'WC-C', orderStatus: 'cancelled', placedAt: NOW.toISOString() });
     expect(await issueRewardCoupon(db, docRef('orders/B') as never, NOW, random)).toBeNull();
     expect(await issueRewardCoupon(db, docRef('orders/C') as never, NOW, random)).toBeNull();
-    store.set('settings/scratchCoupon', { enabled: false });
-    expect(await issueRewardCoupon(db, docRef('orders/A') as never, NOW, random)).toBeNull();
   });
 });
 

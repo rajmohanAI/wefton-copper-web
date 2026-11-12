@@ -132,19 +132,11 @@ export function formatCouponEnd(raw: unknown): string | null {
 export const SCRATCH_CODE_LENGTH = 16;
 export const SCRATCH_STARTS_AFTER_HOURS = 24;
 export const SCRATCH_VALID_DAYS = 30;
-/** Used until an admin saves a different amount in Offers. */
-export const DEFAULT_SCRATCH_SETTINGS: ScratchCouponSettings = { enabled: true, discount: 10, discountFlat: 0 };
+/** What every scratch card coupon takes off: a fixed ₹100. */
+export const SCRATCH_DISCOUNT_FLAT = 100;
 
 /** Letters and digits, minus 0/O and 1/I/L so a code is easy to read back. */
 const SCRATCH_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-
-export interface ScratchCouponSettings {
-  enabled: boolean;
-  /** Percent off; 0 when the reward is a rupee amount. */
-  discount: number;
-  /** Rupees off; 0 when the reward is a percentage. */
-  discountFlat: number;
-}
 
 /** A random scratch card code. `randomInt(n)` must return 0..n-1. */
 export function generateScratchCode(randomInt: (n: number) => number): string {
@@ -160,17 +152,6 @@ export function scratchCouponDates(issuedAt: Date): { startsAt: string; expiresA
     startsAt: new Date(issuedAt.getTime() + SCRATCH_STARTS_AFTER_HOURS * hour).toISOString(),
     expiresAt: new Date(issuedAt.getTime() + SCRATCH_VALID_DAYS * 24 * hour).toISOString(),
   };
-}
-
-/** Saved settings, falling back to the defaults for anything missing or invalid. */
-export function normalizeScratchSettings(raw: Partial<ScratchCouponSettings> | undefined | null): ScratchCouponSettings {
-  if (!raw) return DEFAULT_SCRATCH_SETTINGS;
-  const flat = Number.isInteger(raw.discountFlat) && (raw.discountFlat as number) > 0 ? (raw.discountFlat as number) : 0;
-  const pct = !flat && Number.isInteger(raw.discount) && (raw.discount as number) >= 1 && (raw.discount as number) <= 100
-    ? (raw.discount as number)
-    : 0;
-  if (!flat && !pct) return { ...DEFAULT_SCRATCH_SETTINGS, enabled: raw.enabled !== false };
-  return { enabled: raw.enabled !== false, discount: pct, discountFlat: flat };
 }
 
 /**

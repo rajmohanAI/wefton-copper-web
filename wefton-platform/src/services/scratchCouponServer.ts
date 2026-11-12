@@ -14,23 +14,15 @@ import { FieldValue, type DocumentReference, type Firestore } from 'firebase-adm
 import {
   formatCouponDiscount,
   generateScratchCode,
-  normalizeScratchSettings,
+  SCRATCH_DISCOUNT_FLAT,
   scratchCouponDates,
-  type ScratchCouponSettings,
 } from '@/lib/coupons';
 import type { Coupon, Order, RewardCoupon } from '@/types';
 
-export const SCRATCH_SETTINGS_DOC = 'settings/scratchCoupon';
-
-export async function getScratchSettings(db: Firestore): Promise<ScratchCouponSettings> {
-  const snap = await db.doc(SCRATCH_SETTINGS_DOC).get();
-  return normalizeScratchSettings(snap.exists ? (snap.data() as Partial<ScratchCouponSettings>) : null);
-}
-
 /**
  * Gives a placed order its scratch card coupon, or returns the one it
- * already has. Null when the order can't earn one: not placed yet,
- * cancelled, or scratch cards are switched off.
+ * already has. Null when the order can't earn one: not placed yet, or
+ * cancelled.
  */
 export async function issueRewardCoupon(
   db: Firestore,
@@ -45,10 +37,6 @@ export async function issueRewardCoupon(
     if (order.rewardCoupon?.code) return order.rewardCoupon;
     if (!order.placedAt || order.orderStatus === 'cancelled') return null;
 
-    const settingsSnap = await tx.get(db.doc(SCRATCH_SETTINGS_DOC));
-    const settings = normalizeScratchSettings(settingsSnap.exists ? (settingsSnap.data() as Partial<ScratchCouponSettings>) : null);
-    if (!settings.enabled) return null;
-
     // 31^16 codes: a clash is practically impossible, but never overwrite one.
     let code = '';
     for (let attempt = 0; attempt < 5 && !code; attempt++) {
@@ -61,15 +49,15 @@ export async function issueRewardCoupon(
     const { startsAt, expiresAt } = scratchCouponDates(now);
     const reward: RewardCoupon = {
       code,
-      label: formatCouponDiscount(settings),
+      label: formatCouponDiscount({ discountFlat: SCRATCH_DISCOUNT_FLAT }),
       startsAt,
       expiresAt,
       issuedAt,
     };
     tx.create(db.collection('coupons').doc(code), {
       code,
-      discount: settings.discountFlat ? 0 : settings.discount,
-      discountFlat: settings.discountFlat,
+      discount: 0,
+      discountFlat: SCRATCH_DISCOUNT_FLAT,
       flag: 'A',
       active: true,
       startsAt,
