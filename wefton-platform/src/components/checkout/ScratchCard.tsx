@@ -9,20 +9,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Copy, Eye, Gift } from 'lucide-react';
 import { fetchRewardCoupon } from '@/services/orderService';
+import { formatIstDateTime } from '@/lib/coupons';
 import type { RewardCoupon } from '@/types';
 
 /** Share of the foil that must be cleared before the rest falls away. */
 const REVEAL_AT = 0.45;
 const BRUSH = 22;
-
-const formatIst = (iso: string) =>
-  new Intl.DateTimeFormat('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    day: 'numeric',
-    month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(iso));
 
 function rememberScratched(code: string) {
   try {
@@ -260,7 +252,7 @@ export default function ScratchCard({
                 {copied ? 'Copied' : 'Copy code'}
               </button>
               <p className="text-[11px] text-[var(--text-muted)] text-center leading-relaxed">
-                Use it on a future order from {formatIst(reward.startsAt)} till {formatIst(reward.expiresAt)}.
+                Use it on a future order from {formatIstDateTime(reward.startsAt)} till {formatIstDateTime(reward.expiresAt)}.
                 <br />
                 One use only. Anyone you share it with can use it. It stops working if this order is cancelled.
               </p>
