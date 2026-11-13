@@ -3,6 +3,7 @@
 // ============================================================
 import { describe, expect, it } from 'vitest';
 import {
+  rewardCouponValidity,
   couponSavings,
   couponWindow,
   couponWindowError,
@@ -142,5 +143,15 @@ describe('coupons shown at checkout', () => {
   it('shows the last day in India time', () => {
     expect(formatCouponEnd(istDayEnd('2026-11-30'))).toBe('Valid till 30 Nov');
     expect(formatCouponEnd(null)).toBeNull();
+  });
+});
+
+describe('rewardCouponValidity', () => {
+  const reward = { startsAt: '2026-11-14T04:20:00Z', expiresAt: '2026-12-13T04:20:00Z' };
+  it('shows the window in India time', () => {
+    expect(rewardCouponValidity(reward, new Date('2026-11-13T04:20:00Z'))).toBe('Valid from 14 Nov, 9:50 am till 13 Dec, 9:50 am');
+  });
+  it('says when it has expired', () => {
+    expect(rewardCouponValidity(reward, new Date('2026-12-14T00:00:00Z'))).toBe('Expired on 13 Dec, 9:50 am');
   });
 });
