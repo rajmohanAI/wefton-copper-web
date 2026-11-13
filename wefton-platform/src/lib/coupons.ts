@@ -169,3 +169,20 @@ export function couponUseError(
 export function isScratchCoupon(coupon: Pick<Coupon, 'source'>): boolean {
   return coupon.source === 'scratch';
 }
+
+/** "13 Nov, 9:50 am", in India time. */
+export function formatIstDateTime(iso: string): string {
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(iso));
+}
+
+/** When a reward coupon works, for the customer: "Valid from … till …", or that it has expired. */
+export function rewardCouponValidity(reward: { startsAt: string; expiresAt: string }, now = new Date()): string {
+  if (new Date(reward.expiresAt).getTime() < now.getTime()) return `Expired on ${formatIstDateTime(reward.expiresAt)}`;
+  return `Valid from ${formatIstDateTime(reward.startsAt)} till ${formatIstDateTime(reward.expiresAt)}`;
+}
