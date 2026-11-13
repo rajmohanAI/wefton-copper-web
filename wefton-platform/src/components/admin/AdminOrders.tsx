@@ -11,11 +11,13 @@ import {
   X,
   ExternalLink,
   Copy,
+  FileText,
 } from 'lucide-react';
 import { getFirebaseAuth, getFirebaseDb } from '@/lib/firebase';
 import { updateOrderStatus } from '@/services/orderService';
 import { formatPrice, toDate } from '@/lib/utils';
 import { itemsSummary } from '@/lib/orderSummary';
+import { canInvoice, invoiceFileName } from '@/lib/invoice';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import type { Order } from '@/types';
@@ -163,6 +165,40 @@ export default function AdminOrders() {
       alert('Failed to approve payment. Please try again.');
     } finally {
       setActionLoading(null);
+    }
+  }, []);
+
+  // GST invoice: the first download gives the order its invoice number.
+  const [invoiceLoading, setInvoiceLoading] = useState<string | null>(null);
+  const handleDownloadInvoice = useCallback(async (order: Order & { _docId?: string }) => {
+    const docId = order._docId || order.orderId;
+    setInvoiceLoading(docId);
+    try {
+      const token = await getFirebaseAuth()?.currentUser?.getIdToken();
+      if (!token) throw new Error('Please sign in again.');
+      const res = await fetch('/api/admin/orders/invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ orderId: docId }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error || 'Invoice generation failed.');
+      }
+      const number = decodeURIComponent(res.headers.get('X-Invoice-Number') || '');
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = res.headers.get('X-Invoice-Filename') || invoiceFileName(number || order.orderId);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch (err) {
+      console.error('Failed to generate invoice:', err);
+      alert(err instanceof Error ? err.message : 'Failed to generate invoice.');
+    } finally {
+      setInvoiceLoading(null);
     }
   }, []);
 
@@ -402,6 +438,17 @@ export default function AdminOrders() {
                                 <option key={s} value={s}>{s}</option>
                               ))}
                             </select>
+                            {canInvoice(order) && (
+                              <button
+                                onClick={() => handleDownloadInvoice(order as Order & { _docId?: string })}
+                                disabled={invoiceLoading === docId}
+                                className="p-1.5 rounded hover:bg-[var(--wc-canvas)] text-[var(--text-muted)] hover:text-[var(--text-light)] transition-colors disabled:opacity-50"
+                                title={order.invoiceNumber ? `Download invoice ${order.invoiceNumber}` : 'Generate invoice'}
+                                aria-label="Download invoice"
+                              >
+                                <FileText size={14} />
+                              </button>
+                            )}
                             <button
                               onClick={() => setSelectedOrder(order)}
                               className="p-1.5 rounded hover:bg-[var(--wc-canvas)] text-[var(--text-muted)] hover:text-[var(--text-light)] transition-colors"
@@ -654,6 +701,30 @@ export default function AdminOrders() {
                     </ul>
                   </div>
                 )}
+
+                {/* GST invoice */}
+                <div className="space-y-2 pt-4 border-t border-[var(--border-subtle)]">
+                  <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Invoice</p>
+                  {canInvoice(selectedOrder) ? (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        loading={invoiceLoading === ((selectedOrder as Order & { _docId?: string })._docId || selectedOrder.orderId)}
+                        onClick={() => handleDownloadInvoice(selectedOrder as Order & { _docId?: string })}
+                      >
+                        <FileText size={14} /> {selectedOrder.invoiceNumber ? 'Download invoice' : 'Generate invoice'}
+                      </Button>
+                      <span className="text-xs text-[var(--text-muted)]">
+                        {selectedOrder.invoiceNumber
+                          ? <>No. <span className="font-mono text-[var(--text-light)]">{selectedOrder.invoiceNumber}</span></>
+                          : `Dated ${formatDate(selectedOrder.placedAt || selectedOrder.createdAt)} (paid date)`}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-[var(--text-muted)]">Available once the payment is verified.</p>
+                  )}
+                </div>
 
                 {/* Action Buttons for pending payments */}
                 {selectedOrder.paymentStatus === 'uploaded' && (
