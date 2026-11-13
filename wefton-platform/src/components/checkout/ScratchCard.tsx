@@ -7,7 +7,7 @@
 // ============================================================
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Copy, Gift } from 'lucide-react';
+import { Check, Copy, Eye, Gift } from 'lucide-react';
 import { fetchRewardCoupon } from '@/services/orderService';
 import type { RewardCoupon } from '@/types';
 
@@ -171,8 +171,8 @@ export default function ScratchCard({
       </div>
       <p className="text-xs text-[var(--text-muted)] mb-4">
         {status === 'ready' && reward
-          ? <>Scratch the card to reveal a coupon for <span className="text-[var(--copper-light)] font-medium">{reward.label} off</span>.</>
-          : 'Scratch the card to reveal your coupon.'}
+          ? <>Scratch the card, or tap Reveal coupon, to see a coupon for <span className="text-[var(--copper-light)] font-medium">{reward.label} off</span>.</>
+          : 'Scratch the card, or tap Reveal coupon, to see your coupon.'}
       </p>
 
       {status === 'loading' && (
@@ -236,6 +236,18 @@ export default function ScratchCard({
               />
             )}
           </div>
+
+          {/* Scratching is fiddly with a mouse or trackpad: one click does it too. */}
+          {!revealed && (
+            <button
+              type="button"
+              onClick={reveal}
+              className="mt-3 w-full h-10 inline-flex items-center justify-center gap-2 rounded border border-[var(--copper-main)] text-[var(--copper-light)] text-sm font-medium hover:bg-[var(--copper-main)]/10 transition-colors"
+            >
+              <Eye size={15} />
+              Reveal coupon
+            </button>
+          )}
 
           {revealed && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 space-y-3">
