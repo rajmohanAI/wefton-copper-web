@@ -18,6 +18,8 @@ export interface Product {
   comparePrice?: number;
   inventory: number;
   sku: string;
+  /** HSN code printed on GST invoices; DEFAULT_HSN when unset. */
+  hsnCode?: string;
   images: ProductImage[];
   variants: ProductVariant[];
   ratings: number;
@@ -145,6 +147,9 @@ export interface Order {
   notifications?: OrderNotifications;
   /** The scratch card coupon this order earned (coupon doc id is the code). */
   rewardCoupon?: RewardCoupon;
+  /** GST invoice number (WC1102/YYMM/NNNN), given the first time the invoice is generated. */
+  invoiceNumber?: string;
+  invoiceIssuedAt?: string;
 }
 
 export interface RewardCoupon {
@@ -182,6 +187,8 @@ export interface OrderItem {
   /** Product ID (WCPM001) and variant SKU, filled in when the order is placed. */
   productCode?: string;
   sku?: string;
+  /** HSN code, copied from the product when the order is placed. */
+  hsnCode?: string;
 }
 
 export interface User {

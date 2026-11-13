@@ -59,7 +59,7 @@ async function customerEmailFor(uid: string): Promise<string> {
   }
 }
 
-/** Adds Product ID and variant SKU to each line from the catalog. */
+/** Adds Product ID, variant SKU and HSN code to each line from the catalog. */
 async function enrichItems(db: Firestore, items: OrderItem[]): Promise<OrderItem[]> {
   const ids = [...new Set(items.map((i) => i.productId).filter(Boolean))];
   const products = new Map<string, Product>();
@@ -79,6 +79,7 @@ async function enrichItems(db: Firestore, items: OrderItem[]): Promise<OrderItem
       ...item,
       productCode: item.productCode || product.productCode || '',
       sku: item.sku || variant?.sku || product.sku || '',
+      hsnCode: item.hsnCode || product.hsnCode || '',
     };
   });
 }

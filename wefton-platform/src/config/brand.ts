@@ -55,3 +55,20 @@ export const FREE_SHIPPING_THRESHOLD = 0;
 export const TAX_RATE = 0.05; // 5% GST
 /** Product prices already include GST, so it is never added on top at checkout. */
 export const PRICES_INCLUDE_GST = true;
+
+// ── GST invoices (lib/invoice) ──
+/** The seller block on every invoice, as on the shop's own invoices. */
+export const INVOICE_SELLER = {
+  name: 'WEFTON COPPER',
+  addressLines: ['Innov8 Featherlite, SURVEY NO. 202/3, 8TH FLOOR,', '200FT. MMRD ROAD,', 'CHENNAI, Tamil Nadu, India - 600044'],
+  state: 'Tamil Nadu',
+  stateCode: '33',
+  gstin: '33HKQPS2405J1ZS',
+  businessType: 'Clothing Brand',
+  constitution: 'Proprietorship',
+  website: 'https://weftoncopper.com',
+} as const;
+/** Invoice numbers are WC1102/YYMM/NNNN: this prefix, the paid month, a running number per month. */
+export const INVOICE_PREFIX = 'WC1102';
+/** HSN for knitted garments (T-shirts, polos, jerseys); used when a product has none. */
+export const DEFAULT_HSN = '6109';
