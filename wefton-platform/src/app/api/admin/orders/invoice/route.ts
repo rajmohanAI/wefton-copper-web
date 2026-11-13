@@ -37,6 +37,8 @@ export async function POST(request: NextRequest) {
   } catch (e) {
     if (e instanceof InvoiceError) return NextResponse.json({ error: e.message }, { status: e.status });
     console.error('[invoice] Generation failed:', e);
-    return NextResponse.json({ error: 'Invoice generation failed.' }, { status: 500 });
+    // Admin-only route: show the reason so a failure can be reported and fixed.
+    const reason = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: `Invoice generation failed: ${reason}` }, { status: 500 });
   }
 }

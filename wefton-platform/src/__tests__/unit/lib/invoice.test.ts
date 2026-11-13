@@ -113,6 +113,19 @@ describe('GST invoice', () => {
     expect(pdf.getTitle()).toBe('Invoice WC1102/2608/0001');
   });
 
+  it('draws text the PDF fonts cannot encode (tabs, newlines, ₹, emoji, Tamil) without failing', async () => {
+    const o = order({
+      customerName: 'Karthi\tkeyan 😀',
+      couponCode: 'SAVE\u200b10',
+      discountAmount: 100,
+      total: 3197,
+      shippingAddress: { ...order().shippingAddress, line1: 'No. 5,\nGandhi Street\r\n', line2: 'அண்ணா நகர் Anna Nagar' },
+      products: [{ ...order().products[0], title: 'Premium Tee – ₹999 deal ✨' }],
+    });
+    const bytes = await renderInvoicePdf(buildInvoice(o, 'WC1102/2611/0001'));
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(1);
+  });
+
   it('carries a long order onto more pages', async () => {
     const many = Array.from({ length: 14 }, (_, i) => ({ ...order().products[0], title: `Premium Tee ${i + 1}` }));
     const bytes = await renderInvoicePdf(

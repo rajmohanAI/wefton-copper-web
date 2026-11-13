@@ -45,18 +45,48 @@ interface Ctx {
 // Coordinates below are measured from the top of the page.
 const Y = (top: number) => PAGE_H - top;
 
-function text(page: PDFPage, s: string, x: number, top: number, font: PDFFont, size: number, color: RGB = INK) {
+// The standard fonts only cover WinAnsi (Latin-1 plus a few symbols); a tab,
+// newline, emoji, ₹ or non-Latin letter makes pdf-lib throw. Customer- and
+// admin-typed text goes through pdfSafe so one odd character can't break the invoice.
+const encodable = new Map<string, boolean>();
+function canEncode(font: PDFFont, ch: string): boolean {
+  const key = `${font.name}|${ch}`;
+  let ok = encodable.get(key);
+  if (ok === undefined) {
+    try {
+      font.encodeText(ch);
+      ok = true;
+    } catch {
+      ok = false;
+    }
+    encodable.set(key, ok);
+  }
+  return ok;
+}
+
+/** `s` with only characters the font can draw: whitespace → space, ₹ → Rs., the rest dropped. */
+export function pdfSafe(font: PDFFont, s: string): string {
+  const out = [...String(s ?? '').normalize('NFC')]
+    .map((ch) => (/\s/.test(ch) ? ' ' : ch === '\u20b9' ? 'Rs.' : canEncode(font, ch) ? ch : ''))
+    .join('');
+  return out.replace(/ {2,}/g, ' ').trim();
+}
+
+function text(page: PDFPage, raw: string, x: number, top: number, font: PDFFont, size: number, color: RGB = INK) {
+  const s = pdfSafe(font, raw);
   page.drawText(s, { x, y: Y(top) - size * 0.8, font, size, color });
 }
 
-function textRight(page: PDFPage, s: string, right: number, top: number, font: PDFFont, size: number, color: RGB = INK) {
+function textRight(page: PDFPage, raw: string, right: number, top: number, font: PDFFont, size: number, color: RGB = INK) {
+  const s = pdfSafe(font, raw);
   text(page, s, right - font.widthOfTextAtSize(s, size), top, font, size, color);
 }
 
 /** Wraps `s` to lines no wider than `width`. */
 function wrap(s: string, font: PDFFont, size: number, width: number): string[] {
   const out: string[] = [];
-  for (const para of s.split('\n')) {
+  for (const rawPara of String(s ?? '').split('\n')) {
+    const para = pdfSafe(font, rawPara);
     let line = '';
     for (const word of para.split(/\s+/).filter(Boolean)) {
       const next = line ? `${line} ${word}` : word;
@@ -360,7 +390,7 @@ function drawSummary(ctx: Ctx, top: number): number {
   const page = ctx.page;
 
   if (data.discount) {
-    const label = `Coupon ${data.discount.code ? `${data.discount.code} ` : ''}applied: `;
+    const label = `${pdfSafe(fonts.regular, `Coupon ${data.discount.code}`)} applied: `;
     text(page, label, M + 4, top, fonts.regular, 8, MUTED);
     const lw = fonts.regular.widthOfTextAtSize(label, 8);
     const amt = formatInvoiceAmount(data.discount.amount);
