@@ -13,13 +13,16 @@ import {
   orderBy,
   serverTimestamp,
   arrayUnion,
-  writeBatch,
+  deleteField,
+  runTransaction,
+  type Transaction,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirebaseAuth, getFirebaseDb, getFirebaseStorage } from '@/lib/firebase';
 import type { Order, CartItem, Address, OrderStatusEvent, RewardCoupon } from '@/types';
 import { generateOrderId } from '@/lib/utils';
 import { computeOrderTotals } from '@/lib/orderPricing';
+import { applyStockMoves, planStockMoves, type StockedProduct, type StockMove } from '@/lib/orderStock';
 
 const ORDERS_COL = 'orders';
 
@@ -146,6 +149,64 @@ export async function getAllOrders(): Promise<Order[]> {
   return snap.docs.map((d) => ({ ...(d.data() as Order), productId: d.id }));
 }
 
+/** Reads the given products inside a transaction. */
+async function readProducts(tx: Transaction, ids: string[]): Promise<Map<string, StockedProduct>> {
+  const db = requireDb();
+  const products = new Map<string, StockedProduct>();
+  for (const id of [...new Set(ids.filter(Boolean))]) {
+    const snap = await tx.get(doc(db, 'products', id));
+    if (snap.exists()) products.set(id, snap.data() as StockedProduct);
+  }
+  return products;
+}
+
+/** Writes stock moves to the products: -1 takes stock, +1 puts it back. */
+async function moveStock(tx: Transaction, moves: StockMove[], direction: -1 | 1, at: string): Promise<void> {
+  const db = requireDb();
+  const products = await readProducts(tx, moves.map((m) => m.productId));
+  const { updates, shortfalls } = applyStockMoves(moves, products, direction);
+  if (shortfalls.length) console.warn('[Stock] More ordered than in stock:', shortfalls.join(', '));
+  for (const [id, stock] of updates) {
+    tx.update(doc(db, 'products', id), { inventory: stock.inventory, variants: stock.variants, updatedAt: at });
+  }
+}
+
+const OPEN_FOR_STOCK: Order['orderStatus'][] = ['placed', 'confirmed', 'processing'];
+
+/**
+ * True for a paid, open order that never took its items out of stock
+ * (orders placed before stock tracking). The admin can take them once.
+ */
+export function needsStockTaken(order: Order): boolean {
+  return (
+    !order.stockDeductedAt &&
+    (order.paymentStatus === 'verified' || order.paymentStatus === 'uploaded') &&
+    OPEN_FOR_STOCK.includes(order.orderStatus)
+  );
+}
+
+/** Takes an older order's items out of stock, once. Returns false if it already had. */
+export async function takeOrderStock(docId: string): Promise<boolean> {
+  const db = requireDb();
+  const orderRef = doc(db, ORDERS_COL, docId);
+  const at = new Date().toISOString();
+  return runTransaction(db, async (tx) => {
+    const snap = await tx.get(orderRef);
+    const order = snap.data() as Order | undefined;
+    if (!order || !needsStockTaken(order)) return false;
+    const items = order.products || [];
+    const products = await readProducts(tx, items.map((i) => i.productId));
+    const moves = planStockMoves(items, products);
+    const { updates, shortfalls } = applyStockMoves(moves, products, -1);
+    if (shortfalls.length) console.warn('[Stock] More ordered than in stock:', shortfalls.join(', '));
+    for (const [id, stock] of updates) {
+      tx.update(doc(db, 'products', id), { inventory: stock.inventory, variants: stock.variants, updatedAt: at });
+    }
+    tx.update(orderRef, { stockDeductedAt: at, stockMoves: moves, updatedAt: serverTimestamp() });
+    return true;
+  });
+}
+
 export async function updateOrderStatus(
   docId: string,
   orderStatus: Order['orderStatus'],
@@ -166,18 +227,27 @@ export async function updateOrderStatus(
   if (paymentStatus) updates.paymentStatus = paymentStatus;
   const orderRef = doc(db, ORDERS_COL, docId);
 
-  // Cancelling an order switches off the scratch card coupon it earned, in the same write.
-  const rewardCode = orderStatus === 'cancelled'
-    ? ((await getDoc(orderRef)).data() as Order | undefined)?.rewardCoupon?.code
-    : undefined;
-  if (!rewardCode) {
-    await updateDoc(orderRef, updates);
-    return;
-  }
-  const batch = writeBatch(db);
-  batch.update(orderRef, updates);
-  batch.update(doc(db, 'coupons', rewardCode), { active: false, invalidatedAt: at, updatedAt: at });
-  await batch.commit();
+  await runTransaction(db, async (tx) => {
+    const order = (await tx.get(orderRef)).data() as Order | undefined;
+    const moves = order?.stockMoves || [];
+    if (order?.stockDeductedAt && moves.length) {
+      if (orderStatus === 'cancelled' && !order.stockRestoredAt) {
+        // A cancelled order's items go back into stock.
+        await moveStock(tx, moves, 1, at);
+        updates.stockRestoredAt = at;
+      } else if (orderStatus !== 'cancelled' && order.orderStatus === 'cancelled' && order.stockRestoredAt) {
+        // Re-opening a cancelled order takes the items out of stock again.
+        await moveStock(tx, moves, -1, at);
+        updates.stockRestoredAt = deleteField();
+      }
+    }
+    tx.update(orderRef, updates);
+    // Cancelling an order switches off the scratch card coupon it earned, in the same write.
+    const rewardCode = orderStatus === 'cancelled' ? order?.rewardCoupon?.code : undefined;
+    if (rewardCode) {
+      tx.update(doc(db, 'coupons', rewardCode), { active: false, invalidatedAt: at, updatedAt: at });
+    }
+  });
 }
 
 /** Asks the server for the scratch card coupon this order earned. Null when there is none. */
