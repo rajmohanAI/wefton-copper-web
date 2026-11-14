@@ -123,6 +123,8 @@ export const productFormSchema = z.object({
   inventory: z.number().int().min(0, 'Inventory must be 0 or more'),
   // Filled in from the Product ID on save (lib/productCodes).
   sku: z.string(),
+  /** HSN code printed on GST invoices: 4, 6 or 8 digits. */
+  hsnCode: z.string().regex(/^(\d{4}|\d{6}|\d{8})$/, 'HSN code must be 4, 6 or 8 digits').optional(),
   featured: z.boolean(),
   bestseller: z.boolean(),
   newArrival: z.boolean(),
