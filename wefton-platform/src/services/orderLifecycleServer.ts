@@ -9,7 +9,7 @@
 // Only orders with lifecycleVersion 1 (created by the current checkout)
 // take part, so older orders never get surprise emails or cancellations.
 // ============================================================
-import { FieldValue, type DocumentReference, type Firestore } from 'firebase-admin/firestore';
+import { FieldValue, type DocumentReference, type Firestore, type Transaction } from 'firebase-admin/firestore';
 import { getAdminAuth } from '@/lib/firebaseAdmin';
 import { toDate } from '@/lib/utils';
 import {
@@ -26,6 +26,7 @@ import {
   type OverdueOrder,
 } from '@/lib/email/orderEmails';
 import { invalidateRewardCoupon, redeemScratchCoupon } from '@/services/scratchCouponServer';
+import { applyStockMoves, planStockMoves, type StockedProduct, type StockMove } from '@/lib/orderStock';
 import type { Order, OrderItem, OrderStatusEvent, Product } from '@/types';
 
 export const REMINDER_AFTER_DAYS = 5;
@@ -84,6 +85,43 @@ async function enrichItems(db: Firestore, items: OrderItem[]): Promise<OrderItem
   });
 }
 
+/** Reads the products an order touches, inside a transaction (reads must come before writes). */
+async function readStockedProducts(
+  db: Firestore,
+  tx: Transaction,
+  productIds: string[]
+): Promise<Map<string, StockedProduct>> {
+  const products = new Map<string, StockedProduct>();
+  for (const id of [...new Set(productIds.filter(Boolean))]) {
+    const snap = await tx.get(db.collection('products').doc(id));
+    if (snap.exists) products.set(id, snap.data() as StockedProduct);
+  }
+  return products;
+}
+
+function writeStock(db: Firestore, tx: Transaction, change: ReturnType<typeof applyStockMoves>, at: string) {
+  for (const [id, stock] of change.updates) {
+    tx.update(db.collection('products').doc(id), { inventory: stock.inventory, variants: stock.variants, updatedAt: at });
+  }
+}
+
+/**
+ * Puts back the stock a cancelled order took, in the same transaction as the
+ * cancellation. Does nothing if the order never took stock or already gave it back.
+ */
+export async function restoreStockInTx(
+  db: Firestore,
+  tx: Transaction,
+  order: Pick<Order, 'orderId' | 'stockDeductedAt' | 'stockRestoredAt' | 'stockMoves'>,
+  at: string
+): Promise<Record<string, unknown>> {
+  const moves: StockMove[] = order.stockMoves || [];
+  if (!order.stockDeductedAt || order.stockRestoredAt || !moves.length) return {};
+  const products = await readStockedProducts(db, tx, moves.map((m) => m.productId));
+  writeStock(db, tx, applyStockMoves(moves, products, 1), at);
+  return { stockRestoredAt: at };
+}
+
 /**
  * Stamps a paid order as placed. Returns the order as now stored, or null
  * when the order is not eligible (old checkout, or not paid yet).
@@ -114,11 +152,26 @@ export async function markOrderPlaced(db: Firestore, ref: DocumentReference, now
     products,
   };
 
-  // Only the first caller stamps placedAt (the browser and the daily job can race).
+  // Only the first caller stamps placedAt (the browser and the daily job can
+  // race), and the same transaction takes the items out of stock, so stock
+  // drops exactly once per order.
+  let stockFields: Partial<Order> = {};
   const stamped = await db.runTransaction(async (tx) => {
     const fresh = await tx.get(ref);
     if (fresh.get('placedAt')) return false;
-    tx.update(ref, { ...updates, statusHistory: FieldValue.arrayUnion(event), updatedAt: FieldValue.serverTimestamp() });
+    stockFields = {};
+    if (!fresh.get('stockDeductedAt')) {
+      const items = (fresh.get('products') as OrderItem[] | undefined) || [];
+      const products = await readStockedProducts(db, tx, items.map((i) => i.productId));
+      const moves = planStockMoves(items, products);
+      const change = applyStockMoves(moves, products, -1);
+      if (change.shortfalls.length) {
+        console.warn(`[Stock] ${order.orderId} ordered more than in stock: ${change.shortfalls.join(', ')}`);
+      }
+      writeStock(db, tx, change, at);
+      stockFields = { stockDeductedAt: at, stockMoves: moves };
+    }
+    tx.update(ref, { ...updates, ...stockFields, statusHistory: FieldValue.arrayUnion(event), updatedAt: FieldValue.serverTimestamp() });
     return true;
   });
   if (!stamped) return (await ref.get()).data() as Order;
@@ -126,7 +179,7 @@ export async function markOrderPlaced(db: Firestore, ref: DocumentReference, now
   await redeemScratchCoupon(db, order, now).catch((error) =>
     console.error(`[Coupons] Marking ${order.couponCode} used by ${order.orderId} failed:`, error)
   );
-  return { ...order, ...updates, statusHistory: [...(order.statusHistory || []), event] };
+  return { ...order, ...updates, ...stockFields, statusHistory: [...(order.statusHistory || []), event] };
 }
 
 /** Sends whichever "order placed" emails haven't gone out yet. */
@@ -199,13 +252,19 @@ export async function runDailyOrderChecks(db: Firestore, now = new Date(), send:
     if (AUTO_CANCELLABLE.includes(order.orderStatus) && idle >= CANCEL_AFTER_DAYS) {
       const event: OrderStatusEvent = { status: 'cancelled', at, by: 'system', note: `No status update for ${idle} days` };
       const paymentStatus = PAID.includes(order.paymentStatus) ? 'refund_due' : order.paymentStatus;
-      await ref.update({
-        orderStatus: 'cancelled',
-        paymentStatus,
-        autoCancelledAt: at,
-        statusUpdatedAt: at,
-        statusHistory: FieldValue.arrayUnion(event),
-        updatedAt: FieldValue.serverTimestamp(),
+      // The cancelled order's items go back into stock in the same write.
+      await db.runTransaction(async (tx) => {
+        const fresh = (await tx.get(ref)).data() as Order;
+        const stockFields = await restoreStockInTx(db, tx, fresh, at);
+        tx.update(ref, {
+          orderStatus: 'cancelled',
+          paymentStatus,
+          autoCancelledAt: at,
+          statusUpdatedAt: at,
+          ...stockFields,
+          statusHistory: FieldValue.arrayUnion(event),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
       });
       await invalidateRewardCoupon(db, order, now).catch((error) =>
         console.error(`[Coupons] Switching off the reward coupon of ${order.orderId} failed:`, error)
