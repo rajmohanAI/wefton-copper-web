@@ -17,7 +17,7 @@ import {
   skuBase,
   type CatalogColor,
 } from '@/lib/productCodes';
-import { MEN_CATEGORIES, WOMEN_CATEGORIES } from '@/config/brand';
+import { DEFAULT_HSN, MEN_CATEGORIES, WOMEN_CATEGORIES } from '@/config/brand';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import type { Product, ProductImage, ProductVariant } from '@/types';
@@ -62,6 +62,7 @@ export default function ProductFormModal({
   const [price, setPrice] = useState('');
   const [comparePrice, setComparePrice] = useState('');
   const [inventory, setInventory] = useState('');
+  const [hsnCode, setHsnCode] = useState(DEFAULT_HSN);
   const [featured, setFeatured] = useState(false);
   const [bestseller, setBestseller] = useState(false);
   const [images, setImages] = useState<ProductImage[]>([]);
@@ -103,6 +104,7 @@ export default function ProductFormModal({
     setPrice('');
     setComparePrice('');
     setInventory('');
+    setHsnCode(DEFAULT_HSN);
     setFeatured(false);
     setBestseller(false);
     setImages([]);
@@ -131,6 +133,7 @@ export default function ProductFormModal({
         setPrice(product.price.toString());
         setComparePrice(product.comparePrice?.toString() || '');
         setInventory(product.inventory.toString());
+        setHsnCode(product.hsnCode || DEFAULT_HSN);
         setFeatured(product.featured);
         setBestseller(product.bestseller);
         const existing = product.images || [];
@@ -357,6 +360,7 @@ export default function ProductFormModal({
       comparePrice: comparePrice ? parseFloat(comparePrice) : undefined,
       inventory: hasVariants ? gridTotal + otherTotal : parseInt(inventory) || 0,
       sku: product?.sku || '',
+      hsnCode: hsnCode.trim() || DEFAULT_HSN,
       featured,
       bestseller,
       // The New Arrival badge is retired; saving a product clears it.
@@ -624,6 +628,17 @@ export default function ProductFormModal({
                   placeholder="100"
                   min="0"
                   className={cn(ADMIN_FIELD, hasVariants && 'opacity-70')}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Input
+                  label="HSN Code (GST)"
+                  value={hsnCode}
+                  onChange={(e) => setHsnCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                  error={errors.hsnCode}
+                  placeholder={DEFAULT_HSN}
+                  inputMode="numeric"
+                  className={ADMIN_FIELD}
                 />
               </div>
               <p className="text-xs text-[var(--text-muted)]">
