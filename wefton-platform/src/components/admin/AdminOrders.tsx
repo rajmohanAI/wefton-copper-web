@@ -14,7 +14,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { getFirebaseAuth, getFirebaseDb } from '@/lib/firebase';
-import { updateOrderStatus } from '@/services/orderService';
+import { needsStockTaken, takeOrderStock, updateOrderStatus } from '@/services/orderService';
 import { formatPrice, toDate } from '@/lib/utils';
 import { itemsSummary } from '@/lib/orderSummary';
 import { canInvoice, invoiceFileName } from '@/lib/invoice';
@@ -199,6 +199,23 @@ export default function AdminOrders() {
       alert(err instanceof Error ? err.message : 'Failed to generate invoice.');
     } finally {
       setInvoiceLoading(null);
+    }
+  }, []);
+
+  // Orders placed before stock tracking: take their items out of stock once.
+  const [stockLoading, setStockLoading] = useState<string | null>(null);
+  const handleTakeStock = useCallback(async (order: Order & { _docId?: string }) => {
+    const docId = order._docId || order.orderId;
+    setStockLoading(docId);
+    try {
+      await takeOrderStock(docId);
+      const at = new Date().toISOString();
+      setSelectedOrder((current) => (current && current.orderId === order.orderId ? { ...current, stockDeductedAt: at } : current));
+    } catch (err) {
+      console.error('Failed to update stock:', err);
+      alert('Failed to update stock. Please try again.');
+    } finally {
+      setStockLoading(null);
     }
   }, []);
 
@@ -699,6 +716,32 @@ export default function AdminOrders() {
                         </li>
                       ))}
                     </ul>
+                  </div>
+                )}
+
+                {/* Stock */}
+                {(selectedOrder.stockDeductedAt || needsStockTaken(selectedOrder)) && (
+                  <div className="space-y-2 pt-4 border-t border-[var(--border-subtle)]">
+                    <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Stock</p>
+                    {selectedOrder.stockDeductedAt ? (
+                      <p className="text-xs text-[var(--text-muted)]">
+                        {selectedOrder.stockRestoredAt
+                          ? `Items put back into stock ${formatDate(selectedOrder.stockRestoredAt)}`
+                          : `Items taken out of stock ${formatDate(selectedOrder.stockDeductedAt)}`}
+                      </p>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          loading={stockLoading === ((selectedOrder as Order & { _docId?: string })._docId || selectedOrder.orderId)}
+                          onClick={() => handleTakeStock(selectedOrder as Order & { _docId?: string })}
+                        >
+                          Take items out of stock
+                        </Button>
+                        <span className="text-xs text-[var(--text-muted)]">This order was placed before stock tracking.</span>
+                      </div>
+                    )}
                   </div>
                 )}
 

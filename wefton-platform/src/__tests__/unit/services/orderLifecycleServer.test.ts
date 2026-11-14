@@ -119,6 +119,24 @@ describe('markOrderPlaced', () => {
     expect(store.get('orders/A')!.placedAt).toBe(NOW.toISOString());
   });
 
+  it('takes the ordered variant out of stock exactly once', async () => {
+    store.set('products/p1', { ...store.get('products/p1'), inventory: 80, variants: [
+      { variantId: 'v1', size: 'M', color: 'Olive Green', sku: 'WCP001M0103', inventory: 5 },
+      { variantId: 'v2', size: 'L', color: 'Olive Green', inventory: 5 },
+    ] });
+    order('S', {});
+    await markOrderPlaced(db, docRef('orders/S') as never, NOW);
+    await markOrderPlaced(db, docRef('orders/S') as never, NOW);
+    await runDailyOrderChecks(db, NOW, send);
+    const product = store.get('products/p1')!;
+    expect(product.inventory).toBe(78);
+    expect((product.variants as { inventory: number }[]).map((v) => v.inventory)).toEqual([3, 5]);
+    expect(store.get('orders/S')!.stockDeductedAt).toBe(NOW.toISOString());
+    expect(store.get('orders/S')!.stockMoves).toEqual([
+      { productId: 'p1', variantId: 'v1', size: 'M', color: 'Olive Green', quantity: 2 },
+    ]);
+  });
+
   it('ignores unpaid and older orders', async () => {
     order('B', { paymentStatus: 'pending' });
     order('C', { lifecycleVersion: undefined });
@@ -164,6 +182,16 @@ describe('runDailyOrderChecks', () => {
     const cancelEmail = (send.mock.calls as unknown as [{ subject: string; html: string }][]).find(([e]) => e.subject.includes('cancelled'))![0];
     expect(cancelEmail.html).toContain('5–10 business days');
     expect(sentSubjects().some((s) => s.includes('auto-cancelled'))).toBe(true);
+  });
+
+  it('puts an auto-cancelled order\'s items back into stock once', async () => {
+    store.set('products/p1', { ...store.get('products/p1'), inventory: 78, variants: [{ variantId: 'v1', size: 'M', color: 'Olive Green', inventory: 3 }] });
+    const stockMoves = [{ productId: 'p1', variantId: 'v1', size: 'M', color: 'Olive Green', quantity: 2 }];
+    order('A', { placedAt: daysAgo(11), statusUpdatedAt: daysAgo(10), notifications: sentFlags, stockDeductedAt: daysAgo(11), stockMoves });
+    await runDailyOrderChecks(db, NOW, send);
+    await runDailyOrderChecks(db, NOW, send);
+    expect(store.get('products/p1')).toMatchObject({ inventory: 80, variants: [{ variantId: 'v1', inventory: 5 }] });
+    expect(store.get('orders/A')!.stockRestoredAt).toBe(NOW.toISOString());
   });
 
   it('switches off the scratch card coupon of an auto-cancelled order', async () => {
