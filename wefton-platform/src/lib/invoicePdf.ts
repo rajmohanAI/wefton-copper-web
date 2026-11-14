@@ -513,7 +513,10 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
     regular: await pdf.embedFont(StandardFonts.Helvetica),
     bold: await pdf.embedFont(StandardFonts.HelveticaBold),
   };
-  const logo = await pdf.embedJpg(Buffer.from(INVOICE_LOGO_JPG_BASE64, 'base64'));
+  // Pass the base64 string itself: pdf-lib's JPEG reader ignores a Buffer's
+  // byteOffset, so a Buffer cut from Node's shared pool failed with
+  // "SOI not found in JPEG" on the server.
+  const logo = await pdf.embedJpg(INVOICE_LOGO_JPG_BASE64);
   const qrBytes = await renderQr(data.seller.website);
   const qr = qrBytes ? await pdf.embedPng(qrBytes) : null;
 
