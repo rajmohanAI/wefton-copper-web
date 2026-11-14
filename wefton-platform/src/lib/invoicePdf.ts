@@ -3,8 +3,8 @@
 // Draws lib/invoice's InvoiceData on A4 in the shop's invoice style:
 // logo + name header with the copper rule, Billed By / Billed To boxes,
 // the item table with an HSN column, payment details instead of "scan to
-// pay" (website orders are already paid), totals, a red PAID seal and the
-// footer with the shop's QR and signatory box.
+// pay" (website orders are already paid), totals, a red PAID seal and a
+// footer with the website QR and the computer-generated (no signature) note.
 // The standard PDF fonts have no ₹ glyph, so the rupee sign is drawn as
 // a small vector shape (drawRupee).
 // ============================================================
@@ -134,19 +134,32 @@ function roundedRect(page: PDFPage, x: number, top: number, w: number, h: number
   page.drawSvgPath(p, { x, y: Y(top), color: fill, borderColor: line, borderWidth: 1 });
 }
 
-// ── Header ──
+// ── Header: small logo, letter-spaced brand name, one hairline ──
+/** Draws `s` with extra space between letters; returns its width. */
+function spaced(page: PDFPage, s: string, x: number, top: number, font: PDFFont, size: number, tracking: number, color: RGB = INK): number {
+  let cx = x;
+  for (const ch of s) {
+    text(page, ch, cx, top, font, size, color);
+    cx += font.widthOfTextAtSize(ch, size) + tracking;
+  }
+  return cx - tracking - x;
+}
+
+function spacedWidth(s: string, font: PDFFont, size: number, tracking: number): number {
+  return [...s].reduce((w, ch) => w + font.widthOfTextAtSize(ch, size) + tracking, -tracking);
+}
+
 function drawHeader(ctx: Ctx): number {
   const { page, fonts, logo } = ctx;
-  const logoH = 52;
+  const logoH = 30;
   const logoW = (logo.width / logo.height) * logoH;
-  page.drawImage(logo, { x: M - 4, y: Y(24 + logoH), width: logoW, height: logoH });
-  text(page, 'WEFTON COPPER', M + logoW + 12, 32, fonts.bold, 34, TEAL);
-  // Copper rule with the raised right-hand tab.
-  page.drawRectangle({ x: M - 6, y: Y(88), width: PAGE_W - 2 * M + 12, height: 3.5, color: COPPER });
-  const tabX = PAGE_W - 150;
-  const tabW = PAGE_W - M + 6 - tabX;
-  page.drawSvgPath(`M 8 0 H ${tabW} V 12 H 0 Z`, { x: tabX, y: Y(76.5), color: COPPER });
-  return 104;
+  page.drawImage(logo, { x: M, y: Y(26 + logoH), width: logoW, height: logoH });
+  spaced(page, 'WEFTON COPPER', M + logoW + 10, 33, fonts.regular, 15, 3.2, INK);
+  text(page, 'www.weftoncopper.com', M + logoW + 10, 52, fonts.regular, 7.5, MUTED);
+  const label = 'TAX INVOICE';
+  spaced(page, label, PAGE_W - M - spacedWidth(label, fonts.regular, 10, 2.4), 37, fonts.regular, 10, 2.4, COPPER);
+  page.drawLine({ start: { x: M, y: Y(68) }, end: { x: PAGE_W - M, y: Y(68) }, thickness: 0.75, color: COPPER });
+  return 84;
 }
 
 // ── PAID seal ──
@@ -198,8 +211,7 @@ function drawSeal(page: PDFPage, fonts: Fonts, cx: number, cyTop: number, paidOn
 // ── Invoice meta + parties ──
 function drawParties(ctx: Ctx, top: number): number {
   const { page, fonts, data } = ctx;
-  text(page, 'Tax Invoice', M + 8, top, fonts.bold, 18);
-  let y = top + 28;
+  let y = top + 6;
   const meta: [string, string][] = [
     ['Invoice No', data.invoiceNumber],
     ['Invoice Date', data.invoiceDate],
@@ -214,7 +226,7 @@ function drawParties(ctx: Ctx, top: number): number {
   drawSeal(page, fonts, PAGE_W - M - 60, top + 40, data.payment.paidOn);
 
   // Billed By / Billed To
-  const boxTop = y + 10;
+  const boxTop = Math.max(y + 10, top + 92); // clear of the seal
   const gap = 24;
   const boxW = (CONTENT_W - gap) / 2;
   const pad = 12;
@@ -445,33 +457,36 @@ function drawSummary(ctx: Ctx, top: number): number {
 }
 
 // ── Footer (every page) ──
+const SIGNATURE_NOTE = [
+  'This is a computer-generated invoice issued electronically and does not require a signature',
+  '(Rule 46(q) of the CGST Rules, 2017, read with the Information Technology Act, 2000).',
+];
+
 function drawFooter(ctx: Ctx, page: PDFPage, pageNo: number, pageCount: number) {
   const { fonts, data, qr } = ctx;
   const top = PAGE_H - FOOTER_H + 6;
-  page.drawLine({ start: { x: M - 6, y: Y(top) }, end: { x: PAGE_W - M + 6, y: Y(top) }, thickness: 1, color: COPPER });
-  const qrSize = 62;
-  if (qr) page.drawImage(qr, { x: M, y: Y(top + 10 + qrSize), width: qrSize, height: qrSize });
-  const mx = M + qrSize + 12;
-  text(page, 'Invoice No:', mx, top + 14, fonts.regular, 8.5);
-  text(page, data.invoiceNumber, mx + 58, top + 14, fonts.regular, 8.5);
-  text(page, 'Invoice Date:', mx, top + 27, fonts.regular, 8.5);
-  text(page, data.invoiceDate, mx + 58, top + 27, fonts.regular, 8.5);
-  text(page, `Page ${pageNo} of ${pageCount}`, mx, top + 46, fonts.regular, 7.5, MUTED);
-
-  const bx = M + 250;
-  text(page, data.seller.name, bx, top + 12, fonts.bold, 11, TEAL);
-  text(page, data.seller.constitution, bx, top + 29, fonts.regular, 8, TEAL);
-  text(page, `GST: ${data.seller.gstin}`, bx, top + 41, fonts.regular, 8, TEAL);
-  text(page, `Business Type: ${data.seller.businessType}`, bx, top + 53, fonts.regular, 8, TEAL);
-
-  const sw = 128;
-  const sx = PAGE_W - M - sw;
-  page.drawRectangle({ x: sx, y: Y(top + 58), width: sw, height: 48, borderColor: rgb(0.55, 0.65, 0.8), borderWidth: 0.8 });
-  text(page, `For ${data.seller.name}`, sx + 8, top + 15, fonts.regular, 9.5, TEAL);
-  textRight(page, data.seller.constitution === 'Proprietorship' ? 'Proprietor' : '', sx + sw - 8, top + 46, fonts.regular, 8, TEAL);
-  text(page, 'Authorized Signature', sx + (sw - fonts.bold.widthOfTextAtSize('Authorized Signature', 9)) / 2, top + 62, fonts.bold, 9);
-  const note = 'This is a computer-generated invoice; no signature is required.';
-  text(page, note, (PAGE_W - fonts.regular.widthOfTextAtSize(note, 7)) / 2, top + 76, fonts.regular, 7, MUTED);
+  page.drawLine({ start: { x: M, y: Y(top) }, end: { x: PAGE_W - M, y: Y(top) }, thickness: 0.75, color: COPPER });
+  // Shop QR: scan to visit the website.
+  const qrSize = 46;
+  if (qr) {
+    page.drawImage(qr, { x: M, y: Y(top + 10 + qrSize), width: qrSize, height: qrSize });
+    text(page, 'Scan to shop', M + qrSize + 8, top + 14, fonts.bold, 8);
+    text(page, 'www.weftoncopper.com', M + qrSize + 8, top + 26, fonts.regular, 8, MUTED);
+  }
+  // Invoice reference, centred.
+  const mid = PAGE_W / 2;
+  const ref = `${data.invoiceNumber}  ·  ${data.invoiceDate}`;
+  text(page, ref, mid - fonts.regular.widthOfTextAtSize(ref, 8) / 2, top + 14, fonts.regular, 8);
+  const pg = `Page ${pageNo} of ${pageCount}`;
+  text(page, pg, mid - fonts.regular.widthOfTextAtSize(pg, 7.5) / 2, top + 26, fonts.regular, 7.5, MUTED);
+  // Seller, right-aligned.
+  const right = PAGE_W - M;
+  textRight(page, data.seller.name, right, top + 12, fonts.bold, 9, TEAL);
+  textRight(page, `${data.seller.constitution} · ${data.seller.businessType}`, right, top + 25, fonts.regular, 7.5, MUTED);
+  textRight(page, `GSTIN: ${data.seller.gstin}`, right, top + 36, fonts.regular, 7.5, MUTED);
+  SIGNATURE_NOTE.forEach((line, i) =>
+    text(page, line, mid - fonts.regular.widthOfTextAtSize(line, 7) / 2, top + 64 + i * 9, fonts.regular, 7, MUTED)
+  );
 }
 
 async function renderQr(url: string): Promise<Uint8Array | null> {

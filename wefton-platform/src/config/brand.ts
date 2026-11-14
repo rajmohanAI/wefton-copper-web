@@ -66,7 +66,7 @@ export const INVOICE_SELLER = {
   gstin: '33HKQPS2405J1ZS',
   businessType: 'Clothing Brand',
   constitution: 'Proprietorship',
-  website: 'https://weftoncopper.com',
+  website: 'https://www.weftoncopper.com/',
 } as const;
 /** Invoice numbers are WC1102/YYMM/NNNN: this prefix, the paid month, a running number per month. */
 export const INVOICE_PREFIX = 'WC1102';
