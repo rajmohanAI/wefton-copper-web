@@ -1,6 +1,7 @@
 // ============================================================
 // Wefton Copper — Core Type Definitions
 // ============================================================
+import type { StockMove } from '@/lib/orderStock';
 
 export interface Product {
   productId: string;
@@ -150,6 +151,12 @@ export interface Order {
   /** GST invoice number (WC1102/YYMM/NNNN), given the first time the invoice is generated. */
   invoiceNumber?: string;
   invoiceIssuedAt?: string;
+  /** When the order took its items out of stock (set once, when it is placed). */
+  stockDeductedAt?: string;
+  /** Exactly what was taken, so a cancellation puts back the same variants. */
+  stockMoves?: StockMove[];
+  /** When a cancellation put the stock back. */
+  stockRestoredAt?: string;
 }
 
 export interface RewardCoupon {
