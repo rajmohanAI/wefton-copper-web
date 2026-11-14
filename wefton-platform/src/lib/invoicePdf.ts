@@ -157,7 +157,9 @@ function drawHeader(ctx: Ctx): number {
   spaced(page, 'WEFTON COPPER', M + logoW + 10, 33, fonts.regular, 15, 3.2, INK);
   text(page, 'www.weftoncopper.com', M + logoW + 10, 52, fonts.regular, 7.5, MUTED);
   const label = 'TAX INVOICE';
-  spaced(page, label, PAGE_W - M - spacedWidth(label, fonts.regular, 10, 2.4), 37, fonts.regular, 10, 2.4, COPPER);
+  spaced(page, label, PAGE_W - M - spacedWidth(label, fonts.regular, 10, 2.4), 33, fonts.regular, 10, 2.4, COPPER);
+  // Rule 48: the customer's copy of an invoice for goods is marked ORIGINAL FOR RECIPIENT.
+  textRight(page, 'ORIGINAL FOR RECIPIENT', PAGE_W - M, 50, fonts.regular, 7, MUTED);
   page.drawLine({ start: { x: M, y: Y(68) }, end: { x: PAGE_W - M, y: Y(68) }, thickness: 0.75, color: COPPER });
   return 84;
 }
@@ -216,6 +218,7 @@ function drawParties(ctx: Ctx, top: number): number {
     ['Invoice No', data.invoiceNumber],
     ['Invoice Date', data.invoiceDate],
     ['Order ID', data.orderId],
+    ['Reverse Charge', 'No'],
   ];
   for (const [k, v] of meta) {
     const label = `${k}: `;
@@ -233,6 +236,7 @@ function drawParties(ctx: Ctx, top: number): number {
   const lineW = boxW - 2 * pad;
   const by = [
     ...data.seller.addressLines.flatMap((l) => wrap(l, fonts.regular, 8.5, lineW)),
+    `State: ${data.seller.state}, Code: ${data.seller.stateCode}`,
   ];
   const to = [
     ...data.buyer.addressLines.flatMap((l) => wrap(l, fonts.regular, 8.5, lineW)),
@@ -290,7 +294,7 @@ function columns(interState: boolean): Col[] {
     { key: 'item', label: ['Item'], w: 0, align: 'left' },
     { key: 'hsn', label: ['HSN'], w: 34, align: 'left' },
     { key: 'rate%', label: ['GST', 'Rate'], w: 30, align: 'center' },
-    { key: 'qty', label: ['Units'], w: 30, align: 'center' },
+    { key: 'qty', label: ['Qty'], w: 36, align: 'center' },
     { key: 'rate', label: ['Rate'], w: 52, align: 'right' },
     { key: 'amount', label: ['Amount'], w: 56, align: 'right' },
     ...tax,
@@ -357,7 +361,7 @@ function drawLine(ctx: Ctx, cols: Col[], top: number, n: number, line: InvoiceLi
     text(page, s, xs[i] + (cols[i].w - fonts.regular.widthOfTextAtSize(s, 9)) / 2, ty, fonts.regular, 9);
   };
   center('rate%', `${data.gstRatePercent}%`);
-  center('qty', String(line.quantity));
+  center('qty', `${line.quantity} ${line.unit}`);
   const right = (key: string, v: number) => {
     const i = cell(key);
     if (i >= 0) money(page, v, xs[i] + cols[i].w, ty, fonts.regular, 8.5);
@@ -458,8 +462,8 @@ function drawSummary(ctx: Ctx, top: number): number {
 
 // ── Footer (every page) ──
 const SIGNATURE_NOTE = [
-  'This is a computer-generated invoice issued electronically and does not require a signature',
-  '(Rule 46(q) of the CGST Rules, 2017, read with the Information Technology Act, 2000).',
+  'This is an electronic invoice issued in accordance with the Information Technology Act, 2000, and does not',
+  'require a signature (proviso to Rule 46 of the CGST Rules, 2017).',
 ];
 
 function drawFooter(ctx: Ctx, page: PDFPage, pageNo: number, pageCount: number) {

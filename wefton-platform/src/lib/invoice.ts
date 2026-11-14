@@ -123,6 +123,8 @@ export interface InvoiceLine {
   details: string[];
   hsn: string;
   quantity: number;
+  /** Unique Quantity Code shown with the quantity (Rule 46(h)). */
+  unit: string;
   /** All amounts in rupees, to 2 decimals. */
   rate: number; // taxable value per unit
   taxable: number;
@@ -186,13 +188,14 @@ export function buildInvoice(order: Order, invoiceNumber: string, productHsn: Re
       item.sku ? `SKU: ${item.sku}` : '',
     ].filter(Boolean),
     hsn: item.hsnCode || productHsn[item.productId] || DEFAULT_HSN,
+    unit: 'Pcs',
     quantity: Number(item.quantity) || 0,
     gross: toPaise(item.price) * (Number(item.quantity) || 0),
   }));
   const shipping = toPaise(order.shipping);
   if (shipping > 0) {
     // Delivery is part of the same (composite) supply, so it takes the garments' rate.
-    raw.push({ description: 'Delivery charges', details: [], hsn: raw[0]?.hsn || DEFAULT_HSN, quantity: 1, gross: shipping });
+    raw.push({ description: 'Delivery charges', details: [], hsn: raw[0]?.hsn || DEFAULT_HSN, unit: 'Nos', quantity: 1, gross: shipping });
   }
 
   const discount = Math.min(toPaise(order.discountAmount || 0), raw.reduce((s, l) => s + l.gross, 0));
@@ -210,6 +213,7 @@ export function buildInvoice(order: Order, invoiceNumber: string, productHsn: Re
       details: l.details,
       hsn: l.hsn,
       quantity: l.quantity,
+      unit: l.unit,
       rate: toRupees(l.quantity ? Math.round(taxable / l.quantity) : taxable),
       taxable: toRupees(taxable),
       cgst: toRupees(cgst),
