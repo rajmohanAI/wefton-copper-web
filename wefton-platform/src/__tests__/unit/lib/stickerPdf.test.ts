@@ -4,8 +4,8 @@
 import { writeFileSync } from 'node:fs';
 import { PDFDocument } from 'pdf-lib';
 import { describe, expect, it } from 'vitest';
-import { estimateStickerPages, planSeries, STICKERS_PER_PAGE } from '@/lib/serialgen';
-import { renderStickerPdf, STICKER_GENDER } from '@/lib/stickerPdf';
+import { estimateStickerPages, planSeries, STICKERS_PER_PAGE, welcomeUrl } from '@/lib/serialgen';
+import { parseQr, renderStickerPdf, STICKER_GENDER } from '@/lib/stickerPdf';
 
 describe('sticker sheet', () => {
   it('prints 3 copies per serial, 8 rows per A4 page', async () => {
@@ -38,5 +38,14 @@ describe('sticker sheet', () => {
 
   it('shows gender as M / F / U', () => {
     expect(STICKER_GENDER).toEqual({ M: 'M', W: 'F', U: 'U' });
+  });
+
+  it('points the tag QR at the serial welcome page', async () => {
+    expect(welcomeUrl('WCP01M0103000001')).toBe('https://www.weftoncopper.com/welcomeuser/WCP01M0103000001');
+    const { toSVG } = await import('bwip-js/node');
+    const qr = parseQr(toSVG({ bcid: 'qrcode', text: welcomeUrl('WCP01M0103000001').toUpperCase() }));
+    // Upper case stays in alphanumeric mode: a 29-module (version 3) QR, 4 units a module.
+    expect(qr.units).toBe(29 * 4);
+    expect(qr.path.startsWith('M')).toBe(true);
   });
 });

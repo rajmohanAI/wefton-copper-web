@@ -24,10 +24,16 @@ import {
   type StickerSeries,
 } from '@/lib/serialgen';
 import { CatalogError, getColors } from '@/services/catalogServer';
+import { imagesForColor } from '@/lib/productImages';
+import type { Product } from '@/types';
 
 const MODELS_DOC = 'settings/serialModels';
 const COUNTERS_DOC = 'counters/serials';
 const LOG_COLLECTION = 'serialLog';
+/** Changelog lines cleared from the history, kept for the record. */
+const LOG_ARCHIVE_COLLECTION = 'serialLogArchive';
+/** Piece numbers / printed ranges as they stood each time numbering was restarted. */
+const COUNTERS_ARCHIVE_COLLECTION = 'serialCountersArchive';
 
 /** The batch repeats serials already generated; the admin decides what to do. */
 export class SerialConflictError extends CatalogError {
@@ -176,6 +182,42 @@ export async function getSerialLog(db: Firestore, limit = 200): Promise<SerialLo
   });
 }
 
+/**
+ * Starts serials afresh after a tag redesign. Every changelog line moves to
+ * serialLogArchive, and the piece numbers / printed ranges are saved to
+ * serialCountersArchive and then cleared, so the next batch of each variant
+ * starts at 000001 again. Nothing is deleted outright, and old serials still
+ * check as genuine against the archives. Returns how many lines moved.
+ */
+export async function restartSerials(db: Firestore, by: string): Promise<number> {
+  const [snap, counters] = await Promise.all([db.collection(LOG_COLLECTION).get(), db.doc(COUNTERS_DOC).get()]);
+  const BATCH = 200; // two writes per line, well under Firestore's 500
+  for (let i = 0; i < snap.docs.length; i += BATCH) {
+    const batch = db.batch();
+    for (const doc of snap.docs.slice(i, i + BATCH)) {
+      batch.set(db.collection(LOG_ARCHIVE_COLLECTION).doc(doc.id), {
+        ...doc.data(),
+        archivedAt: FieldValue.serverTimestamp(),
+        archivedBy: by,
+      });
+      batch.delete(doc.ref);
+    }
+    await batch.commit();
+  }
+  if (counters.exists) {
+    const batch = db.batch();
+    batch.set(db.collection(COUNTERS_ARCHIVE_COLLECTION).doc(), {
+      last: counters.get('last') ?? {},
+      ranges: counters.get('ranges') ?? {},
+      archivedAt: FieldValue.serverTimestamp(),
+      archivedBy: by,
+    });
+    batch.update(counters.ref, { last: {}, ranges: {} });
+    await batch.commit();
+  }
+  return snap.size;
+}
+
 /** What a customer sees for a genuine serial. */
 export interface SerialCheck {
   serial: string;
@@ -199,20 +241,25 @@ export async function checkSerial(db: Firestore, input: string): Promise<SerialC
   const parsed = parseSerial(input);
   if (!parsed) return null;
 
-  const [logSnap, counters, models, colors] = await Promise.all([
+  const [logSnap, archiveSnap, counters, countersArchive, models, colors] = await Promise.all([
     db.collection(LOG_COLLECTION).where('prefix', '==', parsed.prefix).get(),
+    db.collection(LOG_ARCHIVE_COLLECTION).where('prefix', '==', parsed.prefix).get(),
     db.doc(COUNTERS_DOC).get(),
+    db.collection(COUNTERS_ARCHIVE_COLLECTION).get(),
     getSerialModels(db),
     getColors(db),
   ]);
-  const entry = logSnap.docs
+  const entry = [...logSnap.docs, ...archiveSnap.docs]
     .map((d) => d.data())
     .filter((e) => e.status !== 'failed' && e.start <= parsed.piece && e.end >= parsed.piece)
     .sort((a, b) => (a.createdAt?.toMillis?.() ?? 0) - (b.createdAt?.toMillis?.() ?? 0))[0];
   if (!entry) {
-    const last = (counters.get('last') as Record<string, number> | undefined) ?? {};
-    const ranges = (counters.get('ranges') as Record<string, PrintedRange[]> | undefined) ?? {};
-    const printed = printedRanges(parsed.prefix, ranges, last).some((r) => r.s <= parsed.piece && r.e >= parsed.piece);
+    // Batches from before the log: check the printed ranges, current and archived.
+    const printed = [counters, ...countersArchive.docs].some((doc) => {
+      const last = (doc.get('last') as Record<string, number> | undefined) ?? {};
+      const ranges = (doc.get('ranges') as Record<string, PrintedRange[]> | undefined) ?? {};
+      return printedRanges(parsed.prefix, ranges, last).some((r) => r.s <= parsed.piece && r.e >= parsed.piece);
+    });
     if (!printed) return null;
   }
 
@@ -224,5 +271,35 @@ export async function checkSerial(db: Firestore, input: string): Promise<SerialC
     gender: GENDER_NAMES[parsed.gender],
     size: parsed.size,
     printedAt: entry?.createdAt?.toDate?.().toISOString() ?? null,
+  };
+}
+
+/** The catalog product a serial belongs to, as shown on its welcome page. */
+export interface SerialProduct {
+  title: string;
+  slug: string;
+  price: number;
+  image: { url: string; alt: string } | null;
+}
+
+/**
+ * The catalog product for a serial: model P01 + gender M is Product ID
+ * WCPM001 (see lib/productCodes). The image is the one for the serial's
+ * colour when the product has one. Null when no product carries that ID.
+ */
+export async function findSerialProduct(db: Firestore, check: Pick<SerialCheck, 'serial' | 'color'>): Promise<SerialProduct | null> {
+  const parsed = parseSerial(check.serial);
+  if (!parsed) return null;
+  const code = `WCP${parsed.gender}${parsed.modelId.slice(1).padStart(3, '0')}`;
+  const snap = await db.collection('products').where('productCode', '==', code).limit(1).get();
+  const doc = snap.docs[0];
+  if (!doc) return null;
+  const p = doc.data() as Pick<Product, 'title' | 'slug' | 'price' | 'images'>;
+  const img = imagesForColor(p.images ?? [], check.color)[0];
+  return {
+    title: p.title,
+    slug: p.slug,
+    price: p.price,
+    image: img ? { url: img.url, alt: img.alt || p.title } : null,
   };
 }
