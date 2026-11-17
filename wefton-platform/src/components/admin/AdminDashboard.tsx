@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import * as Tabs from '@radix-ui/react-tabs';
 import {
   ShoppingBag,
@@ -24,6 +24,7 @@ import AdminOrders from './AdminOrders';
 import CouponsTab from './CouponsTab';
 import ReturnsTab from './ReturnsTab';
 import type { Order, AdminStats } from '@/types';
+import { isAdminDashboardTab } from '@/config/adminServices';
 
 function computeAdminStats(orders: Order[], totalProducts: number, totalUsers: number): AdminStats {
   const totalOrders = orders.length;
@@ -134,7 +135,11 @@ export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuthStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [statsLoading, setStatsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('orders');
+  // The Admin menu links to /admin?tab=…, so the tab follows the URL.
+  const searchParams = useSearchParams();
+  const urlTab = searchParams.get('tab');
+  const activeTab = isAdminDashboardTab(urlTab) ? urlTab : 'orders';
+  const setActiveTab = (tab: string) => router.replace(`/admin?tab=${tab}`, { scroll: false });
 
   // Admin role check — redirect non-admins to homepage
   useEffect(() => {
