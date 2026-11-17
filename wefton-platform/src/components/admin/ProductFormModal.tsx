@@ -20,7 +20,9 @@ import {
 import { DEFAULT_HSN, MEN_CATEGORIES, WOMEN_CATEGORIES } from '@/config/brand';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import type { Product, ProductImage, ProductVariant } from '@/types';
+import type { Product, ProductImage, ProductVariant, SizeChart } from '@/types';
+import type { WashCareGuide } from '@/config/washCare';
+import ProductGuidesSection from './ProductGuidesSection';
 
 interface ProductFormModalProps {
   open: boolean;
@@ -65,6 +67,8 @@ export default function ProductFormModal({
   const [hsnCode, setHsnCode] = useState(DEFAULT_HSN);
   const [featured, setFeatured] = useState(false);
   const [bestseller, setBestseller] = useState(false);
+  const [sizeChart, setSizeChart] = useState<SizeChart | null>(null);
+  const [careGuide, setCareGuide] = useState<WashCareGuide | null>(null);
   const [images, setImages] = useState<ProductImage[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   /** Colour for each new file, by position ('' = every colour). */
@@ -107,6 +111,8 @@ export default function ProductFormModal({
     setHsnCode(DEFAULT_HSN);
     setFeatured(false);
     setBestseller(false);
+    setSizeChart(null);
+    setCareGuide(null);
     setImages([]);
     setImageFiles([]);
     setImageFileColors([]);
@@ -136,6 +142,8 @@ export default function ProductFormModal({
         setHsnCode(product.hsnCode || DEFAULT_HSN);
         setFeatured(product.featured);
         setBestseller(product.bestseller);
+        setSizeChart(product.sizeChart ?? null);
+        setCareGuide(product.careGuide ?? null);
         const existing = product.images || [];
         setImages(existing);
         setImageFiles([]);
@@ -400,6 +408,9 @@ export default function ProductFormModal({
         productCode: code,
         sku: skuBase(code) || formData.sku,
         variants: buildVariants(code),
+        // null clears an earlier upload, so the standard chart/guide applies again.
+        sizeChart,
+        careGuide,
       };
 
       if (isEditing) {
@@ -843,6 +854,14 @@ export default function ProductFormModal({
                 </div>
               )}
             </div>
+
+            <ProductGuidesSection
+              gender={gender}
+              sizeChart={sizeChart}
+              onSizeChart={setSizeChart}
+              careGuide={careGuide}
+              onCareGuide={setCareGuide}
+            />
 
             {/* Images: one row per colour, plus a row for images that suit every colour */}
             <div className="space-y-4">
