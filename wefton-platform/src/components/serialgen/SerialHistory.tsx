@@ -24,7 +24,7 @@ export default function SerialHistory({ refreshKey }: { refreshKey: number }) {
     setError('');
     try {
       const n = await clearSerialLog();
-      setNotice(`History cleared. ${n} line${n === 1 ? '' : 's'} moved to the archive; numbering carries on.`);
+      setNotice(`History cleared. ${n} line${n === 1 ? '' : 's'} moved to the archive; serials restart at 000001.`);
       setConfirming(false);
       setReload((r) => r + 1);
     } catch (e) {
@@ -68,7 +68,7 @@ export default function SerialHistory({ refreshKey }: { refreshKey: number }) {
         {confirming ? (
           <>
             <span className="text-[var(--text-muted)]">
-              Move all {entries.length} lines to the archive? Serial numbers carry on from the last one printed.
+              Move all {entries.length} lines to the archive and restart every variant at 000001? Old serials still check as genuine.
             </span>
             <button
               type="button"
@@ -96,7 +96,7 @@ export default function SerialHistory({ refreshKey }: { refreshKey: number }) {
             }}
             className="px-3 py-1.5 rounded border border-white/10 text-[var(--text-muted)] hover:text-[var(--text-light)]"
           >
-            Start fresh history
+            Start fresh (restart at 000001)
           </button>
         )}
       </div>

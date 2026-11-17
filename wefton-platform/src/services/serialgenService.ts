@@ -79,7 +79,7 @@ export async function fetchSerialLog(): Promise<SerialLogEntry[]> {
   return (await res.json()).entries;
 }
 
-/** Moves the whole download history to the archive. Returns how many lines moved. */
+/** Archives the download history and restarts every variant at 000001. Returns how many lines moved. */
 export async function clearSerialLog(): Promise<number> {
   const res = await fetch('/api/serialgen/history', { method: 'DELETE', headers: await authHeaders() });
   if (!res.ok) throw await errorFrom(res);

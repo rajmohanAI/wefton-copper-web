@@ -32,6 +32,8 @@ const COUNTERS_DOC = 'counters/serials';
 const LOG_COLLECTION = 'serialLog';
 /** Changelog lines cleared from the history, kept for the record. */
 const LOG_ARCHIVE_COLLECTION = 'serialLogArchive';
+/** Piece numbers / printed ranges as they stood each time numbering was restarted. */
+const COUNTERS_ARCHIVE_COLLECTION = 'serialCountersArchive';
 
 /** The batch repeats serials already generated; the admin decides what to do. */
 export class SerialConflictError extends CatalogError {
@@ -181,14 +183,14 @@ export async function getSerialLog(db: Firestore, limit = 200): Promise<SerialLo
 }
 
 /**
- * Starts the download history afresh: every changelog line moves to
- * serialLogArchive (with who cleared it and when), so nothing is lost.
- * Piece numbers and printed ranges are untouched, so new serials carry on
- * from the last one printed and old tags still check as genuine.
- * Returns how many lines were archived.
+ * Starts serials afresh after a tag redesign. Every changelog line moves to
+ * serialLogArchive, and the piece numbers / printed ranges are saved to
+ * serialCountersArchive and then cleared, so the next batch of each variant
+ * starts at 000001 again. Nothing is deleted outright, and old serials still
+ * check as genuine against the archives. Returns how many lines moved.
  */
-export async function archiveSerialLog(db: Firestore, by: string): Promise<number> {
-  const snap = await db.collection(LOG_COLLECTION).get();
+export async function restartSerials(db: Firestore, by: string): Promise<number> {
+  const [snap, counters] = await Promise.all([db.collection(LOG_COLLECTION).get(), db.doc(COUNTERS_DOC).get()]);
   const BATCH = 200; // two writes per line, well under Firestore's 500
   for (let i = 0; i < snap.docs.length; i += BATCH) {
     const batch = db.batch();
@@ -200,6 +202,17 @@ export async function archiveSerialLog(db: Firestore, by: string): Promise<numbe
       });
       batch.delete(doc.ref);
     }
+    await batch.commit();
+  }
+  if (counters.exists) {
+    const batch = db.batch();
+    batch.set(db.collection(COUNTERS_ARCHIVE_COLLECTION).doc(), {
+      last: counters.get('last') ?? {},
+      ranges: counters.get('ranges') ?? {},
+      archivedAt: FieldValue.serverTimestamp(),
+      archivedBy: by,
+    });
+    batch.update(counters.ref, { last: {}, ranges: {} });
     await batch.commit();
   }
   return snap.size;
@@ -228,10 +241,11 @@ export async function checkSerial(db: Firestore, input: string): Promise<SerialC
   const parsed = parseSerial(input);
   if (!parsed) return null;
 
-  const [logSnap, archiveSnap, counters, models, colors] = await Promise.all([
+  const [logSnap, archiveSnap, counters, countersArchive, models, colors] = await Promise.all([
     db.collection(LOG_COLLECTION).where('prefix', '==', parsed.prefix).get(),
     db.collection(LOG_ARCHIVE_COLLECTION).where('prefix', '==', parsed.prefix).get(),
     db.doc(COUNTERS_DOC).get(),
+    db.collection(COUNTERS_ARCHIVE_COLLECTION).get(),
     getSerialModels(db),
     getColors(db),
   ]);
@@ -240,9 +254,12 @@ export async function checkSerial(db: Firestore, input: string): Promise<SerialC
     .filter((e) => e.status !== 'failed' && e.start <= parsed.piece && e.end >= parsed.piece)
     .sort((a, b) => (a.createdAt?.toMillis?.() ?? 0) - (b.createdAt?.toMillis?.() ?? 0))[0];
   if (!entry) {
-    const last = (counters.get('last') as Record<string, number> | undefined) ?? {};
-    const ranges = (counters.get('ranges') as Record<string, PrintedRange[]> | undefined) ?? {};
-    const printed = printedRanges(parsed.prefix, ranges, last).some((r) => r.s <= parsed.piece && r.e >= parsed.piece);
+    // Batches from before the log: check the printed ranges, current and archived.
+    const printed = [counters, ...countersArchive.docs].some((doc) => {
+      const last = (doc.get('last') as Record<string, number> | undefined) ?? {};
+      const ranges = (doc.get('ranges') as Record<string, PrintedRange[]> | undefined) ?? {};
+      return printedRanges(parsed.prefix, ranges, last).some((r) => r.s <= parsed.piece && r.e >= parsed.piece);
+    });
     if (!printed) return null;
   }
 
