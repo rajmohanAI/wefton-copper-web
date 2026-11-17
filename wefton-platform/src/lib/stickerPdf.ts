@@ -7,7 +7,7 @@
 //    tag, with the serial beside it and Prod / Color / Gender / Size below.
 // 2. Tag labels, 2 × 3.5 in (5.08 × 8.89 cm): each serial once more, in the same order, as
 //    the full garment tag (black U notch for the punch at the top centre,
-//    fixed brand, product and MRP; then a QR that opens the serial's
+//    fixed complaints, product and MRP text; then a QR that opens the serial's
 //    welcome page, the serial and Prod / Color / Gender / Size below),
 //    TAG_LABELS_PER_ROW to a row. They start right below the last product
 //    row when a label still fits there, else on the next page.
@@ -92,9 +92,6 @@ const TAG_LABEL = {
 
 // Fixed text on every tag label.
 const TAG_TEXT = {
-  header: ['Designed And Sold By', 'Wefton Copper'],
-  /** The header split to sit left and right of the punch notch. */
-  headerSides: [['Designed And', 'Sold By'], ['Wefton', 'Copper']] as const,
   thanks: 'We thank you for choosing our product',
   complaints: ['For Customer Complaints, write to', 'sales@weftoncopper.com'],
   product: ['Product: Crew Neck T Shirt', 'Net Quantity - 1', 'Country Of Origin - India'],
@@ -245,20 +242,6 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
     drawNotch(page, cx, y + h, TAG_LABEL.notchW, TAG_LABEL.notchH);
 
     // Running baseline, moving down the label, starting below the notch.
-    // Header either side of the notch: "Designed And / Sold By" on the left,
-    // "Wefton / Copper" on the right, each centred in its side strip.
-    const stripW = (w - TAG_LABEL.notchW) / 2 - pad - 0.12 * CM;
-    const leftCx = x + pad + stripW / 2;
-    const rightCx = x + w - pad - stripW / 2;
-    const notchMid = y + h - TAG_LABEL.notchH / 2;
-    const [byLines, nameLines] = TAG_TEXT.headerSides;
-    const bySize = Math.min(...byLines.map((t) => fitSize(bold, t, 7.5, stripW)));
-    const nameSize = Math.min(...nameLines.map((t) => fitSize(bold, t, 11, stripW)));
-    drawCentered(page, byLines[0], bold, bySize, leftCx, notchMid + 1.5);
-    drawCentered(page, byLines[1], bold, bySize, leftCx, notchMid - bySize - 0.5);
-    drawCentered(page, nameLines[0], bold, nameSize, rightCx, notchMid + 1.5);
-    drawCentered(page, nameLines[1], bold, nameSize, rightCx, notchMid - nameSize - 0.5);
-
     // Running baseline, moving down the label, from just below the notch.
     let top = y + h - TAG_LABEL.notchH + 0.5;
     let size: number;
