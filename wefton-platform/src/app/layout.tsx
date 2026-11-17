@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: '%s | Wefton Copper',
   },
   description:
-    'Wefton Copper — Premium Cotton Fabric essentials. Redefining the global standard for essential wear, starting from the thread up.',
+    'Wefton Copper — Premium Cotton Fabric essentials. Redefining the standard for essential wear, starting from the fabric.',
   keywords: [
     'Wefton Copper',
     'premium t-shirts',
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     siteName: 'Wefton Copper',
     title: 'Wefton Copper | Premium Cotton Fabric',
     description:
-      'Premium Cotton Fabric essentials. Crafted for the discerning individual.',
+      'High quality Cotton Fabric essentials. Crafted for the discerning individual.',
     images: [
       {
         url: '/og-image.jpg',

@@ -76,13 +76,13 @@ export default function TermsPage() {
           4. Shipping
         </h2>
         <p className="text-base text-[var(--color-muted-foreground)] leading-relaxed mb-4">
-          We aim to dispatch all orders within 2–3 business days. Delivery timelines depend on your
-          location and the shipping method selected at checkout.
+          Orders are dispatched within 2–3 business days and delivered through third-party courier
+          services. Please see our Shipping Policy for details.
         </p>
         <ol className="list-decimal list-inside space-y-2 text-base text-[var(--color-muted-foreground)] leading-relaxed">
-          <li>Estimated delivery times are provided for reference and are not guaranteed.</li>
-          <li>Risk of loss transfers to you upon delivery to the carrier.</li>
-          <li>We are not responsible for delays caused by courier services or customs.</li>
+          <li>Delivery times depend on the courier service and are not guaranteed.</li>
+          <li>Wefton Copper is responsible for parcels lost or damaged in transit, as set out in our Shipping Policy.</li>
+          <li>We are not responsible for delays caused by courier services.</li>
         </ol>
       </section>
 
@@ -91,13 +91,13 @@ export default function TermsPage() {
           5. Returns
         </h2>
         <p className="text-base text-[var(--color-muted-foreground)] leading-relaxed mb-4">
-          We accept returns within 7 days of delivery for eligible items. Please refer to our Refund
-          Policy page for detailed information on eligibility and the return process.
+          Return, replacement and refund requests can be raised within 7 days of receiving your
+          order, in the cases listed in our Return Policy.
         </p>
         <ol className="list-decimal list-inside space-y-2 text-base text-[var(--color-muted-foreground)] leading-relaxed">
-          <li>Items must be unused, unwashed, and in their original packaging.</li>
-          <li>Return requests must be initiated through your account dashboard.</li>
-          <li>Refunds are processed within 3–5 business days of receiving the returned item.</li>
+          <li>Requests are accepted only for a wrong size, colour or gender, a damaged product, or a wrong item received.</li>
+          <li>Requests are raised through WhatsApp, the Contact Us page, or by email, with photos of the product received.</li>
+          <li>Approved refunds are paid to the original payment method.</li>
         </ol>
       </section>
 

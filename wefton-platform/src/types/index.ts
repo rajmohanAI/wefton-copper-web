@@ -1,6 +1,7 @@
 // ============================================================
 // Wefton Copper — Core Type Definitions
 // ============================================================
+import type { WashCareGuide } from '@/config/washCare';
 import type { StockMove } from '@/lib/orderStock';
 
 export interface Product {
@@ -28,10 +29,22 @@ export interface Product {
   featured: boolean;
   bestseller: boolean;
   newArrival: boolean;
+  /** Size chart uploaded for this product; the standard chart for its gender is used when unset. */
+  sizeChart?: SizeChart | null;
+  /** Wash care guide uploaded for this product; the standard guide is used when unset. */
+  careGuide?: WashCareGuide | null;
   /** Optional clean cutout image URL used by the Try-On feature; falls back to primary image. */
   tryOnImage?: string;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface SizeChart {
+  unit: 'in' | 'cm';
+  /** Column names after Size, e.g. ['Chest', 'Shoulder', 'Length']. */
+  measurements: string[];
+  /** One row per size; values line up with `measurements` (null = not measured). */
+  rows: { size: string; values: (number | null)[] }[];
 }
 
 export interface ProductImage {

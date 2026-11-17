@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Instagram, Facebook, Twitter, Mail, Phone, MapPin } from '@/components/ui/SocialIcons';
 import { BRAND } from '@/config/brand';
+import { FEATURES } from '@/config/features';
 import NewsletterForm from './NewsletterForm';
 
 const FOOTER_LINKS = {
@@ -14,7 +15,9 @@ const FOOTER_LINKS = {
     { label: 'Our Vision', href: '/vision' },
     { label: 'About Us', href: '/about' },
     { label: 'Sustainability', href: '/vision#sustainability' },
-    { label: 'Craftsmanship', href: '/vision#craftsmanship' },
+    ...(FEATURES.copperStitchedCraftsmanship
+      ? [{ label: 'Craftsmanship', href: '/vision#craftsmanship' }]
+      : []),
   ],
   Support: [
     { label: 'Size Guide', href: '/size-guide' },
@@ -64,8 +67,8 @@ export default function Footer() {
               WEFTON COPPER
             </Link>
             <p className="mt-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-xs">
-              Redefining the global standard for essential wear, starting from the thread up.
-              Premium Cotton Fabric crafted for the discerning individual.
+              Redefining the standard for essential wear, starting from the fabric.
+              High quality Cotton Fabric crafted for the discerning individual.
             </p>
 
             {/* Social */}
