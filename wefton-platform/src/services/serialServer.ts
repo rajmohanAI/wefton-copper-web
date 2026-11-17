@@ -30,6 +30,8 @@ import type { Product } from '@/types';
 const MODELS_DOC = 'settings/serialModels';
 const COUNTERS_DOC = 'counters/serials';
 const LOG_COLLECTION = 'serialLog';
+/** Changelog lines cleared from the history, kept for the record. */
+const LOG_ARCHIVE_COLLECTION = 'serialLogArchive';
 
 /** The batch repeats serials already generated; the admin decides what to do. */
 export class SerialConflictError extends CatalogError {
@@ -178,6 +180,31 @@ export async function getSerialLog(db: Firestore, limit = 200): Promise<SerialLo
   });
 }
 
+/**
+ * Starts the download history afresh: every changelog line moves to
+ * serialLogArchive (with who cleared it and when), so nothing is lost.
+ * Piece numbers and printed ranges are untouched, so new serials carry on
+ * from the last one printed and old tags still check as genuine.
+ * Returns how many lines were archived.
+ */
+export async function archiveSerialLog(db: Firestore, by: string): Promise<number> {
+  const snap = await db.collection(LOG_COLLECTION).get();
+  const BATCH = 200; // two writes per line, well under Firestore's 500
+  for (let i = 0; i < snap.docs.length; i += BATCH) {
+    const batch = db.batch();
+    for (const doc of snap.docs.slice(i, i + BATCH)) {
+      batch.set(db.collection(LOG_ARCHIVE_COLLECTION).doc(doc.id), {
+        ...doc.data(),
+        archivedAt: FieldValue.serverTimestamp(),
+        archivedBy: by,
+      });
+      batch.delete(doc.ref);
+    }
+    await batch.commit();
+  }
+  return snap.size;
+}
+
 /** What a customer sees for a genuine serial. */
 export interface SerialCheck {
   serial: string;
@@ -201,13 +228,14 @@ export async function checkSerial(db: Firestore, input: string): Promise<SerialC
   const parsed = parseSerial(input);
   if (!parsed) return null;
 
-  const [logSnap, counters, models, colors] = await Promise.all([
+  const [logSnap, archiveSnap, counters, models, colors] = await Promise.all([
     db.collection(LOG_COLLECTION).where('prefix', '==', parsed.prefix).get(),
+    db.collection(LOG_ARCHIVE_COLLECTION).where('prefix', '==', parsed.prefix).get(),
     db.doc(COUNTERS_DOC).get(),
     getSerialModels(db),
     getColors(db),
   ]);
-  const entry = logSnap.docs
+  const entry = [...logSnap.docs, ...archiveSnap.docs]
     .map((d) => d.data())
     .filter((e) => e.status !== 'failed' && e.start <= parsed.piece && e.end >= parsed.piece)
     .sort((a, b) => (a.createdAt?.toMillis?.() ?? 0) - (b.createdAt?.toMillis?.() ?? 0))[0];
