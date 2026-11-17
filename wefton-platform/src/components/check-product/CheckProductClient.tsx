@@ -115,7 +115,7 @@ export default function CheckProductClient() {
             <SearchX size={20} /> We couldn’t find this serial
           </p>
           <p className="text-sm text-[var(--text-muted)]">
-            Check that you typed <span className="font-mono">{result.serial}</span> exactly as printed under the barcode.
+            Check that you typed <span className="font-mono">{result.serial}</span> exactly as printed on the tag.
             If it still isn’t found, write to{' '}
             <a href="mailto:sales@weftoncopper.com" className="text-[var(--copper-light)] hover:underline">
               sales@weftoncopper.com

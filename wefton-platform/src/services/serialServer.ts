@@ -24,6 +24,8 @@ import {
   type StickerSeries,
 } from '@/lib/serialgen';
 import { CatalogError, getColors } from '@/services/catalogServer';
+import { imagesForColor } from '@/lib/productImages';
+import type { Product } from '@/types';
 
 const MODELS_DOC = 'settings/serialModels';
 const COUNTERS_DOC = 'counters/serials';
@@ -224,5 +226,35 @@ export async function checkSerial(db: Firestore, input: string): Promise<SerialC
     gender: GENDER_NAMES[parsed.gender],
     size: parsed.size,
     printedAt: entry?.createdAt?.toDate?.().toISOString() ?? null,
+  };
+}
+
+/** The catalog product a serial belongs to, as shown on its welcome page. */
+export interface SerialProduct {
+  title: string;
+  slug: string;
+  price: number;
+  image: { url: string; alt: string } | null;
+}
+
+/**
+ * The catalog product for a serial: model P01 + gender M is Product ID
+ * WCPM001 (see lib/productCodes). The image is the one for the serial's
+ * colour when the product has one. Null when no product carries that ID.
+ */
+export async function findSerialProduct(db: Firestore, check: Pick<SerialCheck, 'serial' | 'color'>): Promise<SerialProduct | null> {
+  const parsed = parseSerial(check.serial);
+  if (!parsed) return null;
+  const code = `WCP${parsed.gender}${parsed.modelId.slice(1).padStart(3, '0')}`;
+  const snap = await db.collection('products').where('productCode', '==', code).limit(1).get();
+  const doc = snap.docs[0];
+  if (!doc) return null;
+  const p = doc.data() as Pick<Product, 'title' | 'slug' | 'price' | 'images'>;
+  const img = imagesForColor(p.images ?? [], check.color)[0];
+  return {
+    title: p.title,
+    slug: p.slug,
+    price: p.price,
+    image: img ? { url: img.url, alt: img.alt || p.title } : null,
   };
 }
