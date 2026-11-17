@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import ReturnPolicyContent from '@/components/policy/ReturnPolicyContent';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/returns', {
   title: 'Return Policy',
   description:
     'Wefton Copper return policy — raise a return within 7 days of receiving your order for a wrong size, colour or gender, a damaged product, or a wrong item.',
-};
+});
 
 export default function ReturnPolicyPage() {
   return (

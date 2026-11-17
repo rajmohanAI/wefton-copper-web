@@ -17,4 +17,10 @@ export const FEATURES = {
    * stitching, so it stays off until they do (WC-Issue-2).
    */
   copperStitchedCraftsmanship: false,
+  /**
+   * Homepage customer testimonials. The current quotes are placeholders, not
+   * real customers, so the section stays off until real reviews replace
+   * them (WC-Issue-12).
+   */
+  testimonials: false,
 } as const;

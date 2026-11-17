@@ -13,7 +13,7 @@ export interface EmailContent {
 }
 
 const COPPER = '#8c4a22';
-const SITE = 'https://weftoncopper.com';
+const SITE = 'https://www.weftoncopper.com';
 const SUPPORT = 'sales@weftoncopper.com';
 /** Refund window promised when an order is cancelled. */
 export const REFUND_WINDOW = '5–10 business days';

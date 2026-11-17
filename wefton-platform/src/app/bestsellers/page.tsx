@@ -2,18 +2,15 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import CollectionPage from '@/components/catalog/CollectionPage';
 import { ProductCardSkeleton } from '@/components/ui/Skeleton';
+import { withCanonical } from '@/lib/seo';
 
-
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
-
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/bestsellers', {
   title: 'Bestsellers',
   description:
     'Shop the most loved pieces from Wefton Copper. Our community favourites in premium Cotton Fabric.',
   openGraph: {
     title: 'Bestsellers | Wefton Copper',
     description: 'Shop the most loved pieces from Wefton Copper. Our community favourites.',
-    url: `${siteUrl}/bestsellers`,
     images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Wefton Copper Bestsellers' }],
   },
   twitter: {
@@ -22,7 +19,7 @@ export const metadata: Metadata = {
     description: 'Shop the most loved pieces from Wefton Copper.',
     images: ['/og-image.jpg'],
   },
-};
+});
 
 export default function BestsellersPage() {
   return (

@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { collection, getDocs } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.weftoncopper.com';
 
 async function getProductSlugs(): Promise<string[]> {
   try {

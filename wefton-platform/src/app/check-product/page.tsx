@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import CheckProductClient from '@/components/check-product/CheckProductClient';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/check-product', {
   title: 'Check Your Product',
   description: 'Enter the serial on your Wefton Copper tag to check that your product is genuine and see its details.',
-};
+});
 
 export default function CheckProductPage() {
   return (

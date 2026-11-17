@@ -159,7 +159,7 @@ export default function Navbar() {
           >
             <Image
               src="/brand/wefton-mark.png"
-              alt=""
+              alt="Wefton Copper logo"
               width={720}
               height={464}
               loading="eager"
