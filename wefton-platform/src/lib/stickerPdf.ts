@@ -2,7 +2,7 @@
 // Wefton Copper — Product sticker sheet (server only)
 // ============================================================
 // Lays sticker series out on A4 in two parts:
-// 1. Product stickers, 5.5 × 3.3 cm: each serial printed STICKER_COPIES
+// 1. Product stickers, 2 × 1.5 in (5.08 × 3.81 cm): each serial printed STICKER_COPIES
 //    times, so one serial fills one row. The same welcome-page QR as the
 //    tag, with the serial beside it and Prod / Color / Gender / Size below.
 // 2. Tag labels, 2 × 3.5 in (5.08 × 8.89 cm): each serial once more, in the same order, as
@@ -47,19 +47,19 @@ interface StickerLayout extends Grid {
 }
 
 const PRODUCT_LAYOUT: StickerLayout = {
-  w: 5.5 * CM,
-  h: 3.3 * CM,
+  w: 2 * 72, // standard 2 × 1.5 inch label
+  h: 1.5 * 72,
   cols: STICKER_COPIES,
   rows: STICKER_ROWS_PER_PAGE,
   gap: 0.2 * CM,
-  qrSize: 1.85 * CM,
+  qrSize: 2.05 * CM,
   qrInset: 0.15 * CM,
   serialSize: 8,
   labelY: 0.75 * CM,
   valueY: 0.25 * CM,
   labelSize: 7.5,
   colsX: 0.1 * CM,
-  colWidths: [1.2, 1.9, 1.1, 1.1],
+  colWidths: [1.1, 1.75, 1.05, 0.98],
   valueSizes: [11, 7.5, 11, 11],
 };
 
@@ -69,21 +69,24 @@ interface Grid {
   h: number;
   cols: number;
   rows: number;
-  gap: number;
+  gap: number; // between columns
+  /** Between rows; defaults to `gap`. */
+  rowGap?: number;
 }
 
 // Tag label. The U notch at the top centre is where the tag is punched; the
 // QR at the bottom opens the serial's welcome page (product, wash care,
 // review).
-// Standard 2 × 3.5 inch hang tag. Four across A4 only fit with no gap, so
-// neighbouring tags share their cut lines.
+// Standard 2 × 3.5 inch hang tag. Four across A4 leave room for only a
+// 1 mm gap between columns (about 2 mm side margins); rows get 3 mm.
 const INCH = 72;
 const TAG_LABEL = {
   w: 2 * INCH,
   h: 3.5 * INCH,
   cols: TAG_LABELS_PER_ROW,
   rows: TAG_LABEL_ROWS_PER_PAGE,
-  gap: 0,
+  gap: 1 * MM,
+  rowGap: 3 * MM,
   pad: 0.22 * CM,
   notchW: 10 * MM,
   notchH: 12 * MM,
@@ -116,7 +119,8 @@ function drawLogo(page: PDFPage, x: number, top: number, width: number) {
 const logoHeight = (width: number) => (width * LOGO.h) / LOGO.w;
 
 const originX = (l: Grid) => (PAGE_W - (l.cols * l.w + (l.cols - 1) * l.gap)) / 2;
-const pageMargin = (l: Grid) => (PAGE_H - (l.rows * l.h + (l.rows - 1) * l.gap)) / 2;
+const rowGap = (l: Grid) => l.rowGap ?? l.gap;
+const pageMargin = (l: Grid) => (PAGE_H - (l.rows * l.h + (l.rows - 1) * rowGap(l))) / 2;
 
 /** Gender on the sticker reads M / F / U (the serial itself uses W for women). */
 export const STICKER_GENDER: Record<StickerSeries['gender'], string> = { M: 'M', W: 'F', U: 'U' };
@@ -330,7 +334,7 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
       top = PAGE_H - pageMargin(l);
     }
     row.forEach((item, c) => draw(page, originX(l) + c * (l.w + l.gap), top - l.h, item));
-    top -= l.h + l.gap;
+    top -= l.h + rowGap(l);
   };
 
   const drawProduct = (page: PDFPage, x: number, y: number, item: Item) => drawSticker(page, PRODUCT_LAYOUT, x, y, item);
@@ -338,7 +342,7 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
     drawRow(PRODUCT_LAYOUT, Array.from({ length: PRODUCT_LAYOUT.cols }, () => item), drawProduct);
   }
 
-  top -= SECTION_GAP - PRODUCT_LAYOUT.gap;
+  top -= SECTION_GAP - rowGap(PRODUCT_LAYOUT);
   for (let i = 0; i < items.length; i += TAG_LABEL.cols) {
     drawRow(TAG_LABEL, items.slice(i, i + TAG_LABEL.cols), drawTagLabel);
   }
