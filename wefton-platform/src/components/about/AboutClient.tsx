@@ -154,8 +154,8 @@ export default function AboutClient() {
             className="text-lg text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed"
           >
             Premium isn&apos;t about logos; it&apos;s about the feeling of the fabric against the
-            skin and the confidence of the cut. We are redefining the global standard for essential
-            wear, starting from the thread up.
+            skin and the confidence of the cut. We are redefining the standard for essential wear,
+            starting from the fabric.
           </motion.p>
         </div>
       </section>

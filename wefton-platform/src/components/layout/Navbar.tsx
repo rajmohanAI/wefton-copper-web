@@ -22,6 +22,7 @@ import { useSearchStore } from '@/store/searchStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import { getNavCategories, type NavCategory } from '@/services/categoryService';
 import ThemeSwitcher from './ThemeSwitcher';
+import { AdminMenuDesktop, AdminMenuMobile } from './AdminMenu';
 
 /**
  * NavbarActionsSkeleton — rendered before hydration completes
@@ -69,6 +70,10 @@ function buildNavLinks(
   ];
 }
 
+function isAdminUser(user: { role?: string } | null | undefined): boolean {
+  return user?.role === 'admin';
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
@@ -81,6 +86,7 @@ export default function Navbar() {
   const cartCount = useCartStore((s) => s.getItemCount());
   const wishlistCount = useWishlistStore((s) => s.items.length);
   const { user } = useAuthStore();
+  const isAdmin = isAdminUser(user);
   const { openSearch } = useSearchStore();
   const { openModal } = useAuthModalStore();
 
@@ -240,6 +246,7 @@ export default function Navbar() {
                 </AnimatePresence>
               </li>
             ))}
+            {mounted && isAdmin && <AdminMenuDesktop />}
           </ul>
 
           {/* Actions */}
@@ -362,6 +369,7 @@ export default function Navbar() {
                   )}
                 </div>
               ))}
+              {isAdmin && <AdminMenuMobile />}
             </nav>
           </motion.div>
         )}

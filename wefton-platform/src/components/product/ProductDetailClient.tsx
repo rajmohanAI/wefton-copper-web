@@ -494,7 +494,7 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
                 <p className="text-xs tracking-widest uppercase text-[var(--text-muted)]">
                   Size: <span className="text-[var(--text-light)]">{selectedSize || 'Select'}</span>
                 </p>
-                <Link href="/size-guide" className="text-xs text-[var(--copper-light)] hover:underline">
+                <Link href={`/size-guide?product=${encodeURIComponent(product.slug)}`} className="text-xs text-[var(--copper-light)] hover:underline">
                   Size Guide
                 </Link>
               </div>

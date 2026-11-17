@@ -6,9 +6,11 @@ export const BRAND = {
   name: 'Wefton Copper',
   tagline: 'Premium Lightweight Cotton Fabric',
   description:
-    'Redefining the global standard for essential wear, starting from the thread up.',
+    'Redefining the standard for essential wear, starting from the fabric.',
   email: 'sales@weftoncopper.com',
   phone: '+91 80561 89511',
+  /** Customer support on WhatsApp (digits only, with country code, for wa.me links). */
+  whatsapp: '918056189511',
   address: 'Chennai, Tamil Nadu, India',
   social: {
     instagram: 'https://instagram.com/weftoncopper',
