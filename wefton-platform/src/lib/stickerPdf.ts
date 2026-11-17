@@ -98,6 +98,21 @@ const TAG_TEXT = {
   website: 'www.weftoncopper.com',
 };
 
+// Brand mark (the "W" monogram), traced from the brand artwork as seven
+// polygons on an 830 × 535 box, y down. Vector, so it prints sharp.
+const LOGO = {
+  path: 'M470 306 L426 394 L473 495 L582 534 Z M417 201 L297 437 L251 535 L358 495 L460 289 Z M830 42 L694 108 L546 407 L558 437 L594 507 Z M1 40 L239 508 L288 408 L140 106 Z M829 11 L609 39 L539 188 L586 275 L678 90 L813 28 Z M0 10 L19 28 L156 91 L248 276 L294 188 L224 38 Z M416 0 L324 166 L255 298 L298 389 L416 159 L534 389 L578 300 Z',
+  w: 830,
+  h: 535,
+};
+
+/** Draws the brand mark `width` wide with its top-left corner at (x, top). */
+function drawLogo(page: PDFPage, x: number, top: number, width: number) {
+  page.drawSvgPath(LOGO.path, { x, y: top, scale: width / LOGO.w, color: BLACK });
+}
+
+const logoHeight = (width: number) => (width * LOGO.h) / LOGO.w;
+
 const originX = (l: Grid) => (PAGE_W - (l.cols * l.w + (l.cols - 1) * l.gap)) / 2;
 const pageMargin = (l: Grid) => (PAGE_H - (l.rows * l.h + (l.rows - 1) * l.gap)) / 2;
 
@@ -200,9 +215,9 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
     const sideW = x + l.w - 0.12 * CM - sideX;
     const sideCx = sideX + sideW / 2;
     const midY = qrTop - l.qrSize / 2;
-    const brand = TAG_TEXT.header[1];
-    drawCentered(page, brand, bold, fitSize(bold, brand, 9, sideW), sideCx, midY + 3);
-    drawCentered(page, serial, mono, fitSize(mono, serial, l.serialSize, sideW), sideCx, midY - l.serialSize - 1);
+    const logoW = 0.95 * CM;
+    drawLogo(page, sideCx - logoW / 2, midY + logoHeight(logoW) + 1, logoW);
+    drawCentered(page, serial, mono, fitSize(mono, serial, l.serialSize, sideW), sideCx, midY - l.serialSize - 2);
 
     let colX = x + l.colsX;
     STICKER_COLUMNS.forEach(({ label, value }, i) => {
@@ -226,12 +241,20 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
 
     // Running baseline, moving down the label, starting below the notch.
     let top = y + h - TAG_LABEL.notchH - 0.22 * CM;
-    let size = fitSize(bold, TAG_TEXT.header[0], 9.5, inner);
+    // Header lockup: brand mark on the left of the two header lines.
+    const markW = 0.95 * CM;
+    const gapW = 0.16 * CM;
+    let size = fitSize(bold, TAG_TEXT.header[0], 9, inner - markW - gapW);
+    const nameSize = fitSize(bold, TAG_TEXT.header[1], 11, inner - markW - gapW);
+    const textW = Math.max(bold.widthOfTextAtSize(TAG_TEXT.header[0], size), bold.widthOfTextAtSize(TAG_TEXT.header[1], nameSize));
+    const lockX = cx - (markW + gapW + textW) / 2;
+    const textCx0 = lockX + markW + gapW + textW / 2;
+    const blockH = size + nameSize + 1;
+    drawLogo(page, lockX, top - (blockH - logoHeight(markW)) / 2 + 1, markW);
     top -= size;
-    drawCentered(page, TAG_TEXT.header[0], bold, size, cx, top);
-    size = fitSize(bold, TAG_TEXT.header[1], 11, inner);
-    top -= size + 1;
-    drawCentered(page, TAG_TEXT.header[1], bold, size, cx, top);
+    drawCentered(page, TAG_TEXT.header[0], bold, size, textCx0, top);
+    top -= nameSize + 1;
+    drawCentered(page, TAG_TEXT.header[1], bold, nameSize, textCx0, top);
     top -= 4;
     drawRule(page, x + pad, top, inner);
 
