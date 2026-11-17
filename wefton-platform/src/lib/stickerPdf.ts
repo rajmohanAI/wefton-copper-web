@@ -241,20 +241,12 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
 
     // Running baseline, moving down the label, starting below the notch.
     let top = y + h - TAG_LABEL.notchH - 0.22 * CM;
-    // Header lockup: brand mark on the left of the two header lines.
-    const markW = 0.95 * CM;
-    const gapW = 0.16 * CM;
-    let size = fitSize(bold, TAG_TEXT.header[0], 9, inner - markW - gapW);
-    const nameSize = fitSize(bold, TAG_TEXT.header[1], 11, inner - markW - gapW);
-    const textW = Math.max(bold.widthOfTextAtSize(TAG_TEXT.header[0], size), bold.widthOfTextAtSize(TAG_TEXT.header[1], nameSize));
-    const lockX = cx - (markW + gapW + textW) / 2;
-    const textCx0 = lockX + markW + gapW + textW / 2;
-    const blockH = size + nameSize + 1;
-    drawLogo(page, lockX, top - (blockH - logoHeight(markW)) / 2 + 1, markW);
+    let size = fitSize(bold, TAG_TEXT.header[0], 9.5, inner);
     top -= size;
-    drawCentered(page, TAG_TEXT.header[0], bold, size, textCx0, top);
-    top -= nameSize + 1;
-    drawCentered(page, TAG_TEXT.header[1], bold, nameSize, textCx0, top);
+    drawCentered(page, TAG_TEXT.header[0], bold, size, cx, top);
+    size = fitSize(bold, TAG_TEXT.header[1], 11, inner);
+    top -= size + 1;
+    drawCentered(page, TAG_TEXT.header[1], bold, size, cx, top);
     top -= 4;
     drawRule(page, x + pad, top, inner);
 
@@ -291,11 +283,20 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
     top -= 10;
     drawCentered(page, TAG_TEXT.website, regular, 5.6, cx, top);
 
-    // Serial part: the QR opens this piece's welcome page.
-    top -= 8;
-    drawQr(page, qr, cx - TAG_LABEL.qrSize / 2, top, TAG_LABEL.qrSize);
-    top -= TAG_LABEL.qrSize + 8;
-    drawCentered(page, serial, mono, fitSize(mono, serial, 7.5, inner), cx, top);
+    // Serial part, laid out like the product sticker: the QR (opens this
+    // piece's welcome page) on the left, brand mark over the serial beside
+    // it, the pair centred between the website line and the bottom row.
+    const rowTop = y + 0.62 * CM + 6.5 + 4; // just above the Prod / Color labels
+    const qrTop = rowTop + (top - 2 - rowTop + TAG_LABEL.qrSize) / 2;
+    const qrX = x + pad;
+    drawQr(page, qr, qrX, qrTop, TAG_LABEL.qrSize);
+    const sideX = qrX + TAG_LABEL.qrSize + 0.15 * CM;
+    const sideW = x + w - pad - sideX;
+    const sideCx = sideX + sideW / 2;
+    const midY = qrTop - TAG_LABEL.qrSize / 2;
+    const markW = 1.05 * CM;
+    drawLogo(page, sideCx - markW / 2, midY + logoHeight(markW) + 1, markW);
+    drawCentered(page, serial, mono, fitSize(mono, serial, 7.5, sideW), sideCx, midY - 8);
 
     const colWidths = [1.05, 1.6, 1.0, 0.71];
     let colX = x + pad - 0.05 * CM;
