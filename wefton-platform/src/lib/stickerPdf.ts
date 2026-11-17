@@ -2,7 +2,7 @@
 // Wefton Copper — Product sticker sheet (server only)
 // ============================================================
 // Lays sticker series out on A4 in two parts:
-// 1. Product stickers, 5.5 × 3.3 cm: each serial printed STICKER_COPIES
+// 1. Product stickers, 2 × 1.5 in (5.08 × 3.81 cm): each serial printed STICKER_COPIES
 //    times, so one serial fills one row. The same welcome-page QR as the
 //    tag, with the serial beside it and Prod / Color / Gender / Size below.
 // 2. Tag labels, 2 × 3.5 in (5.08 × 8.89 cm): each serial once more, in the same order, as
@@ -47,19 +47,19 @@ interface StickerLayout extends Grid {
 }
 
 const PRODUCT_LAYOUT: StickerLayout = {
-  w: 5.5 * CM,
-  h: 3.3 * CM,
+  w: 2 * 72, // standard 2 × 1.5 inch label
+  h: 1.5 * 72,
   cols: STICKER_COPIES,
   rows: STICKER_ROWS_PER_PAGE,
   gap: 0.2 * CM,
-  qrSize: 1.85 * CM,
+  qrSize: 2.05 * CM,
   qrInset: 0.15 * CM,
   serialSize: 8,
   labelY: 0.75 * CM,
   valueY: 0.25 * CM,
   labelSize: 7.5,
   colsX: 0.1 * CM,
-  colWidths: [1.2, 1.9, 1.1, 1.1],
+  colWidths: [1.1, 1.75, 1.05, 0.98],
   valueSizes: [11, 7.5, 11, 11],
 };
 

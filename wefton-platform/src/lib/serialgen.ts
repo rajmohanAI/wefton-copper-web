@@ -109,8 +109,8 @@ export const PIECE_DIGITS = 6;
 export const MAX_PIECE_NUMBER = 999_999;
 /** Every serial is printed this many times (one row of stickers). */
 export const STICKER_COPIES = 3;
-/** A4 sheet: one serial (its 3 copies) per row, 8 rows a page. */
-export const STICKER_ROWS_PER_PAGE = 8;
+/** A4 sheet: one serial (its 3 copies) per row, 7 rows of 2 × 1.5 in stickers a page. */
+export const STICKER_ROWS_PER_PAGE = 7;
 export const STICKERS_PER_PAGE = STICKER_COPIES * STICKER_ROWS_PER_PAGE;
 /** After those rows, every serial prints once more as a full 2 × 3.5 inch (5.08 × 8.89 cm) tag label. */
 export const TAG_LABELS_PER_ROW = 4;
