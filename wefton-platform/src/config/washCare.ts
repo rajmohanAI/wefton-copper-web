@@ -10,7 +10,7 @@ export interface CareSection {
 }
 
 export interface WashCareGuide {
-  /** Stable id, referenced from a product's `careGuideId`. */
+  /** Slug of the guide name. */
   id: string;
   /** Shown in the product picker on the Wash Care page. */
   name: string;
@@ -25,7 +25,7 @@ export interface WashCareGuide {
 
 /** Standard guide for the current range: 100% cotton crew neck T-shirts. */
 export const STANDARD_COTTON_TEE_GUIDE: WashCareGuide = {
-  id: 'cotton-crew-neck',
+  id: 'cotton-crew-neck-t-shirt',
   name: 'Cotton Crew Neck T-shirt',
   fabric: '100% cotton, knitted jersey',
   quickCare: [

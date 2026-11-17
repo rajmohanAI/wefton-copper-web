@@ -54,6 +54,16 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   return null;
 }
 
+/**
+ * Every product, for the Size Guide and Wash Care pickers. The catalogue is
+ * small; capped so a large catalogue never loads everything.
+ */
+export async function getGuideProducts(max = 200): Promise<Product[]> {
+  const db = requireDb();
+  const snap = await getDocs(query(collection(db, PRODUCTS_COL), orderBy('createdAt', 'desc'), limit(max)));
+  return snap.docs.map((d) => ({ productId: d.id, ...(d.data() as Omit<Product, 'productId'>) }));
+}
+
 export async function getProductById(id: string): Promise<Product | null> {
   const db = requireDb();
   const snap = await getDoc(doc(db, PRODUCTS_COL, id));

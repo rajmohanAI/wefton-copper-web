@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { STANDARD_COTTON_TEE_GUIDE } from '@/config/washCare';
 import WashCareGuideView from '@/components/care/WashCareGuideView';
+import WashCareClient from '@/components/guides/WashCareClient';
 
 export const metadata: Metadata = {
   title: 'Wash Care Instructions',
@@ -16,10 +18,12 @@ export default function WashCarePage() {
           Wash Care Instructions
         </h1>
         <p className="text-[var(--text-muted)] mb-12">
-          Simple care keeps your Wefton Copper garment looking and feeling its best. Always check
-          the care label inside the garment as well.
+          Simple care keeps your Wefton Copper garment looking and feeling its best. Choose your
+          product below, and always check the care label inside the garment as well.
         </p>
-        <WashCareGuideView guide={STANDARD_COTTON_TEE_GUIDE} />
+        <Suspense fallback={<WashCareGuideView guide={STANDARD_COTTON_TEE_GUIDE} />}>
+          <WashCareClient />
+        </Suspense>
       </div>
     </div>
   );
