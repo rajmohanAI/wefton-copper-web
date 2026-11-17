@@ -13,7 +13,7 @@ export default function CheckProductPage() {
       <div className="max-w-2xl mx-auto px-4 md:px-8 py-16">
         <h1 className="text-4xl font-light text-[var(--copper-light)] mb-4">Check Your Product</h1>
         <p className="text-[var(--text-muted)] mb-10">
-          Every Wefton Copper garment carries a serial under the barcode on its tag. Enter it below to check that your
+          Every Wefton Copper garment carries a serial on its tag. Enter it below to check that your
           product is genuine and see its details.
         </p>
         <Suspense>
