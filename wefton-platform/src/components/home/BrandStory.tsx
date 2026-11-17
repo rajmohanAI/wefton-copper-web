@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 import { Shield, Leaf, Shirt, Sparkles, Award } from 'lucide-react';
+import { FEATURES } from '@/config/features';
 
 /**
  * Five product differentiators that define the Wefton Copper brand.
@@ -43,7 +44,7 @@ const DIFFERENTIATORS = [
 
 /**
  * BrandStory — displays Wefton Copper's 5 product differentiators and
- * a copper-stitched craftsmanship section on the homepage.
+ * an optional copper-stitched craftsmanship section on the homepage.
  *
  * Uses Framer Motion staggered entrance animations (100ms delay per card)
  * triggered on viewport entry.
@@ -121,7 +122,9 @@ export default function BrandStory() {
           ))}
         </div>
 
-        {/* Copper-Stitched Craftsmanship Section */}
+        {/* Copper-Stitched Craftsmanship Section — hidden while current products
+            have no copper seams or stitching (FEATURES.copperStitchedCraftsmanship) */}
+        {FEATURES.copperStitchedCraftsmanship && (
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -157,6 +160,7 @@ export default function BrandStory() {
             as they did on day one.
           </p>
         </motion.div>
+        )}
 
         {/* Vision Quote */}
         <motion.blockquote

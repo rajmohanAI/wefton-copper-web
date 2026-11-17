@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Shield, Leaf, Sparkles, Sprout, Hand, Layers } from 'lucide-react';
+import { FEATURES } from '@/config/features';
 
 /**
  * Six brand promise sections for the Wefton Copper Vision page.
@@ -107,8 +108,8 @@ export default function VisionClient() {
           </h1>
           <p className="text-lg text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed">
             Premium isn&apos;t about logos — it&apos;s about the feeling of the fabric against
-            the skin and the confidence of the cut. We are redefining the global standard for
-            essential wear, starting from the thread up.
+            the skin and the confidence of the cut. We are redefining the standard for essential
+            wear, starting from the fabric.
           </p>
         </motion.div>
       </section>
@@ -122,7 +123,9 @@ export default function VisionClient() {
           whileInView="visible"
           viewport={{ once: true, margin: '-50px' }}
         >
-          {BRAND_PROMISES.map((promise) => (
+          {BRAND_PROMISES.filter(
+            (promise) => promise.id !== 'craftsmanship' || FEATURES.copperStitchedCraftsmanship,
+          ).map((promise) => (
             <motion.article
               key={promise.id}
               variants={itemVariants}
