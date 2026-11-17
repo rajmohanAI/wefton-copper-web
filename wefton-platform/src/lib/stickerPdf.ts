@@ -5,9 +5,9 @@
 // 1. Product stickers, 5.5 × 3.3 cm: each serial printed STICKER_COPIES
 //    times, so one serial fills one row. The same welcome-page QR as the
 //    tag, with the serial beside it and Prod / Color / Gender / Size below.
-// 2. Tag labels, 4.8 × 9.4 cm: each serial once more, in the same order, as
+// 2. Tag labels, 2 × 3.5 in (5.08 × 8.89 cm): each serial once more, in the same order, as
 //    the full garment tag (black U notch for the punch at the top centre,
-//    fixed brand, product and MRP; then a QR that opens the serial's
+//    fixed complaints, product and MRP text; then a QR that opens the serial's
 //    welcome page, the serial and Prod / Color / Gender / Size below),
 //    TAG_LABELS_PER_ROW to a row. They start right below the last product
 //    row when a label still fits there, else on the next page.
@@ -75,21 +75,23 @@ interface Grid {
 // Tag label. The U notch at the top centre is where the tag is punched; the
 // QR at the bottom opens the serial's welcome page (product, wash care,
 // review).
+// Standard 2 × 3.5 inch hang tag. Four across A4 only fit with no gap, so
+// neighbouring tags share their cut lines.
+const INCH = 72;
 const TAG_LABEL = {
-  w: 4.8 * CM,
-  h: 9.4 * CM,
+  w: 2 * INCH,
+  h: 3.5 * INCH,
   cols: TAG_LABELS_PER_ROW,
   rows: TAG_LABEL_ROWS_PER_PAGE,
-  gap: 0.15 * CM,
+  gap: 0,
   pad: 0.22 * CM,
   notchW: 10 * MM,
   notchH: 12 * MM,
-  qrSize: 1.9 * CM,
+  qrSize: 2 * CM,
 };
 
 // Fixed text on every tag label.
 const TAG_TEXT = {
-  header: ['Designed And Sold By', 'Wefton Copper'],
   thanks: 'We thank you for choosing our product',
   complaints: ['For Customer Complaints, write to', 'sales@weftoncopper.com'],
   product: ['Product: Crew Neck T Shirt', 'Net Quantity - 1', 'Country Of Origin - India'],
@@ -240,13 +242,9 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
     drawNotch(page, cx, y + h, TAG_LABEL.notchW, TAG_LABEL.notchH);
 
     // Running baseline, moving down the label, starting below the notch.
-    let top = y + h - TAG_LABEL.notchH - 0.22 * CM;
-    let size = fitSize(bold, TAG_TEXT.header[0], 9.5, inner);
-    top -= size;
-    drawCentered(page, TAG_TEXT.header[0], bold, size, cx, top);
-    size = fitSize(bold, TAG_TEXT.header[1], 11, inner);
-    top -= size + 1;
-    drawCentered(page, TAG_TEXT.header[1], bold, size, cx, top);
+    // Running baseline, moving down the label, from just below the notch.
+    let top = y + h - TAG_LABEL.notchH + 0.5;
+    let size: number;
     top -= 4;
     drawRule(page, x + pad, top, inner);
 
@@ -298,7 +296,7 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
     drawLogo(page, sideCx - markW / 2, midY + logoHeight(markW) + 1, markW);
     drawCentered(page, serial, mono, fitSize(mono, serial, 7.5, sideW), sideCx, midY - 8);
 
-    const colWidths = [1.05, 1.6, 1.0, 0.71];
+    const colWidths = [1.12, 1.72, 1.06, 0.74];
     let colX = x + pad - 0.05 * CM;
     STICKER_COLUMNS.forEach(({ label, value }, i) => {
       const colW = colWidths[i] * CM;
