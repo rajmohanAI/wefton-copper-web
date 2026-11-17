@@ -112,7 +112,7 @@ export const STICKER_COPIES = 3;
 /** A4 sheet: one serial (its 3 copies) per row, 8 rows a page. */
 export const STICKER_ROWS_PER_PAGE = 8;
 export const STICKERS_PER_PAGE = STICKER_COPIES * STICKER_ROWS_PER_PAGE;
-/** After those rows, every serial prints once more as a full 4.8 × 9.4 cm tag label. */
+/** After those rows, every serial prints once more as a full 4.8 × 8.5 cm tag label. */
 export const TAG_LABELS_PER_ROW = 4;
 export const TAG_LABEL_ROWS_PER_PAGE = 3;
 export const TAG_LABELS_PER_PAGE = TAG_LABELS_PER_ROW * TAG_LABEL_ROWS_PER_PAGE;
