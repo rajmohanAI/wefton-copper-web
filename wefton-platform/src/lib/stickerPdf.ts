@@ -3,15 +3,17 @@
 // ============================================================
 // Lays sticker series out on A4 in two parts:
 // 1. Product stickers, 5.5 × 3.3 cm: each serial printed STICKER_COPIES
-//    times, so one serial fills one row.
-// 2. Tag labels, 4.8 × 8.5 cm: each serial once more, in the same order, as
-//    the full garment tag (fixed brand, product, MRP and wash-care QR on
-//    top; barcode, serial and Prod / Color / Gender / Size below),
+//    times, so one serial fills one row. The same welcome-page QR as the
+//    tag, with the serial beside it and Prod / Color / Gender / Size below.
+// 2. Tag labels, 4.8 × 9.4 cm: each serial once more, in the same order, as
+//    the full garment tag (black U notch for the punch at the top centre,
+//    fixed brand, product and MRP; then a QR that opens the serial's
+//    welcome page, the serial and Prod / Color / Gender / Size below),
 //    TAG_LABELS_PER_ROW to a row. They start right below the last product
 //    row when a label still fits there, else on the next page.
 // Series run on from each other with no gaps, page after page.
-// Barcodes are drawn as vector bars (not images) so they stay sharp at
-// any printer resolution and scan reliably.
+// QRs are drawn as vector shapes (not images) so they stay
+// sharp at any printer resolution and scan reliably.
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import {
   STICKER_COPIES,
@@ -20,6 +22,7 @@ import {
   TAG_LABEL_ROWS_PER_PAGE,
   formatSerial,
   type StickerSeries,
+  welcomeUrl,
 } from '@/lib/serialgen';
 
 // ── Layout (points; 1cm = 28.3465pt) ──
@@ -30,15 +33,9 @@ const PAGE_H = 841.89;
 const SECTION_GAP = 0.5 * CM; // between the product rows and the tag rows
 const BLACK = rgb(0, 0, 0);
 
-// Code 128: keep bars ≥ 0.25mm wide (standard scanners) and leave a quiet
-// zone of ≥ 10 modules either side inside the sticker.
-const MAX_MODULE = 0.33 * MM;
-
 interface StickerLayout extends Grid {
-  maxBarsW: number;
-  barsH: number;
-  barsTop: number; // from the sticker's top edge
-  serialDrop: number; // serial baseline, below the bars
+  qrSize: number;
+  qrInset: number; // from the sticker's top and left edges
   serialSize: number;
   labelY: number; // from the sticker's bottom edge
   valueY: number;
@@ -55,10 +52,8 @@ const PRODUCT_LAYOUT: StickerLayout = {
   cols: STICKER_COPIES,
   rows: STICKER_ROWS_PER_PAGE,
   gap: 0.2 * CM,
-  maxBarsW: 4.8 * CM,
-  barsH: 1.2 * CM,
-  barsTop: 0.2 * CM,
-  serialDrop: 0.33 * CM,
+  qrSize: 1.85 * CM,
+  qrInset: 0.15 * CM,
   serialSize: 8,
   labelY: 0.75 * CM,
   valueY: 0.25 * CM,
@@ -77,18 +72,19 @@ interface Grid {
   gap: number;
 }
 
-// Tag label. The barcode keeps bars ≥ 0.25mm with a 3mm quiet zone either
-// side, so it is a little wider than on the paper design.
+// Tag label. The U notch at the top centre is where the tag is punched; the
+// QR at the bottom opens the serial's welcome page (product, wash care,
+// review).
 const TAG_LABEL = {
   w: 4.8 * CM,
-  h: 8.5 * CM,
+  h: 9.4 * CM,
   cols: TAG_LABELS_PER_ROW,
   rows: TAG_LABEL_ROWS_PER_PAGE,
   gap: 0.15 * CM,
   pad: 0.22 * CM,
-  quietZone: 3 * MM,
-  barsH: 1.15 * CM,
-  qrSize: 1.45 * CM,
+  notchW: 10 * MM,
+  notchH: 12 * MM,
+  qrSize: 1.9 * CM,
 };
 
 // Fixed text on every tag label.
@@ -99,40 +95,23 @@ const TAG_TEXT = {
   product: ['Product: Crew Neck T Shirt', 'Net Quantity - 1', 'Country Of Origin - India'],
   mrpLabel: 'MAX RETAIL PRICE (Inclusive Of All Taxes)',
   mrp: '689',
-  washCare: 'Wash Care Instructions',
   website: 'www.weftoncopper.com',
 };
 
-// Wash-care QR (HTTPS://WWW.WEFTONCOPPER.COM/WC, the same code as
-// public/wash-care-qr.png), one string per module row, # = dark.
-// Drawn as vector squares so it prints sharp.
-const WASH_CARE_QR = [
-  '#######.#####.#...#######',
-  '#.....#..#.####.#.#.....#',
-  '#.###.#.#..#..#...#.###.#',
-  '#.###.#..##....#..#.###.#',
-  '#.###.#.....#.###.#.###.#',
-  '#.....#.#..#...#..#.....#',
-  '#######.#.#.#.#.#.#######',
-  '.........#...##.#........',
-  '#.#...##..##.#.#...#..#.#',
-  '##..##.#...####..##.##..#',
-  '#.##..##.#..#....#.#..#.#',
-  '###..#.#.#.#.#.###.#.#..#',
-  '##.##.##...#..#...#.####.',
-  '.#..#...#.#..##...##.#..#',
-  '#####.#...##.#.#.##.##.#.',
-  '..##.#.##.#..#......#..#.',
-  '##.####.#.####..#####..##',
-  '........#.#.#...#...#####',
-  '#######.#.#.###.#.#.#.##.',
-  '#.....#....##..##...#####',
-  '#.###.#......########.#..',
-  '#.###.#..##..#...#.###...',
-  '#.###.#.##.#....####..###',
-  '#.....#..##..#.###...##.#',
-  '#######.#.####...########',
-];
+// Brand mark (the "W" monogram), traced from the brand artwork as seven
+// polygons on an 830 × 535 box, y down. Vector, so it prints sharp.
+const LOGO = {
+  path: 'M470 306 L426 394 L473 495 L582 534 Z M417 201 L297 437 L251 535 L358 495 L460 289 Z M830 42 L694 108 L546 407 L558 437 L594 507 Z M1 40 L239 508 L288 408 L140 106 Z M829 11 L609 39 L539 188 L586 275 L678 90 L813 28 Z M0 10 L19 28 L156 91 L248 276 L294 188 L224 38 Z M416 0 L324 166 L255 298 L298 389 L416 159 L534 389 L578 300 Z',
+  w: 830,
+  h: 535,
+};
+
+/** Draws the brand mark `width` wide with its top-left corner at (x, top). */
+function drawLogo(page: PDFPage, x: number, top: number, width: number) {
+  page.drawSvgPath(LOGO.path, { x, y: top, scale: width / LOGO.w, color: BLACK });
+}
+
+const logoHeight = (width: number) => (width * LOGO.h) / LOGO.w;
 
 const originX = (l: Grid) => (PAGE_W - (l.cols * l.w + (l.cols - 1) * l.gap)) / 2;
 const pageMargin = (l: Grid) => (PAGE_H - (l.rows * l.h + (l.rows - 1) * l.gap)) / 2;
@@ -148,32 +127,24 @@ const STICKER_COLUMNS: { label: string; value: (s: StickerSeries) => string }[] 
   { label: 'Size', value: (s) => s.size },
 ];
 
-interface Bars {
-  /** Bars as [left, width] in modules. */
-  bars: [number, number][];
-  modules: number;
+/** A QR as one SVG path (bwip-js output, y down, no quiet zone). */
+interface Qr {
+  path: string;
+  units: number; // width = height of the path, in its own units
 }
 
-/** Turns bwip-js SVG output (one stroked path per bar width) into bar rectangles. */
-function parseBars(svg: string): Bars {
+/** Pulls the single path out of bwip-js SVG output for a QR code. */
+export function parseQr(svg: string): Qr {
   const viewBox = /viewBox="0 0 ([\d.]+) [\d.]+"/.exec(svg);
-  if (!viewBox) throw new Error('Unexpected barcode SVG');
-  const units = Number(viewBox[1]);
-  const bars: [number, number][] = [];
-  for (const [, width, d] of svg.matchAll(/stroke-width="([\d.]+)" d="([^"]+)"/g)) {
-    const w = Number(width);
-    for (const [, x] of d.matchAll(/M([\d.]+) [\d.]+L[\d.]+ [\d.]+/g)) {
-      bars.push([(Number(x) - w / 2) / 2, w / 2]);
-    }
-  }
-  if (!bars.length) throw new Error('Barcode has no bars');
-  return { bars, modules: units / 2 };
+  const path = /<path d="([^"]+)"/.exec(svg);
+  if (!viewBox || !path) throw new Error('Unexpected QR SVG');
+  return { path: path[1], units: Number(viewBox[1]) };
 }
 
 interface Item {
   series: StickerSeries;
   serial: string;
-  bars: Bars;
+  qr: Qr;
 }
 
 /** Shrinks the font size until `text` fits `maxW`. */
@@ -185,12 +156,6 @@ function fitSize(font: PDFFont, text: string, size: number, maxW: number): numbe
 
 function drawCentered(page: PDFPage, text: string, font: PDFFont, size: number, cx: number, y: number) {
   page.drawText(text, { x: cx - font.widthOfTextAtSize(text, size) / 2, y, size, font, color: BLACK });
-}
-
-function drawBars(page: PDFPage, bars: Bars, x: number, y: number, moduleW: number, h: number) {
-  for (const [left, width] of bars.bars) {
-    page.drawRectangle({ x: x + left * moduleW, y, width: width * moduleW, height: h, color: BLACK });
-  }
 }
 
 function drawRule(page: PDFPage, x: number, y: number, w: number) {
@@ -212,23 +177,14 @@ function drawEnvelope(page: PDFPage, x: number, y: number, w: number, h: number)
   page.drawSvgPath(`M0 0 L${w / 2} ${h * 0.55} L${w} 0`, { x, y: y + h, borderColor: rgb(1, 1, 1), borderWidth: 1.1 });
 }
 
-function drawArrow(page: PDFPage, x: number, cy: number, w: number, h: number) {
-  const shaft = h * 0.42;
-  page.drawSvgPath(`M0 ${-shaft / 2} H${w * 0.55} V${-h / 2} L${w} 0 L${w * 0.55} ${h / 2} V${shaft / 2} H0 Z`, {
-    x,
-    y: cy,
-    color: BLACK,
-  });
+/** Black U notch hanging from the top edge, centred on `cx`: straight sides, round bottom. */
+function drawNotch(page: PDFPage, cx: number, top: number, w: number, h: number) {
+  const r = w / 2;
+  page.drawSvgPath(`M0 0 V${h - r} A${r} ${r} 0 0 0 ${w} ${h - r} V0 Z`, { x: cx - r, y: top, color: BLACK });
 }
 
-function drawQr(page: PDFPage, x: number, top: number, size: number) {
-  const m = size / WASH_CARE_QR.length;
-  WASH_CARE_QR.forEach((row, j) => {
-    for (let i = 0; i < row.length; i++) {
-      // A hair of overlap so neighbouring squares print as one solid block.
-      if (row[i] === '#') page.drawRectangle({ x: x + i * m, y: top - (j + 1) * m, width: m + 0.02, height: m + 0.02, color: BLACK });
-    }
-  });
+function drawQr(page: PDFPage, qr: Qr, x: number, top: number, size: number) {
+  page.drawSvgPath(qr.path, { x, y: top, scale: size / qr.units, color: BLACK });
 }
 
 export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Array> {
@@ -244,20 +200,24 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
   const mono = await pdf.embedFont(StandardFonts.Courier);
 
   const drawSticker = (page: PDFPage, l: StickerLayout, x: number, y: number, item: Item) => {
-    const { series: s, serial, bars } = item;
+    const { series: s, serial, qr } = item;
     // Cut guide.
     page.drawRectangle({
       x, y, width: l.w, height: l.h,
       borderColor: rgb(0.75, 0.75, 0.75), borderWidth: 0.4,
     });
 
-    const moduleW = Math.min(MAX_MODULE, l.maxBarsW / bars.modules);
-    const barsW = bars.modules * moduleW;
-    const barsY = y + l.h - l.barsTop - l.barsH;
-    drawBars(page, bars, x + (l.w - barsW) / 2, barsY, moduleW, l.barsH);
-
-    const cx = x + l.w / 2;
-    drawCentered(page, serial, mono, fitSize(mono, serial, l.serialSize, barsW), cx, barsY - l.serialDrop);
+    // QR top left; brand and serial beside it.
+    const qrX = x + l.qrInset;
+    const qrTop = y + l.h - l.qrInset;
+    drawQr(page, qr, qrX, qrTop, l.qrSize);
+    const sideX = qrX + l.qrSize + 0.2 * CM;
+    const sideW = x + l.w - 0.12 * CM - sideX;
+    const sideCx = sideX + sideW / 2;
+    const midY = qrTop - l.qrSize / 2;
+    const logoW = 0.95 * CM;
+    drawLogo(page, sideCx - logoW / 2, midY + logoHeight(logoW) + 1, logoW);
+    drawCentered(page, serial, mono, fitSize(mono, serial, l.serialSize, sideW), sideCx, midY - l.serialSize - 2);
 
     let colX = x + l.colsX;
     STICKER_COLUMNS.forEach(({ label, value }, i) => {
@@ -270,16 +230,17 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
     });
   };
 
-  /** The full garment tag: fixed text and QR on top, the serial below the website. */
+  /** The full garment tag: punch notch and fixed text on top, the serial's QR below the website. */
   const drawTagLabel = (page: PDFPage, x: number, y: number, item: Item) => {
-    const { series: s, serial, bars } = item;
+    const { series: s, serial, qr } = item;
     const { w, h, pad } = TAG_LABEL;
     const inner = w - 2 * pad;
     const cx = x + w / 2;
     page.drawRectangle({ x, y, width: w, height: h, borderColor: rgb(0.75, 0.75, 0.75), borderWidth: 0.4 });
+    drawNotch(page, cx, y + h, TAG_LABEL.notchW, TAG_LABEL.notchH);
 
-    // Running baseline, moving down the label.
-    let top = y + h - 0.32 * CM;
+    // Running baseline, moving down the label, starting below the notch.
+    let top = y + h - TAG_LABEL.notchH - 0.22 * CM;
     let size = fitSize(bold, TAG_TEXT.header[0], 9.5, inner);
     top -= size;
     drawCentered(page, TAG_TEXT.header[0], bold, size, cx, top);
@@ -316,28 +277,26 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
     const capHeight = bold.heightAtSize(priceSize, { descender: false }) * 0.72;
     top -= priceSize + 1;
     const priceW = capHeight * 0.7 + 1.5 + bold.widthOfTextAtSize(TAG_TEXT.mrp, priceSize);
-    const priceX = x + pad + inner * 0.38 - priceW / 2;
+    const priceX = cx - priceW / 2;
     const rupeeW = drawRupee(page, priceX, top, capHeight);
     page.drawText(TAG_TEXT.mrp, { x: priceX + rupeeW + 1.5, y: top, size: priceSize, font: bold, color: BLACK });
-
-    // Wash-care QR on the right, level with the price, arrow pointing at it.
-    const qrX = x + w - pad - TAG_LABEL.qrSize;
-    const qrTop = top + priceSize * 0.35;
-    drawQr(page, qrX, qrTop, TAG_LABEL.qrSize);
-    const qrMid = qrTop - TAG_LABEL.qrSize / 2;
-    size = fitSize(bold, TAG_TEXT.washCare, 6.2, qrX - x - pad - 0.62 * CM);
-    page.drawText(TAG_TEXT.washCare, { x: x + pad, y: qrMid - size * 0.35, size, font: bold, color: BLACK });
-    drawArrow(page, qrX - 0.55 * CM, qrMid, 0.45 * CM, 0.34 * CM);
-    top = qrTop - TAG_LABEL.qrSize - 6.5;
+    top -= 10;
     drawCentered(page, TAG_TEXT.website, regular, 5.6, cx, top);
 
-    // Serial part.
-    const moduleW = Math.min(MAX_MODULE, (w - 2 * TAG_LABEL.quietZone) / bars.modules);
-    const barsW = bars.modules * moduleW;
-    top -= 3 + TAG_LABEL.barsH;
-    drawBars(page, bars, x + (w - barsW) / 2, top, moduleW, TAG_LABEL.barsH);
-    top -= 8;
-    drawCentered(page, serial, mono, fitSize(mono, serial, 7.5, barsW), cx, top);
+    // Serial part, laid out like the product sticker: the QR (opens this
+    // piece's welcome page) on the left, brand mark over the serial beside
+    // it, the pair centred between the website line and the bottom row.
+    const rowTop = y + 0.62 * CM + 6.5 + 4; // just above the Prod / Color labels
+    const qrTop = rowTop + (top - 2 - rowTop + TAG_LABEL.qrSize) / 2;
+    const qrX = x + pad;
+    drawQr(page, qr, qrX, qrTop, TAG_LABEL.qrSize);
+    const sideX = qrX + TAG_LABEL.qrSize + 0.15 * CM;
+    const sideW = x + w - pad - sideX;
+    const sideCx = sideX + sideW / 2;
+    const midY = qrTop - TAG_LABEL.qrSize / 2;
+    const markW = 1.05 * CM;
+    drawLogo(page, sideCx - markW / 2, midY + logoHeight(markW) + 1, markW);
+    drawCentered(page, serial, mono, fitSize(mono, serial, 7.5, sideW), sideCx, midY - 8);
 
     const colWidths = [1.05, 1.6, 1.0, 0.71];
     let colX = x + pad - 0.05 * CM;
@@ -354,7 +313,12 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
   const items: Item[] = series.flatMap((s) =>
     Array.from({ length: s.end - s.start + 1 }, (_, i) => {
       const serial = formatSerial(s.prefix, s.start + i);
-      return { series: s, serial, bars: parseBars(toSVG({ bcid: 'code128', text: serial, height: 10 })) };
+      return {
+        series: s,
+        serial,
+        // Upper case keeps the QR in alphanumeric mode: fewer, bigger modules.
+        qr: parseQr(toSVG({ bcid: 'qrcode', text: welcomeUrl(serial).toUpperCase() })),
+      };
     })
   );
 
