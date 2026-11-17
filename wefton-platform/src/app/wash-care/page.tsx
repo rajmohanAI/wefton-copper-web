@@ -148,7 +148,7 @@ export default function WashCarePage() {
           {/* Note */}
           <section className="glass-card p-6 border border-[var(--copper-main)]/20">
             <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-              <span className="text-[var(--copper-light)] font-medium">Pro tip:</span> Following these wash care instructions will help your Wefton Copper garment retain its shape, colour, and the integrity of the signature copper stitching for 100+ washes.
+              <span className="text-[var(--copper-light)] font-medium">Pro tip:</span> Following these wash care instructions will help your Wefton Copper garment retain its shape, colour, and the integrity of the signature copper stitching for a longer period.
             </p>
           </section>
         </div>
