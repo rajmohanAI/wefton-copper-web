@@ -46,6 +46,13 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Tag QR: HTTPS://WWW.WEFTONCOPPER.COM/WELCOMEUSER/WCP01M0103000001 is in
+  // upper case (smaller QR). Custom routes match case-insensitively, so this
+  // serves /WELCOMEUSER/… from the lowercase page. A rewrite, not a redirect:
+  // a redirect would also match /welcomeuser/… and loop.
+  async rewrites() {
+    return [{ source: '/welcomeuser/:serial', destination: '/welcomeuser/:serial' }];
+  },
   // Security headers
   async headers() {
     return [
