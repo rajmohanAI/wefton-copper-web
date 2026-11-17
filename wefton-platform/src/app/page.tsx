@@ -18,11 +18,11 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
 export const metadata: Metadata = {
   title: 'Wefton Copper | Premium Cotton Fabric',
   description:
-    'Wefton Copper — Premium Cotton Fabric essentials for men and women. Redefining the global standard for essential wear, starting from the thread up.',
+    'Wefton Copper — Premium Cotton Fabric essentials for men and women. Redefining the standard for essential wear, starting from the fabric.',
   openGraph: {
     title: 'Wefton Copper | Premium Cotton Fabric',
     description:
-      'Premium Cotton Fabric essentials. Crafted for the discerning individual.',
+      'High quality Cotton Fabric essentials. Crafted for the discerning individual.',
     url: siteUrl,
     images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Wefton Copper' }],
   },
@@ -77,7 +77,7 @@ export default function HomePage() {
     url: siteUrl,
     logo: `${siteUrl}/logo.png`,
     description:
-      'Premium Cotton Fabric essentials. Redefining the global standard for essential wear, starting from the thread up.',
+      'Premium Cotton Fabric essentials. Redefining the standard for essential wear, starting from the fabric.',
     sameAs: [
       'https://www.instagram.com/weftoncopper',
       'https://www.facebook.com/profile.php?id=61596562648320',
@@ -114,7 +114,7 @@ export default function HomePage() {
         </Section>
 
         {/* 3. Featured Products — server-side fetched with skeleton fallback */}
-        <Section aria-label="Featured products">
+        <Section aria-label="Featured products" className="empty:hidden">
           <Suspense
             fallback={
               <Container>

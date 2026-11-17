@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -20,7 +21,9 @@ export const metadata: Metadata = {
 export default function AdminPage() {
   return (
     <ProtectedRoute requireAdmin>
-      <AdminDashboard />
+      <Suspense fallback={null}>
+        <AdminDashboard />
+      </Suspense>
     </ProtectedRoute>
   );
 }
