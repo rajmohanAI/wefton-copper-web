@@ -69,21 +69,24 @@ interface Grid {
   h: number;
   cols: number;
   rows: number;
-  gap: number;
+  gap: number; // between columns
+  /** Between rows; defaults to `gap`. */
+  rowGap?: number;
 }
 
 // Tag label. The U notch at the top centre is where the tag is punched; the
 // QR at the bottom opens the serial's welcome page (product, wash care,
 // review).
-// Standard 2 × 3.5 inch hang tag. Four across A4 only fit with no gap, so
-// neighbouring tags share their cut lines.
+// Standard 2 × 3.5 inch hang tag. Four across A4 leave room for only a
+// 1 mm gap between columns (about 2 mm side margins); rows get 3 mm.
 const INCH = 72;
 const TAG_LABEL = {
   w: 2 * INCH,
   h: 3.5 * INCH,
   cols: TAG_LABELS_PER_ROW,
   rows: TAG_LABEL_ROWS_PER_PAGE,
-  gap: 0,
+  gap: 1 * MM,
+  rowGap: 3 * MM,
   pad: 0.22 * CM,
   notchW: 10 * MM,
   notchH: 12 * MM,
@@ -116,7 +119,8 @@ function drawLogo(page: PDFPage, x: number, top: number, width: number) {
 const logoHeight = (width: number) => (width * LOGO.h) / LOGO.w;
 
 const originX = (l: Grid) => (PAGE_W - (l.cols * l.w + (l.cols - 1) * l.gap)) / 2;
-const pageMargin = (l: Grid) => (PAGE_H - (l.rows * l.h + (l.rows - 1) * l.gap)) / 2;
+const rowGap = (l: Grid) => l.rowGap ?? l.gap;
+const pageMargin = (l: Grid) => (PAGE_H - (l.rows * l.h + (l.rows - 1) * rowGap(l))) / 2;
 
 /** Gender on the sticker reads M / F / U (the serial itself uses W for women). */
 export const STICKER_GENDER: Record<StickerSeries['gender'], string> = { M: 'M', W: 'F', U: 'U' };
@@ -330,7 +334,7 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
       top = PAGE_H - pageMargin(l);
     }
     row.forEach((item, c) => draw(page, originX(l) + c * (l.w + l.gap), top - l.h, item));
-    top -= l.h + l.gap;
+    top -= l.h + rowGap(l);
   };
 
   const drawProduct = (page: PDFPage, x: number, y: number, item: Item) => drawSticker(page, PRODUCT_LAYOUT, x, y, item);
@@ -338,7 +342,7 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
     drawRow(PRODUCT_LAYOUT, Array.from({ length: PRODUCT_LAYOUT.cols }, () => item), drawProduct);
   }
 
-  top -= SECTION_GAP - PRODUCT_LAYOUT.gap;
+  top -= SECTION_GAP - rowGap(PRODUCT_LAYOUT);
   for (let i = 0; i < items.length; i += TAG_LABEL.cols) {
     drawRow(TAG_LABEL, items.slice(i, i + TAG_LABEL.cols), drawTagLabel);
   }
