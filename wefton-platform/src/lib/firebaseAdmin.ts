@@ -8,6 +8,7 @@
 import { initializeApp, getApps, getApp, applicationDefault, type App } from 'firebase-admin/app';
 import { getAuth, type Auth } from 'firebase-admin/auth';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 
 function adminApp(): App {
   if (getApps().length) return getApp();
@@ -23,4 +24,9 @@ export function getAdminAuth(): Auth {
 
 export function getAdminDb(): Firestore {
   return getFirestore(adminApp());
+}
+
+/** The project's Storage bucket (customer uploads such as Wheez return photos). */
+export function getAdminBucket() {
+  return getStorage(adminApp()).bucket(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
 }

@@ -136,6 +136,20 @@ export default function AccountClient() {
     }
   };
 
+  // /account?tab=orders (e.g. from Wheez "Review a product") opens Orders.
+  const [accountTab, setAccountTab] = useState('profile');
+  const openedFromLink = useRef(false);
+  useEffect(() => {
+    if (!user || openedFromLink.current) return;
+    openedFromLink.current = true;
+    if (new URLSearchParams(window.location.search).get('tab') === 'orders') {
+      setAccountTab('orders');
+      handleTabChange('orders');
+    }
+    // Runs once, when the user is known.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   // Copy tracking number to clipboard
   const handleCopyTracking = async (orderId: string, trackingNumber: string) => {
     try {
@@ -519,7 +533,7 @@ export default function AccountClient() {
 
           {/* Content */}
           <div className="lg:col-span-3">
-            <Tabs.Root defaultValue="profile" onValueChange={handleTabChange}>
+            <Tabs.Root value={accountTab} onValueChange={(v) => { setAccountTab(v); handleTabChange(v); }}>
               <Tabs.List className="flex border-b border-[var(--border-subtle)] mb-8">
                 <Tabs.Trigger
                   value="profile"
