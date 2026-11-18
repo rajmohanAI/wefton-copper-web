@@ -4,6 +4,7 @@ import { MessageCircle } from 'lucide-react';
 import { BRAND } from '@/config/brand';
 import ContactForm from '@/components/contact/ContactForm';
 import WheezChat from '@/components/wheez/WheezChat';
+import WheezMark from '@/components/wheez/WheezMark';
 import { withCanonical } from '@/lib/seo';
 
 export const metadata: Metadata = withCanonical('/contact', {
@@ -96,7 +97,8 @@ export default function ContactPage() {
         </div>
 
         <section aria-labelledby="wheez-heading" className="mt-16">
-          <h2 id="wheez-heading" className="text-2xl font-light text-[var(--copper-light)] mb-2">
+          <h2 id="wheez-heading" className="flex items-center gap-3 text-2xl font-light text-[var(--copper-light)] mb-2">
+            <WheezMark size={36} />
             Chat with Wheez
           </h2>
           <p className="text-sm text-[var(--text-muted)] mb-6 max-w-2xl">
