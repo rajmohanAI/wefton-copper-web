@@ -57,7 +57,7 @@ export default function Footer() {
                 />
                 <Image
                   src="/brand/wefton-mark.png"
-                  alt=""
+                  alt="Wefton Copper logo"
                   width={720}
                   height={464}
                   sizes="96px"
@@ -169,7 +169,7 @@ export default function Footer() {
           <p className="flex items-center gap-2 text-xs text-[var(--text-faint)]">
             <Image
               src="/brand/wefton-mark.png"
-              alt=""
+              alt="Wefton Copper logo"
               width={720}
               height={464}
               sizes="32px"

@@ -78,12 +78,17 @@ export default function BannerSlider({ slides }: BannerSliderProps) {
                 sizes="100vw"
               />
               <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-center px-4">
-                <h2 className="text-3xl md:text-5xl font-bold text-white">
-                  {slide.headline}
-                </h2>
-                <p className="text-base md:text-lg text-white/90 mt-2">
-                  {slide.subheading}
-                </p>
+                {/* Only render text that exists: an empty <h2> is flagged by SEO checks. */}
+                {slide.headline && (
+                  <h2 className="text-3xl md:text-5xl font-bold text-white">
+                    {slide.headline}
+                  </h2>
+                )}
+                {slide.subheading && (
+                  <p className="text-base md:text-lg text-white/90 mt-2">
+                    {slide.subheading}
+                  </p>
+                )}
                 {slide.ctaText && (
                   <a
                     href={slide.ctaHref}

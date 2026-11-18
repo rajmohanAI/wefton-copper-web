@@ -59,7 +59,7 @@ env:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_APP_URL
-    value: https://weftoncopper.com
+    value: https://www.weftoncopper.com
     availability:
       - BUILD
       - RUNTIME

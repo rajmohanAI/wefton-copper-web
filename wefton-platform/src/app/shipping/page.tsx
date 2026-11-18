@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BRAND } from '@/config/brand';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/shipping', {
   title: 'Shipping Policy',
   description:
     'Wefton Copper shipping policy — order dispatch within 2–3 business days, delivery through third-party courier services, and our commitment on lost or damaged parcels.',
-};
+});
 
 export default function ShippingPolicyPage() {
   return (

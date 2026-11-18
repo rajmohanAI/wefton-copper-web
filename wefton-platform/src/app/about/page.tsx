@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import AboutClient from '@/components/about/AboutClient';
+import { withCanonical } from '@/lib/seo';
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
-
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/about', {
   title: 'About Us',
   description:
     'Learn about Wefton Copper — the brand redefining premium essential wear from the thread up.',
@@ -12,7 +11,6 @@ export const metadata: Metadata = {
     title: 'About Us | Wefton Copper',
     description:
       'Learn about Wefton Copper — the brand redefining premium essential wear from the thread up.',
-    url: `${siteUrl}/about`,
     images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'About Wefton Copper' }],
   },
   twitter: {
@@ -21,7 +19,7 @@ export const metadata: Metadata = {
     description: 'Learn about Wefton Copper — redefining premium essential wear.',
     images: ['/og-image.jpg'],
   },
-};
+});
 
 export default function AboutPage() {
   return (

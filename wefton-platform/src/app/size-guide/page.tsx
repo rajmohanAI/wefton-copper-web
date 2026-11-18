@@ -3,12 +3,13 @@ import { Suspense } from 'react';
 import SizeGuideClient from '@/components/guides/SizeGuideClient';
 import SizeChartTable from '@/components/guides/SizeChartTable';
 import { STANDARD_MEN_CHART, STANDARD_WOMEN_CHART } from '@/lib/sizeChart';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/size-guide', {
   title: 'Size Guide',
   description:
     'Find your fit with the Wefton Copper size guide. Choose a product to see its chest or bust, shoulder and length measurements.',
-};
+});
 
 export default function SizeGuidePage() {
   return (

@@ -2,10 +2,9 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import CollectionPage from '@/components/catalog/CollectionPage';
 import { ProductCardSkeleton } from '@/components/ui/Skeleton';
+import { withCanonical } from '@/lib/seo';
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
-
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/men', {
   title: "Men's Collection",
   description:
     "Shop Wefton Copper Men's Collection — Premium Tees, Polos, Oversized, Active Wear, Hoodies, and more. Crafted from Cotton Fabric.",
@@ -13,7 +12,6 @@ export const metadata: Metadata = {
     title: "Men's Collection | Wefton Copper",
     description:
       "Shop Wefton Copper Men's Collection — Premium Tees, Polos, Oversized, Active Wear, Hoodies, and more.",
-    url: `${siteUrl}/men`,
     images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: "Wefton Copper Men's Collection" }],
   },
   twitter: {
@@ -22,7 +20,7 @@ export const metadata: Metadata = {
     description: "Shop Wefton Copper Men's Collection — Premium Cotton Fabric essentials.",
     images: ['/og-image.jpg'],
   },
-};
+});
 
 export default function MenPage() {
   return (

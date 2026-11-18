@@ -2,11 +2,12 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { BRAND, MEN_CATEGORIES, WOMEN_CATEGORIES } from '@/config/brand';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/welcome', {
   title: 'Welcome to Wefton Copper',
   description: 'Premium Cotton Fabric essentials for men and women. Discover our collection.',
-};
+});
 
 const PRODUCTS = [
   ...MEN_CATEGORIES.slice(0, 5).map((c) => ({ ...c, gender: 'men' as const })),
