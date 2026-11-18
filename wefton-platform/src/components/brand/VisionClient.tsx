@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Shield, Leaf, Sparkles, Sprout, Hand, Layers } from 'lucide-react';
 import { FEATURES } from '@/config/features';
@@ -16,7 +17,7 @@ const BRAND_PROMISES = [
     icon: Shield,
     title: 'Authenticity Serial Number',
     description:
-      'Every Wefton Copper garment is assigned a unique serial number printed on the product tag, serving as your personal certificate of authenticity. This serial number is registered in our secure database at the time of manufacturing, linking each piece to its production batch, fabric source, and quality inspection record. Customers can verify their garment\'s authenticity by visiting weftoncopper.com/verify and entering the serial number found on the inner tag. The verification system instantly confirms whether the product is genuine, displays its manufacturing date, and provides care instructions specific to that garment. This initiative protects our customers from counterfeit products and reinforces our commitment to transparency in every stitch.',
+      'Every Wefton Copper garment carries a unique serial number on its tag, your personal certificate of authenticity. Each serial is registered in our secure database when the garment is tagged, linking it to the exact product, colour, fit and size. Enter the serial at weftoncopper.com/check-product to instantly confirm that your garment is genuine. This protects our customers from counterfeit products and reflects our commitment to transparency in every piece.',
     accent: 'from-[var(--copper-main)]/20',
   },
   {
@@ -59,6 +60,25 @@ const BRAND_PROMISES = [
       'At the heart of every Wefton garment lies our signature copper-stitched construction — a technique that merges architectural engineering with textile artistry. We approached the round-neck block like a structural blueprint, eliminating excess fabric and reinforcing every seam with copper-infused threading that provides superior tensile strength. This copper stitching not only strengthens high-stress points like collar joins, shoulder seams, and hem edges, but also adds a distinctive metallic accent visible upon close inspection. The result is a collar that retains its shape wash after wash, seams that resist fraying over years of wear, and a garment that looks as refined on its hundredth day as it did on its first. Each piece undergoes rigorous quality inspection before earning the Wefton Copper mark.',
     accent: 'from-[var(--copper-light)]/20',
   },
+];
+
+/** Cards for extras that ship only when FEATURES.packagingExtras is on. */
+const PACKAGING_EXTRAS = ['fabric-freshener', 'plantable-seed-tag', 'collapsible-hanger'];
+
+const VISIBLE_PROMISES = BRAND_PROMISES.filter(
+  (promise) =>
+    (promise.id !== 'craftsmanship' || FEATURES.copperStitchedCraftsmanship) &&
+    (!PACKAGING_EXTRAS.includes(promise.id) || FEATURES.packagingExtras),
+);
+
+/** What /check-product shows for a genuine serial (WC-Issue-14). */
+const SAMPLE_RESULT: [string, string][] = [
+  ['Serial', 'WCP01M0105000012'],
+  ['Product', '210 GSM 100% cotton, Crew neck half sleeve regular size T-shirt (P01)'],
+  ['Colour', 'Olive Green'],
+  ['Fit', 'Men'],
+  ['Size', 'XL'],
+  ['Tagged on', 'November 9, 2026'],
 ];
 
 const containerVariants = {
@@ -117,15 +137,15 @@ export default function VisionClient() {
       {/* Brand Promise Sections */}
       <section className="py-20 px-4 md:px-8 max-w-[1280px] mx-auto">
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          className={`grid grid-cols-1 md:grid-cols-2 gap-8 ${
+            VISIBLE_PROMISES.length > 2 ? 'lg:grid-cols-3' : 'max-w-4xl mx-auto'
+          }`}
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-50px' }}
         >
-          {BRAND_PROMISES.filter(
-            (promise) => promise.id !== 'craftsmanship' || FEATURES.copperStitchedCraftsmanship,
-          ).map((promise) => (
+          {VISIBLE_PROMISES.map((promise) => (
             <motion.article
               key={promise.id}
               variants={itemVariants}
@@ -197,8 +217,11 @@ export default function VisionClient() {
                 Visit the Verification Page
               </h3>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                Navigate to weftoncopper.com/verify and enter your serial number in the
-                verification field. The system checks against our secure manufacturing database.
+                Go to{' '}
+                <Link href="/check-product" className="text-[var(--copper-light)] underline underline-offset-2">
+                  weftoncopper.com/check-product
+                </Link>{' '}
+                and enter your serial number. It is checked against our secure product database.
               </p>
             </motion.div>
 
@@ -210,10 +233,30 @@ export default function VisionClient() {
                 Receive Confirmation
               </h3>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                Instantly receive confirmation of your garment&apos;s authenticity, including
-                its manufacturing date, fabric source, and specific care instructions.
+                Instantly see that your garment is genuine, with its serial, product, colour, fit,
+                size and the date it was tagged.
               </p>
             </motion.div>
+          </motion.div>
+
+          <motion.div
+            className="glass-card mt-8 p-6 max-w-xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <p className="text-xs tracking-widest uppercase text-[var(--copper-light)] mb-4">
+              Sample confirmation
+            </p>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+              {SAMPLE_RESULT.map(([label, value]) => (
+                <div key={label} className="contents">
+                  <dt className="text-[var(--text-muted)]">{label}</dt>
+                  <dd className={`text-[var(--text-light)] ${label === 'Serial' ? 'font-mono' : ''}`}>{value}</dd>
+                </div>
+              ))}
+            </dl>
           </motion.div>
         </motion.div>
       </section>
