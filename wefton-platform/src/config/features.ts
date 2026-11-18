@@ -24,9 +24,10 @@ export const FEATURES = {
    */
   testimonials: false,
   /**
-   * Vision page cards for the Organic Fabric Freshener, Plantable Seed Tag
-   * and Collapsible Hanger. Current products don't ship with these, so the
-   * cards stay off until they do (WC-Issue-14).
+   * Organic Fabric Freshener, Plantable Seed Tag and Collapsible Hanger,
+   * wherever they appear: Vision cards, the homepage "Why Wefton" card, the
+   * About page seed tag card and the Welcome page ticks. Current products
+   * don't ship with these, so they stay off until they do (WC-Issue-14).
    */
   packagingExtras: false,
 } as const;

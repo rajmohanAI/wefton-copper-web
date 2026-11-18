@@ -3,6 +3,15 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { BRAND, MEN_CATEGORIES, WOMEN_CATEGORIES } from '@/config/brand';
 import { withCanonical } from '@/lib/seo';
+import { FEATURES } from '@/config/features';
+
+/** Ticks under "Brand Differentiators"; extras show only when switched on. */
+const DIFFERENTIATORS = [
+  'Authenticity Serial Number',
+  'Premium Packaging',
+  ...(FEATURES.packagingExtras ? ['Plantable Seed Tag', 'Fabric Freshener', 'Collapsible Hanger'] : []),
+  ...(FEATURES.copperStitchedCraftsmanship ? ['Copper Stitching'] : []),
+];
 
 export const metadata: Metadata = withCanonical('/welcome', {
   title: 'Welcome to Wefton Copper',
@@ -58,31 +67,15 @@ export default function WelcomePage() {
 
       {/* Brand Differentiators */}
       <section className="px-6 py-10 border-t border-neutral-200">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-2xl mx-auto text-center">
-          <div>
-            <p className="text-lg font-light text-[#B87333]">✓</p>
-            <p className="text-xs text-neutral-600 mt-1">Authenticity Serial Number</p>
-          </div>
-          <div>
-            <p className="text-lg font-light text-[#B87333]">✓</p>
-            <p className="text-xs text-neutral-600 mt-1">Premium Packaging</p>
-          </div>
-          <div>
-            <p className="text-lg font-light text-[#B87333]">✓</p>
-            <p className="text-xs text-neutral-600 mt-1">Plantable Seed Tag</p>
-          </div>
-          <div>
-            <p className="text-lg font-light text-[#B87333]">✓</p>
-            <p className="text-xs text-neutral-600 mt-1">Fabric Freshener</p>
-          </div>
-          <div>
-            <p className="text-lg font-light text-[#B87333]">✓</p>
-            <p className="text-xs text-neutral-600 mt-1">Collapsible Hanger</p>
-          </div>
-          <div>
-            <p className="text-lg font-light text-[#B87333]">✓</p>
-            <p className="text-xs text-neutral-600 mt-1">Copper Stitching</p>
-          </div>
+        <div
+          className={`grid grid-cols-2 gap-4 max-w-2xl mx-auto text-center ${DIFFERENTIATORS.length > 2 ? 'sm:grid-cols-3' : ''}`}
+        >
+          {DIFFERENTIATORS.map((label) => (
+            <div key={label}>
+              <p className="text-lg font-light text-[#B87333]">✓</p>
+              <p className="text-xs text-neutral-600 mt-1">{label}</p>
+            </div>
+          ))}
         </div>
       </section>
 
