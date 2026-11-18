@@ -189,16 +189,6 @@ function drawNotch(page: PDFPage, cx: number, top: number, w: number, h: number)
   page.drawSvgPath(`M0 0 V${h - r} A${r} ${r} 0 0 0 ${w} ${h - r} V0 Z`, { x: cx - r, y: top, color: BLACK });
 }
 
-/** Dashed cut line across the roll with a small scissors mark at the left. */
-function drawCutLine(page: PDFPage, y: number, w: number) {
-  // Scissors: two rings and crossing blades, about 3 mm wide.
-  page.drawCircle({ x: 3, y: y + 1.6, size: 1.3, borderColor: BLACK, borderWidth: 0.6 });
-  page.drawCircle({ x: 3, y: y - 1.6, size: 1.3, borderColor: BLACK, borderWidth: 0.6 });
-  page.drawLine({ start: { x: 4, y: y + 0.8 }, end: { x: 10, y: y - 1.2 }, thickness: 0.6, color: BLACK });
-  page.drawLine({ start: { x: 4, y: y - 0.8 }, end: { x: 10, y: y + 1.2 }, thickness: 0.6, color: BLACK });
-  page.drawLine({ start: { x: 12, y }, end: { x: w - 2, y }, thickness: 0.6, color: BLACK, dashArray: [3, 2] });
-}
-
 function drawQr(page: PDFPage, qr: Qr, x: number, top: number, size: number) {
   page.drawSvgPath(qr.path, { x, y: top, scale: size / qr.units, color: BLACK });
 }
@@ -210,11 +200,11 @@ function drawQr(page: PDFPage, qr: Qr, x: number, top: number, size: number) {
  */
 export type StickerFormat = 'a4' | 'roll-stickers' | 'roll-tags';
 
-// Roll: one label per page, each followed by a dashed cut line. Thermal
-// printers print black only, so roll labels have no grey border.
+// Roll: one label per page, with a small blank gap below it and no cut
+// line. Thermal printers print black only, so roll labels have no grey border.
 const ROLL = {
   w: 2 * INCH,
-  cutZone: 5 * MM, // blank space below each label, with the cut line in the middle
+  gap: 5 * MM, // blank space below each label, to cut in
 };
 
 export async function renderStickerPdf(series: StickerSeries[], format: StickerFormat = 'a4'): Promise<Uint8Array> {
@@ -231,7 +221,7 @@ export async function renderStickerPdf(series: StickerSeries[], format: StickerF
 
   const drawSticker = (page: PDFPage, l: StickerLayout, x: number, y: number, item: Item) => {
     const { series: s, serial, qr } = item;
-    // Cut guide (A4 only: on the roll the paper edge and cut line do this).
+    // Cut guide (A4 only: on the roll the paper edge and the blank gap do this).
     if (format === 'a4') {
       page.drawRectangle({
         x, y, width: l.w, height: l.h,
@@ -353,11 +343,10 @@ export async function renderStickerPdf(series: StickerSeries[], format: StickerF
   );
 
   if (format !== 'a4') {
-    // One label per page, in serial order, each followed by a cut line.
+    // One label per page, in serial order, each followed by a blank gap.
     const rollLabel = (h: number, draw: (page: PDFPage, x: number, y: number) => void) => {
-      const p = pdf.addPage([ROLL.w, h + ROLL.cutZone]);
-      draw(p, 0, ROLL.cutZone);
-      drawCutLine(p, ROLL.cutZone / 2, ROLL.w);
+      const p = pdf.addPage([ROLL.w, h + ROLL.gap]);
+      draw(p, 0, ROLL.gap);
     };
     for (const item of items) {
       if (format === 'roll-stickers') {
