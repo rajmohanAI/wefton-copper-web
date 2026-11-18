@@ -3,12 +3,13 @@ import { Suspense } from 'react';
 import { STANDARD_COTTON_TEE_GUIDE } from '@/config/washCare';
 import WashCareGuideView from '@/components/care/WashCareGuideView';
 import WashCareClient from '@/components/guides/WashCareClient';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/wash-care', {
   title: 'Wash Care Instructions',
   description:
     'How to wash, dry, iron and store your Wefton Copper cotton garments so they keep their shape, colour and softness.',
-};
+});
 
 export default function WashCarePage() {
   return (

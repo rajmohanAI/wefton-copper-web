@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Don't advertise the framework in an X-Powered-By header.
+  poweredByHeader: false,
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'firebasestorage.googleapis.com' },
@@ -25,6 +27,15 @@ const nextConfig: NextConfig = {
   // payload (HTTPS://WEFTONCOPPER.COM/IG) also resolves correctly.
   async redirects() {
     return [
+      // One site address: weftoncopper.com/* -> www.weftoncopper.com/* (301).
+      // Listed first; the path is kept, so the hangtag short links still work
+      // (they then match the rules below on the www host).
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'weftoncopper.com' }],
+        destination: 'https://www.weftoncopper.com/:path*',
+        permanent: true,
+      },
       // Serial short link: /s/WCP01M0103000001 -> "Check your product" for
       // that serial (for a QR on the sticker). Case-insensitive like the others.
       {

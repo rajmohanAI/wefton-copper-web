@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/seo';
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
-
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/privacy', {
   title: 'Privacy Policy',
   description:
     'Learn how Wefton Copper collects, uses, and protects your personal information.',
@@ -10,9 +9,8 @@ export const metadata: Metadata = {
     title: 'Privacy Policy | Wefton Copper',
     description:
       'Learn how Wefton Copper collects, uses, and protects your personal information.',
-    url: `${siteUrl}/privacy`,
   },
-};
+});
 
 export default function PrivacyPage() {
   return (
