@@ -37,7 +37,7 @@ export default function StickerExcelUpload({ catalog, onPrinted }: { catalog: Se
     if (inputRef.current) inputRef.current.value = '';
   };
 
-  const { print, submitting, error, result, clearResult, dialog } = useStickerPrint('excel', () => {
+  const { print, submitting, error, result, clearResult, dialog, formatPicker } = useStickerPrint('excel', () => {
     reset();
     onPrinted();
   });
@@ -105,6 +105,7 @@ export default function StickerExcelUpload({ catalog, onPrinted }: { catalog: Se
             {requests.length} row(s), {serials} serial(s) × {STICKER_COPIES} copies + 1 tag label each ={' '}
             {serials * STICKERS_PER_SERIAL} stickers, about {estimateStickerPages(serials)} A4 page(s).
           </p>
+          {formatPicker}
           <Button variant="copper" onClick={generate} loading={submitting} disabled={submitting}>
             {submitting ? 'Generating PDF…' : 'Generate PDF'}
           </Button>

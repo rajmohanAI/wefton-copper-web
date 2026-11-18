@@ -193,7 +193,21 @@ function drawQr(page: PDFPage, qr: Qr, x: number, top: number, size: number) {
   page.drawSvgPath(qr.path, { x, y: top, scale: size / qr.units, color: BLACK });
 }
 
-export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Array> {
+/**
+ * 'a4' is the sheet above. The roll formats are for a 2-inch thermal pocket
+ * printer, one per paper roll (WC-Issue-15): 'roll-stickers' has every
+ * product sticker (STICKER_COPIES per serial), 'roll-tags' every tag label.
+ */
+export type StickerFormat = 'a4' | 'roll-stickers' | 'roll-tags';
+
+// Roll: one label per page, with a small blank gap below it and no cut
+// line. Thermal printers print black only, so roll labels have no grey border.
+const ROLL = {
+  w: 2 * INCH,
+  gap: 5 * MM, // blank space below each label, to cut in
+};
+
+export async function renderStickerPdf(series: StickerSeries[], format: StickerFormat = 'a4'): Promise<Uint8Array> {
   const { toSVG } = await import('bwip-js/node');
 
   const pdf = await PDFDocument.create();
@@ -207,11 +221,13 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
 
   const drawSticker = (page: PDFPage, l: StickerLayout, x: number, y: number, item: Item) => {
     const { series: s, serial, qr } = item;
-    // Cut guide.
-    page.drawRectangle({
-      x, y, width: l.w, height: l.h,
-      borderColor: rgb(0.75, 0.75, 0.75), borderWidth: 0.4,
-    });
+    // Cut guide (A4 only: on the roll the paper edge and the blank gap do this).
+    if (format === 'a4') {
+      page.drawRectangle({
+        x, y, width: l.w, height: l.h,
+        borderColor: rgb(0.75, 0.75, 0.75), borderWidth: 0.4,
+      });
+    }
 
     // QR top left; brand and serial beside it.
     const qrX = x + l.qrInset;
@@ -242,7 +258,9 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
     const { w, h, pad } = TAG_LABEL;
     const inner = w - 2 * pad;
     const cx = x + w / 2;
-    page.drawRectangle({ x, y, width: w, height: h, borderColor: rgb(0.75, 0.75, 0.75), borderWidth: 0.4 });
+    if (format === 'a4') {
+      page.drawRectangle({ x, y, width: w, height: h, borderColor: rgb(0.75, 0.75, 0.75), borderWidth: 0.4 });
+    }
     drawNotch(page, cx, y + h, TAG_LABEL.notchW, TAG_LABEL.notchH);
 
     // Running baseline, moving down the label, starting below the notch.
@@ -324,6 +342,24 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
     })
   );
 
+  if (format !== 'a4') {
+    // One label per page, in serial order, each followed by a blank gap.
+    const rollLabel = (h: number, draw: (page: PDFPage, x: number, y: number) => void) => {
+      const p = pdf.addPage([ROLL.w, h + ROLL.gap]);
+      draw(p, 0, ROLL.gap);
+    };
+    for (const item of items) {
+      if (format === 'roll-stickers') {
+        for (let c = 0; c < STICKER_COPIES; c++) {
+          rollLabel(PRODUCT_LAYOUT.h, (p, x, y) => drawSticker(p, PRODUCT_LAYOUT, x, y, item));
+        }
+      } else {
+        rollLabel(TAG_LABEL.h, (p, x, y) => drawTagLabel(p, x, y, item));
+      }
+    }
+    return pdf.save();
+  }
+
   let page = pdf.addPage([PAGE_W, PAGE_H]);
   let top = PAGE_H - pageMargin(PRODUCT_LAYOUT); // where the next row starts
 
@@ -350,7 +386,8 @@ export async function renderStickerPdf(series: StickerSeries[]): Promise<Uint8Ar
   return pdf.save();
 }
 
-export function buildStickerPdfName(series: StickerSeries[]): string {
+export function buildStickerPdfName(series: StickerSeries[], format: StickerFormat = 'a4'): string {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  return `stickers_${series[0].prefix}_${series.length}-series_${stamp}.pdf`;
+  const kind = format === 'roll-stickers' ? 'roll-stickers_' : format === 'roll-tags' ? 'roll-tags_' : '';
+  return `stickers_${kind}${series[0].prefix}_${series.length}-series_${stamp}.pdf`;
 }

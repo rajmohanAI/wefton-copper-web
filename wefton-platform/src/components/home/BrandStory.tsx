@@ -31,6 +31,7 @@ const DIFFERENTIATORS = [
   {
     icon: Sparkles,
     title: 'Fabric Freshener',
+    packagingExtra: true,
     description:
       'An organic fabric freshener accompanies every garment. Keep your Wefton essentials smelling fresh naturally, without harsh chemicals or synthetic fragrances.',
   },
@@ -41,6 +42,13 @@ const DIFFERENTIATORS = [
       'Each garment is crafted from handpicked, meticulously selected high-quality fabric — engineered for lasting comfort and a premium feel you can trust, wear after wear.',
   },
 ];
+
+/** Packaging extras show only when FEATURES.packagingExtras is on (WC-Issue-14). */
+const VISIBLE_DIFFERENTIATORS = DIFFERENTIATORS.filter(
+  (item) => !('packagingExtra' in item) || FEATURES.packagingExtras,
+);
+
+const COUNT_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six'];
 
 /**
  * BrandStory — displays Wefton Copper's 5 product differentiators and
@@ -94,14 +102,18 @@ export default function BrandStory() {
             <span className="gradient-copper">An experience.</span>
           </h2>
           <p className="mt-6 text-base text-[var(--text-muted)] leading-relaxed text-center">
-            Every Wefton Copper product comes with five thoughtful extras that reflect our
+            Every Wefton Copper product comes with {COUNT_WORDS[VISIBLE_DIFFERENTIATORS.length]} thoughtful extras that reflect our
             commitment to quality, sustainability, and care.
           </p>
         </motion.div>
 
         {/* Differentiator Cards — staggered entrance at 100ms per card */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-          {DIFFERENTIATORS.map((item, i) => (
+        <div
+          className={`grid grid-cols-1 sm:grid-cols-2 gap-6 ${
+            VISIBLE_DIFFERENTIATORS.length === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'
+          }`}
+        >
+          {VISIBLE_DIFFERENTIATORS.map((item, i) => (
             <motion.div
               key={item.title}
               initial={{ opacity: 0, y: 30 }}

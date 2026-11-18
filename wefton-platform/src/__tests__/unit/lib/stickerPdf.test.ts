@@ -4,8 +4,8 @@
 import { writeFileSync } from 'node:fs';
 import { PDFDocument } from 'pdf-lib';
 import { describe, expect, it } from 'vitest';
-import { estimateStickerPages, planSeries, STICKERS_PER_PAGE, welcomeUrl } from '@/lib/serialgen';
-import { parseQr, renderStickerPdf, STICKER_GENDER } from '@/lib/stickerPdf';
+import { estimateStickerPages, planSeries, STICKER_COPIES, STICKERS_PER_PAGE, welcomeUrl } from '@/lib/serialgen';
+import { buildStickerPdfName, parseQr, renderStickerPdf, STICKER_GENDER } from '@/lib/stickerPdf';
 
 describe('sticker sheet', () => {
   it('prints 3 copies per serial, 7 rows per A4 page', async () => {
@@ -48,5 +48,35 @@ describe('sticker sheet', () => {
     // Upper case stays in alphanumeric mode: a 29-module (version 3) QR, 4 units a module.
     expect(qr.units).toBe(29 * 4);
     expect(qr.path.startsWith('M')).toBe(true);
+  });
+
+  describe('2-inch roll PDFs (WC-Issue-15)', () => {
+    const { series } = planSeries(
+      [{ modelId: 'P01', gender: 'M', colorCode: '01', colorName: 'Olive Green', size: 'XL', quantity: 4 }],
+      {},
+    );
+    const pages = async (format: 'roll-stickers' | 'roll-tags') =>
+      (await PDFDocument.load(await renderStickerPdf(series, format))).getPages();
+
+    it('puts every product sticker on its own 2-inch page', async () => {
+      const p = await pages('roll-stickers');
+      expect(p).toHaveLength(4 * STICKER_COPIES);
+      expect(Math.round(p[0].getWidth())).toBe(144);
+      // 1.5 in sticker plus the 5 mm blank gap.
+      expect(Math.round(p[0].getHeight())).toBe(122);
+    });
+
+    it('puts one tag label per serial on its own 2-inch page', async () => {
+      const p = await pages('roll-tags');
+      expect(p).toHaveLength(4);
+      expect(Math.round(p[0].getWidth())).toBe(144);
+      expect(Math.round(p[0].getHeight())).toBe(266);
+    });
+
+    it('names the roll files apart from the A4 sheet', () => {
+      expect(buildStickerPdfName(series, 'roll-stickers')).toMatch(/^stickers_roll-stickers_/);
+      expect(buildStickerPdfName(series, 'roll-tags')).toMatch(/^stickers_roll-tags_/);
+      expect(buildStickerPdfName(series)).not.toMatch(/roll/);
+    });
   });
 });
