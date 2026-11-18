@@ -12,10 +12,12 @@ import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import Container from '@/components/layout/Container';
 import Section from '@/components/layout/Section';
 import ProductGrid from '@/components/catalog/ProductGrid';
+import { withCanonical } from '@/lib/seo';
+import { FEATURES } from '@/config/features';
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.weftoncopper.com';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/', {
   title: 'Wefton Copper | Premium Cotton Fabric',
   description:
     'Wefton Copper — Premium Cotton Fabric essentials for men and women. Redefining the standard for essential wear, starting from the fabric.',
@@ -23,7 +25,6 @@ export const metadata: Metadata = {
     title: 'Wefton Copper | Premium Cotton Fabric',
     description:
       'High quality Cotton Fabric essentials. Crafted for the discerning individual.',
-    url: siteUrl,
     images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Wefton Copper' }],
   },
   twitter: {
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
     description: 'Premium Cotton Fabric essentials.',
     images: ['/og-image.jpg'],
   },
-};
+});
 
 /**
  * Placeholder banner slides for the homepage hero.
@@ -138,10 +139,12 @@ export default function HomePage() {
           <BrandStory />
         </section>
 
-        {/* 5. Testimonials — customer reviews carousel */}
-        <section aria-label="Customer testimonials">
-          <TestimonialsSection />
-        </section>
+        {/* 5. Testimonials — customer reviews carousel (off until real reviews exist) */}
+        {FEATURES.testimonials && (
+          <section aria-label="Customer testimonials">
+            <TestimonialsSection />
+          </section>
+        )}
 
         {/* 6. Newsletter — temporarily hidden
         <section

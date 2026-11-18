@@ -34,7 +34,7 @@ export async function generateStaticParams(): Promise<{ slug: string }[]> {
   }
 }
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.weftoncopper.com';
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -49,10 +49,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title,
       description,
+      alternates: { canonical: `/products/${slug}` },
       openGraph: {
         title: `${title} | Wefton Copper`,
         description,
-        url: `${siteUrl}/products/${slug}`,
+        url: `/products/${slug}`,
         images: [{ url: imageUrl, alt: product.title }],
       },
       twitter: {

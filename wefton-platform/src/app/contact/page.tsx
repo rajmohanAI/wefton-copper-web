@@ -3,12 +3,13 @@ import { Mail, Phone, MapPin } from '@/components/ui/SocialIcons';
 import { MessageCircle } from 'lucide-react';
 import { BRAND } from '@/config/brand';
 import ContactForm from '@/components/contact/ContactForm';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/contact', {
   title: 'Contact Us',
   description:
     'Contact Wefton Copper for help with orders, deliveries, returns, sizing or anything else, by WhatsApp, phone, email or the contact form.',
-};
+});
 
 const CHANNELS = [
   {

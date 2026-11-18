@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.weftoncopper.com';
 
 // Only the live site should be indexed; dev/qa/pp hosts block all crawlers.
 const isProduction = ['weftoncopper.com', 'www.weftoncopper.com'].includes(new URL(siteUrl).hostname);

@@ -1,20 +1,18 @@
 import type { Metadata } from 'next';
 import ReturnPolicyContent from '@/components/policy/ReturnPolicyContent';
-
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
+import { withCanonical } from '@/lib/seo';
 
 const description =
   'Wefton Copper refund policy — when a return, replacement or refund is accepted, what to send us, and how refunds are paid.';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/refund-policy', {
   title: 'Refund Policy',
   description,
   openGraph: {
     title: 'Refund Policy | Wefton Copper',
     description,
-    url: `${siteUrl}/refund-policy`,
   },
-};
+});
 
 export default function RefundPolicyPage() {
   return (

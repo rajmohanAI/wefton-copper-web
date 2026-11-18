@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/cookies', {
   title: 'Cookie Policy',
   description: 'Wefton Copper cookie policy — how we use cookies to improve your shopping experience.',
-};
+});
 
 export default function CookiePolicyPage() {
   return (

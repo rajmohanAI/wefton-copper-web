@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
+import { withCanonical } from '@/lib/seo';
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://weftoncopper.com';
-
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical('/terms', {
   title: 'Terms of Service',
   description:
     'Read the Terms of Service for Wefton Copper. Understand your rights and obligations when using our platform.',
@@ -10,9 +9,8 @@ export const metadata: Metadata = {
     title: 'Terms of Service | Wefton Copper',
     description:
       'Read the Terms of Service for Wefton Copper. Understand your rights and obligations when using our platform.',
-    url: `${siteUrl}/terms`,
   },
-};
+});
 
 export default function TermsPage() {
   return (
