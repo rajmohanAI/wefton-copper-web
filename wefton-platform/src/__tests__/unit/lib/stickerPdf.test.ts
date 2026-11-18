@@ -62,7 +62,7 @@ describe('sticker sheet', () => {
       const p = await pages('roll-stickers');
       expect(p).toHaveLength(4 * STICKER_COPIES);
       expect(Math.round(p[0].getWidth())).toBe(144);
-      // 1.5 in sticker plus the 5 mm cut zone.
+      // 1.5 in sticker plus the 5 mm blank gap.
       expect(Math.round(p[0].getHeight())).toBe(122);
     });
 
