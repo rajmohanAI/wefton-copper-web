@@ -23,4 +23,10 @@ export const FEATURES = {
    * them (WC-Issue-12).
    */
   testimonials: false,
+  /**
+   * Vision page cards for the Organic Fabric Freshener, Plantable Seed Tag
+   * and Collapsible Hanger. Current products don't ship with these, so the
+   * cards stay off until they do (WC-Issue-14).
+   */
+  packagingExtras: false,
 } as const;
