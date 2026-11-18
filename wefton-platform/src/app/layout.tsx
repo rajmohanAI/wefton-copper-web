@@ -4,6 +4,7 @@ import '@/styles/globals.css';
 import AppProviders from '@/components/providers/AppProviders';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import WheezLauncher from '@/components/wheez/WheezLauncher';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -85,6 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </main>
           <Footer />
+          <WheezLauncher />
         </AppProviders>
       </body>
     </html>

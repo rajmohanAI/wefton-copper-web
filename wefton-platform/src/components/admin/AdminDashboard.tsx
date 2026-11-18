@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Ticket,
   RotateCcw,
+  MessageCircle,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { getAllOrders } from '@/services/orderService';
@@ -23,6 +24,7 @@ import ProductsTab from './ProductsTab';
 import AdminOrders from './AdminOrders';
 import CouponsTab from './CouponsTab';
 import ReturnsTab from './ReturnsTab';
+import SupportTab from './SupportTab';
 import type { Order, AdminStats } from '@/types';
 import { isAdminDashboardTab } from '@/config/adminServices';
 
@@ -191,7 +193,7 @@ export default function AdminDashboard() {
         {/* Radix UI Tabs */}
         <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
           <Tabs.List
-            className="flex items-center gap-1 p-1 mb-8 glass-card w-fit rounded-lg"
+            className="flex items-center gap-1 p-1 mb-8 glass-card w-fit max-w-full overflow-x-auto rounded-lg"
             aria-label="Admin dashboard navigation"
           >
             <Tabs.Trigger
@@ -229,6 +231,13 @@ export default function AdminDashboard() {
               <RotateCcw size={15} />
               Returns
             </Tabs.Trigger>
+            <Tabs.Trigger
+              value="support"
+              className="flex items-center gap-2 px-4 py-2.5 rounded text-sm transition-colors data-[state=active]:bg-[var(--copper-main)]/10 data-[state=active]:text-[var(--copper-light)] data-[state=active]:border data-[state=active]:border-[var(--copper-main)]/20 text-[var(--text-muted)] hover:text-[var(--text-light)] hover:bg-white/5"
+            >
+              <MessageCircle size={15} />
+              Support
+            </Tabs.Trigger>
           </Tabs.List>
 
           {/* Orders Tab */}
@@ -258,6 +267,11 @@ export default function AdminDashboard() {
           {/* Returns Tab */}
           <Tabs.Content value="returns" className="outline-none">
             <ReturnsTab />
+          </Tabs.Content>
+
+          {/* Support Tab: Wheez requests and Contact Us messages */}
+          <Tabs.Content value="support" className="outline-none">
+            <SupportTab />
           </Tabs.Content>
         </Tabs.Root>
       </div>
