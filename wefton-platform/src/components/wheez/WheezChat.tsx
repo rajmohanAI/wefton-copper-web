@@ -23,6 +23,7 @@ import {
   type WheezOrderSummary,
   type WheezRequestType,
 } from '@/lib/wheez';
+import { playWheezClick } from '@/lib/wheezSound';
 
 // ============================================================
 // Wheez — guided support chat (WC-Issue-13). The customer answers by
@@ -138,8 +139,10 @@ export default function WheezChat({ className }: { className?: string }) {
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [photos, setPhotos] = useState<File[]>([]);
 
-  const say = (from: Message['from'], content: ReactNode) =>
+  const say = (from: Message['from'], content: ReactNode) => {
+    if (from === 'bot') playWheezClick();
     setMessages((m) => [...m, { id: nextId.current++, from, content }]);
+  };
 
   useEffect(() => {
     if (messages.length === 0) {
