@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Mail, Phone } from 'lucide-react';
 import { Instagram, Facebook, Twitter } from '@/components/ui/SocialIcons';
 import Button from '@/components/ui/Button';
+import { FEATURES } from '@/config/features';
 
 /* ─── Brand Timeline Milestones ─── */
 const MILESTONES = [
@@ -232,7 +233,7 @@ export default function AboutClient() {
             </h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className={`grid grid-cols-1 gap-6 ${FEATURES.packagingExtras ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={sustainInView ? { opacity: 1, y: 0 } : {}}
@@ -265,21 +266,24 @@ export default function AboutClient() {
               </p>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={sustainInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="glass-card p-6"
-            >
-              <h3 className="text-lg font-medium text-[var(--text-light)] mb-3">
-                Plantable Seed Tag
-              </h3>
-              <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                Every garment comes with a plantable seed tag — our way of giving back to nature. Tear it off,
-                bury it in soil, and watch it grow. We encourage customers and their families to nurture greenery
-                and contribute to a greener future, one order at a time.
-              </p>
-            </motion.div>
+            {/* Hidden until products ship with it (FEATURES.packagingExtras, WC-Issue-14) */}
+            {FEATURES.packagingExtras && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={sustainInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="glass-card p-6"
+              >
+                <h3 className="text-lg font-medium text-[var(--text-light)] mb-3">
+                  Plantable Seed Tag
+                </h3>
+                <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                  Every garment comes with a plantable seed tag — our way of giving back to nature. Tear it off,
+                  bury it in soil, and watch it grow. We encourage customers and their families to nurture greenery
+                  and contribute to a greener future, one order at a time.
+                </p>
+              </motion.div>
+            )}
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
