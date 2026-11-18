@@ -3,6 +3,8 @@ import { Mail, Phone, MapPin } from '@/components/ui/SocialIcons';
 import { MessageCircle } from 'lucide-react';
 import { BRAND } from '@/config/brand';
 import ContactForm from '@/components/contact/ContactForm';
+import WheezChat from '@/components/wheez/WheezChat';
+import WheezMark from '@/components/wheez/WheezMark';
 import { withCanonical } from '@/lib/seo';
 
 export const metadata: Metadata = withCanonical('/contact', {
@@ -93,6 +95,20 @@ export default function ContactPage() {
 
           <ContactForm />
         </div>
+
+        <section aria-labelledby="wheez-heading" className="mt-16">
+          <h2 id="wheez-heading" className="flex items-center gap-3 text-2xl font-light text-[var(--copper-light)] mb-2">
+            <WheezMark size={36} />
+            Chat with Wheez
+          </h2>
+          <p className="text-sm text-[var(--text-muted)] mb-6 max-w-2xl">
+            Wheez, our support helper, can check your order status, start a return or replacement
+            with photos, and take complaints, suggestions or error reports.
+          </p>
+          <div className="glass-card h-[520px] max-w-2xl flex flex-col overflow-hidden">
+            <WheezChat className="flex-1" />
+          </div>
+        </section>
       </div>
     </div>
   );
