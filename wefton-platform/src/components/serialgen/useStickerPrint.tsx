@@ -5,7 +5,17 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { AlertTriangle } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { formatSerial, type SerialConflict, type StickerRequest, type StickerSource } from '@/lib/serialgen';
-import { StickerConflict, downloadStickerPdf, type DownloadedPdf } from '@/services/serialgenService';
+import {
+  StickerConflict,
+  downloadStickerPdf,
+  type DownloadedPdf,
+  type StickerDownloadFormat,
+} from '@/services/serialgenService';
+
+const FORMATS: { value: StickerDownloadFormat; label: string; hint: string }[] = [
+  { value: 'a4', label: 'Standard PDF (A4)', hint: 'Stickers and tags on A4 sheets' },
+  { value: 'roll', label: 'Roll PDFs (2 inch)', hint: 'Two files for the pocket printer: a stickers roll and a tags roll' },
+];
 
 const pieceNo = (n: number) => String(n).padStart(6, '0');
 
@@ -19,13 +29,14 @@ export function useStickerPrint(source: StickerSource, onPrinted: () => void) {
   const [error, setError] = useState('');
   const [result, setResult] = useState<DownloadedPdf | null>(null);
   const [pending, setPending] = useState<{ items: StickerRequest[]; conflicts: SerialConflict[] } | null>(null);
+  const [format, setFormat] = useState<StickerDownloadFormat>('a4');
 
   const print = async (items: StickerRequest[], override = false) => {
     setError('');
     setResult(null);
     setSubmitting(true);
     try {
-      setResult(await downloadStickerPdf(items, source, override));
+      setResult(await downloadStickerPdf(items, source, override, format));
       setPending(null);
       onPrinted();
     } catch (e) {
@@ -100,5 +111,38 @@ export function useStickerPrint(source: StickerSource, onPrinted: () => void) {
     </Dialog.Root>
   );
 
-  return { print, submitting, error, result, clearResult: () => setResult(null), dialog };
+  /** Standard A4 sheet or the two 2-inch roll PDFs (WC-Issue-15). */
+  const formatPicker = (
+    <fieldset className="space-y-2">
+      <legend className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Download as</legend>
+      <div className="flex flex-wrap gap-2">
+        {FORMATS.map((f) => (
+          <label
+            key={f.value}
+            className={`flex cursor-pointer flex-col rounded border px-3 py-2 text-sm ${
+              format === f.value
+                ? 'border-[var(--copper-main)] bg-[var(--copper-main)]/10 text-[var(--text-light)]'
+                : 'border-white/10 text-[var(--text-muted)] hover:border-white/20'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <input
+                type="radio"
+                name={`sticker-format-${source}`}
+                value={f.value}
+                checked={format === f.value}
+                onChange={() => setFormat(f.value)}
+                disabled={submitting}
+                className="accent-[var(--copper-main)]"
+              />
+              {f.label}
+            </span>
+            <span className="text-[11px] text-[var(--text-faint)] pl-5">{f.hint}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+
+  return { print, submitting, error, result, clearResult: () => setResult(null), dialog, formatPicker };
 }

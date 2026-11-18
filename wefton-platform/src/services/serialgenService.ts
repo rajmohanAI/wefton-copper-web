@@ -20,8 +20,12 @@ export interface SerialCatalog {
   last: Record<string, number>;
 }
 
+/** 'a4' is the sticker sheet; 'roll' gives two 2-inch roll PDFs, stickers and tags (WC-Issue-15). */
+export type StickerDownloadFormat = 'a4' | 'roll';
+
 export interface DownloadedPdf {
-  file: string;
+  /** The PDFs saved, kept so they can be saved again without generating new serials. */
+  files: { name: string; blob: Blob }[];
   count: number;
   series: { prefix: string; start: number; end: number }[];
 }
@@ -61,7 +65,7 @@ export async function createSerialModel(name: string): Promise<SerialModel[]> {
   return (await res.json()).models;
 }
 
-function saveBlob(blob: Blob, filename: string) {
+export function saveBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -93,22 +97,33 @@ export async function clearSerialLog(): Promise<number> {
 export async function downloadStickerPdf(
   items: StickerRequest[],
   source: StickerSource,
-  override = false
+  override = false,
+  format: StickerDownloadFormat = 'a4'
 ): Promise<DownloadedPdf> {
   const res = await fetch('/api/serialgen', {
     method: 'POST',
     headers: await authHeaders(),
-    body: JSON.stringify({ items, source, override }),
+    body: JSON.stringify({ items, source, override, format }),
   });
   if (res.status === 409) {
     const data = (await res.clone().json().catch(() => ({}))) as { conflicts?: SerialConflict[] };
     if (data.conflicts?.length) throw new StickerConflict(data.conflicts);
   }
   if (!res.ok) throw await errorFrom(res);
-  const file = res.headers.get('X-Serial-Filename') || 'stickers.pdf';
-  saveBlob(await res.blob(), file);
+  if (format === 'roll') {
+    const data = (await res.json()) as Omit<DownloadedPdf, 'files'> & { files: { name: string; pdf: string }[] };
+    const files = data.files.map((f) => ({
+      name: f.name,
+      blob: new Blob([Uint8Array.from(atob(f.pdf), (c) => c.charCodeAt(0))], { type: 'application/pdf' }),
+    }));
+    files.forEach((f) => saveBlob(f.blob, f.name));
+    return { files, count: data.count, series: data.series };
+  }
+  const name = res.headers.get('X-Serial-Filename') || 'stickers.pdf';
+  const blob = await res.blob();
+  saveBlob(blob, name);
   return {
-    file,
+    files: [{ name, blob }],
     count: Number(res.headers.get('X-Serial-Count') || 0),
     series: JSON.parse(decodeURIComponent(res.headers.get('X-Serial-Series') || '%5B%5D')),
   };
