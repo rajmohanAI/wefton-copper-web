@@ -2,7 +2,7 @@
 // Wefton Copper — admin services shown in the Admin menu (WC-Issue-8)
 // ============================================================
 import type { LucideIcon } from 'lucide-react';
-import { ShoppingBag, Package, BarChart3, Ticket, RotateCcw, Barcode } from 'lucide-react';
+import { ShoppingBag, Package, BarChart3, Ticket, RotateCcw, Barcode, MessageCircle } from 'lucide-react';
 
 export interface AdminService {
   /** Admin dashboard tab id, or undefined for a separate admin page. */
@@ -13,7 +13,7 @@ export interface AdminService {
   icon: LucideIcon;
 }
 
-export const ADMIN_DASHBOARD_TABS = ['orders', 'products', 'stats', 'coupons', 'returns'] as const;
+export const ADMIN_DASHBOARD_TABS = ['orders', 'products', 'stats', 'coupons', 'returns', 'support'] as const;
 export type AdminDashboardTab = (typeof ADMIN_DASHBOARD_TABS)[number];
 
 export function isAdminDashboardTab(value: string | null | undefined): value is AdminDashboardTab {
@@ -26,5 +26,6 @@ export const ADMIN_SERVICES: AdminService[] = [
   { tab: 'stats', label: 'Stats', href: '/admin?tab=stats', description: 'Revenue and order summary', icon: BarChart3 },
   { tab: 'coupons', label: 'Offers', href: '/admin?tab=coupons', description: 'Coupons and offers', icon: Ticket },
   { tab: 'returns', label: 'Returns', href: '/admin?tab=returns', description: 'Return and refund requests', icon: RotateCcw },
+  { tab: 'support', label: 'Support', href: '/admin?tab=support', description: 'Wheez requests and Contact Us messages', icon: MessageCircle },
   { label: 'Serial Generator', href: '/serialgen', description: 'Serial numbers, QR tags and stickers', icon: Barcode },
 ];
