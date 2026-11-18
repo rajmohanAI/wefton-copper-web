@@ -25,6 +25,7 @@ const MILESTONES = [
   {
     year: '2025',
     title: 'Copper Stitch',
+    copperStitch: true,
     description:
       'Developed the signature copper-stitched seam — a reinforced detail that became our hallmark of durability and craftsmanship.',
   },
@@ -35,6 +36,11 @@ const MILESTONES = [
       'Wefton Copper launches with a promise: every product verified with a unique serial number, every thread intentional, every package premium.',
   },
 ];
+
+/** The copper-stitch milestone follows FEATURES.copperStitchedCraftsmanship (WC-Issue-2). */
+const VISIBLE_MILESTONES = MILESTONES.filter(
+  (m) => !('copperStitch' in m) || FEATURES.copperStitchedCraftsmanship,
+);
 
 /* ─── Social Media Links ─── */
 const SOCIAL_LINKS = [
@@ -167,7 +173,7 @@ export default function AboutClient() {
           Our <span className="gradient-copper">Journey</span>
         </h2>
         <div className="space-y-0">
-          {MILESTONES.map((m, i) => (
+          {VISIBLE_MILESTONES.map((m, i) => (
             <MilestoneItem key={`${m.year}-${m.title}`} milestone={m} index={i} />
           ))}
         </div>
@@ -295,8 +301,8 @@ export default function AboutClient() {
                 Built to Last
               </h3>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                Sustainability starts with durability. Our copper-stitched seams and premium fabric
-                are engineered to withstand hundreds of washes, reducing the need for frequent
+                Sustainability starts with durability. Our high quality cotton fabric and careful
+                construction are made to last for a longer period, reducing the need for frequent
                 replacements and minimising textile waste.
               </p>
             </motion.div>
