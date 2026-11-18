@@ -8,7 +8,7 @@ import {
 } from '@/lib/serialgen';
 import { getAdminAuth, getAdminDb } from '@/lib/firebaseAdmin';
 import { getRequestAdminUid } from '@/lib/serverAuth';
-import { renderStickerPdf, buildStickerPdfName } from '@/lib/stickerPdf';
+import { renderStickerPdf, buildStickerPdfName, type StickerFormat } from '@/lib/stickerPdf';
 import { CatalogError, getColors } from '@/services/catalogServer';
 import {
   SerialConflictError,
@@ -61,7 +61,12 @@ export async function GET(request: NextRequest) {
  * next batch for the same variant carries on from there. Serials already
  * generated come back as a 409 with `conflicts` unless `override` is set.
  */
-async function generateStickers(uid: string, body: { items?: unknown; override?: unknown; source?: unknown }) {
+async function generateStickers(
+  uid: string,
+  body: { items?: unknown; override?: unknown; source?: unknown; format?: unknown },
+) {
+  // 'roll' returns two 2-inch roll PDFs (stickers, tags) for a thermal pocket printer (WC-Issue-15).
+  const roll = body.format === 'roll';
   try {
     const db = getAdminDb();
     const by = (await getAdminAuth().getUser(uid).catch(() => null))?.email ?? uid;
@@ -70,15 +75,28 @@ async function generateStickers(uid: string, body: { items?: unknown; override?:
       source: body.source === 'excel' ? 'excel' : 'batch',
       by,
     });
-    let pdfBytes: Uint8Array;
+    const formats: StickerFormat[] = roll ? ['roll-stickers', 'roll-tags'] : ['a4'];
+    let pdfs: Uint8Array[];
     try {
-      pdfBytes = await renderStickerPdf(series);
+      pdfs = await Promise.all(formats.map((f) => renderStickerPdf(series, f)));
     } catch (e) {
       await markSerialLogFailed(db, logIds).catch((err) => console.error('[serialgen] Could not mark log:', err));
       throw e;
     }
-    const pdfName = buildStickerPdfName(series);
     const count = series.reduce((n, s) => n + s.quantity, 0);
+    const seriesInfo = series.map((s) => ({ prefix: s.prefix, start: s.start, end: s.end }));
+    if (roll) {
+      return NextResponse.json(
+        {
+          count,
+          series: seriesInfo,
+          files: formats.map((f, i) => ({ name: buildStickerPdfName(series, f), pdf: Buffer.from(pdfs[i]).toString('base64') })),
+        },
+        { headers: { 'Cache-Control': 'no-store' } },
+      );
+    }
+    const pdfBytes = pdfs[0];
+    const pdfName = buildStickerPdfName(series);
     return new NextResponse(new Uint8Array(pdfBytes), {
       status: 200,
       headers: {
@@ -87,9 +105,7 @@ async function generateStickers(uid: string, body: { items?: unknown; override?:
         'Content-Length': String(pdfBytes.length),
         'Cache-Control': 'no-store',
         'X-Serial-Count': String(count),
-        'X-Serial-Series': encodeURIComponent(
-          JSON.stringify(series.map((s) => ({ prefix: s.prefix, start: s.start, end: s.end })))
-        ),
+        'X-Serial-Series': encodeURIComponent(JSON.stringify(seriesInfo)),
         'X-Serial-Filename': pdfName,
       },
     });
@@ -120,7 +136,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Admins only' }, { status: 403 });
   }
 
-  let body: Partial<SerialConfig> & { barcodeType?: string; items?: unknown; override?: unknown; source?: unknown };
+  let body: Partial<SerialConfig> & { barcodeType?: string; items?: unknown; override?: unknown; source?: unknown; format?: unknown };
   try {
     body = await request.json();
   } catch {

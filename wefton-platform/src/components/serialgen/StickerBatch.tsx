@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, Plus, Trash2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Download, Plus, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { CATALOG_SIZES, type GenderLetter } from '@/lib/productCodes';
@@ -14,7 +14,7 @@ import {
   planSeries,
   type StickerRequest,
 } from '@/lib/serialgen';
-import { createSerialModel, type DownloadedPdf, type SerialCatalog } from '@/services/serialgenService';
+import { createSerialModel, saveBlob, type DownloadedPdf, type SerialCatalog } from '@/services/serialgenService';
 import { useStickerPrint } from './useStickerPrint';
 
 type QueueItem = StickerRequest & { id: string; colorName: string };
@@ -73,7 +73,7 @@ export default function StickerBatch({
   const [newModel, setNewModel] = useState('');
   const [addingModel, setAddingModel] = useState(false);
   const [error, setError] = useState('');
-  const { print, submitting, error: printError, result, clearResult, dialog } = useStickerPrint('batch', () => {
+  const { print, submitting, error: printError, result, clearResult, dialog, formatPicker } = useStickerPrint('batch', () => {
     setQueue([]);
     onPrinted();
   });
@@ -276,6 +276,8 @@ export default function StickerBatch({
         </p>
       )}
 
+      {formatPicker}
+
       <div className="flex flex-wrap gap-3">
         <Button variant="copper" onClick={generate} loading={submitting} disabled={submitting || queue.length === 0}>
           {submitting ? 'Generating PDF…' : 'Generate PDF'}
@@ -297,8 +299,26 @@ export function PrintedNote({ result }: { result: DownloadedPdf }) {
   return (
     <div className="rounded border border-emerald-500/20 bg-emerald-500/10 p-4 space-y-1">
       <p className="text-sm text-emerald-300 flex items-center gap-2">
-        <CheckCircle2 size={16} /> Downloaded {result.file} with {result.count} serial(s).
+        <CheckCircle2 size={16} /> Downloaded {result.files.length === 1 ? result.files[0].name : `${result.files.length} PDFs`} with{' '}
+        {result.count} serial(s).
       </p>
+      {result.files.length > 1 && (
+        <div className="flex flex-wrap gap-2 py-1">
+          {result.files.map((f) => (
+            <button
+              key={f.name}
+              type="button"
+              onClick={() => saveBlob(f.blob, f.name)}
+              className="inline-flex items-center gap-1.5 rounded border border-emerald-500/30 px-2.5 py-1 text-xs text-emerald-200 hover:bg-emerald-500/10"
+            >
+              <Download size={12} /> {f.name.includes('roll-tags') ? 'Tags roll' : 'Stickers roll'}
+            </button>
+          ))}
+          <span className="text-[11px] text-[var(--text-muted)] self-center">
+            If your browser blocked a file, save it again here.
+          </span>
+        </div>
+      )}
       <ul className="text-[11px] font-mono text-[var(--text-muted)]">
         {result.series.map((s, i) => (
           <li key={i}>
