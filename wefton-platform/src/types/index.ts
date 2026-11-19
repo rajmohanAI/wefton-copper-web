@@ -276,6 +276,8 @@ export interface Coupon {
   usedByOrderId?: string;
   /** Set when the order that earned it was cancelled. */
   invalidatedAt?: string;
+  /** Set when the "ends in 5 days" email went to the customer. */
+  expiryReminderSentAt?: string;
 }
 
 export interface NewsletterSubscriber {

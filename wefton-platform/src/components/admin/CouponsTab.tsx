@@ -27,7 +27,7 @@ import {
   isScratchCoupon,
   istDayEnd,
   SCRATCH_DISCOUNT_FLAT,
-  SCRATCH_STARTS_AFTER_HOURS,
+  SCRATCH_REMINDER_DAYS_BEFORE,
   SCRATCH_VALID_DAYS,
   istDayStart,
   toIstDateInput,
@@ -249,7 +249,8 @@ function couponBadge(coupon: Coupon): { label: string; variant: 'success' | 'err
   if (coupon.invalidatedAt) return { label: 'Cancelled', variant: 'error' };
   if (isScratchCoupon(coupon) && coupon.usedAt) return { label: 'Used', variant: 'warning' };
   if (!coupon.active) return { label: 'Disabled', variant: 'error' };
-  const window = couponWindow(coupon);
+  // Scratch coupons work as soon as they are issued, whatever start date they carry.
+  const window = couponWindow(isScratchCoupon(coupon) ? { ...coupon, startsAt: null } : coupon);
   if (window === 'expired') return { label: 'Expired', variant: 'error' };
   if (window === 'scheduled') return { label: 'Scheduled', variant: 'warning' };
   return { label: 'Active', variant: 'success' };
@@ -284,8 +285,9 @@ function ScratchInfo() {
       <Gift size={16} className="text-[var(--copper-light)] flex-shrink-0 mt-0.5" />
       <p className="text-xs text-[var(--text-muted)]">
         Every placed order gets a 16-character coupon for ₹{SCRATCH_DISCOUNT_FLAT} off on a scratch card. It works once,
-        for anyone who has the code, from {SCRATCH_STARTS_AFTER_HOURS} hours after the order till {SCRATCH_VALID_DAYS} days
-        after it, and stops working if that order is cancelled.
+        for anyone who has the code, on a later order, straight away till {SCRATCH_VALID_DAYS} days after the order, and
+        stops working if that order is cancelled. The customer gets a reminder email {SCRATCH_REMINDER_DAYS_BEFORE} days
+        before it ends.
       </p>
     </div>
   );
