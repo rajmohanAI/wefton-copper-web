@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import Link from 'next/link';
-import { Mail, Phone } from 'lucide-react';
+import { Mail, MessageCircle } from 'lucide-react';
 import { Instagram, Facebook, Twitter } from '@/components/ui/SocialIcons';
 import Button from '@/components/ui/Button';
 
@@ -324,7 +324,7 @@ export default function AboutClient() {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="glass-card p-8 md:p-12"
           >
-            {/* Email & Phone */}
+            {/* Email & WhatsApp */}
             <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-10">
               <a
                 href="mailto:sales@weftoncopper.com"
@@ -337,13 +337,16 @@ export default function AboutClient() {
               </a>
 
               <a
-                href="tel:+918056189511"
+                href="https://wa.me/918056189511"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Chat with us on WhatsApp (messages only)"
                 className="flex items-center gap-3 text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors group"
               >
                 <div className="w-10 h-10 rounded-full bg-[var(--copper-main)]/10 flex items-center justify-center group-hover:bg-[var(--copper-main)]/20 transition-colors">
-                  <Phone size={18} className="text-[var(--copper-light)]" />
+                  <MessageCircle size={18} className="text-[var(--copper-light)]" />
                 </div>
-                <span className="text-sm">+91 80561 89511</span>
+                <span className="text-sm">WhatsApp: +91 80561 89511 (chat only)</span>
               </a>
             </div>
 

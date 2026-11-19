@@ -1,9 +1,15 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Instagram, Facebook, Twitter, Mail, Phone, MapPin } from '@/components/ui/SocialIcons';
+import { Instagram, Facebook, Twitter, Mail, MapPin } from '@/components/ui/SocialIcons';
+import { MessageCircle } from 'lucide-react';
 import { BRAND } from '@/config/brand';
 import { FEATURES } from '@/config/features';
 import NewsletterForm from './NewsletterForm';
+
+/** "@weftoncopper" from a profile link. */
+function socialHandle(url: string): string {
+  return `@${url.replace(/\/+$/, '').split('/').pop()}`;
+}
 
 const FOOTER_LINKS = {
   Shop: [
@@ -96,7 +102,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
-                aria-label="Twitter"
+                aria-label="X (formerly Twitter)"
               >
                 <Twitter size={18} />
               </a>
@@ -112,11 +118,13 @@ export default function Footer() {
                 {BRAND.email}
               </a>
               <a
-                href={`tel:${BRAND.phone}`}
+                href={`https://wa.me/${BRAND.whatsapp}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2 py-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
               >
-                <Phone size={13} />
-                {BRAND.phone}
+                <MessageCircle size={13} />
+                WhatsApp {BRAND.phone} (chat only)
               </a>
               <span className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
                 <MapPin size={13} />
@@ -152,10 +160,33 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
               <h3 className="text-sm font-medium tracking-wider text-[var(--text-light)]">
-                Join the Wefton Circle
+                Join our family
               </h3>
               <p className="text-xs text-[var(--text-muted)] mt-1">
-                Early access, exclusive drops, and brand stories.
+                Join and follow us for stories, exciting offers, new arrivals, lifestyle...
+              </p>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+                <a
+                  href={BRAND.social.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 py-1 text-xs text-[var(--copper-light)] hover:underline"
+                >
+                  <Instagram size={14} />
+                  {socialHandle(BRAND.social.instagram)} on Instagram
+                </a>
+                <a
+                  href={BRAND.social.twitter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 py-1 text-xs text-[var(--copper-light)] hover:underline"
+                >
+                  <Twitter size={13} />
+                  {socialHandle(BRAND.social.twitter)} on X
+                </a>
+              </div>
+              <p className="text-[11px] text-[var(--text-faint)] mt-2">
+                One email a month with our latest posts. Unsubscribe anytime.
               </p>
             </div>
             <NewsletterForm />

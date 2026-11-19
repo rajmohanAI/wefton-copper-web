@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Copy, Eye, Gift } from 'lucide-react';
 import { fetchRewardCoupon } from '@/services/orderService';
-import { formatIstDateTime } from '@/lib/coupons';
+import { formatIstDateTime, rewardCouponPromo } from '@/lib/coupons';
 import type { RewardCoupon } from '@/types';
 
 /** Share of the foil that must be cleared before the rest falls away. */
@@ -185,6 +185,11 @@ export default function ScratchCard({
 
       {status === 'ready' && reward && (
         <>
+          {rewardCouponPromo(reward) && (
+            <p className="mb-3 text-xs font-medium text-[var(--copper-light)]" data-testid="coupon-days-left">
+              {rewardCouponPromo(reward)}
+            </p>
+          )}
           <div className="relative h-24 rounded-lg overflow-hidden bg-[var(--wc-canvas,#111)] border border-[var(--copper-main)]/40 select-none">
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] mb-1">Your coupon code</span>
@@ -252,7 +257,7 @@ export default function ScratchCard({
                 {copied ? 'Copied' : 'Copy code'}
               </button>
               <p className="text-[11px] text-[var(--text-muted)] text-center leading-relaxed">
-                Use it on a future order from {formatIstDateTime(reward.startsAt)} till {formatIstDateTime(reward.expiresAt)}.
+                Use it on your next order, starting now, till {formatIstDateTime(reward.expiresAt)}.
                 <br />
                 One use only. Anyone you share it with can use it. It stops working if this order is cancelled.
               </p>

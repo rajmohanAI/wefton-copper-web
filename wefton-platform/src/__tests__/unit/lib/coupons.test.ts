@@ -3,6 +3,7 @@
 // ============================================================
 import { describe, expect, it } from 'vitest';
 import {
+  rewardCouponPromo,
   rewardCouponValidity,
   couponSavings,
   couponWindow,
@@ -148,8 +149,17 @@ describe('coupons shown at checkout', () => {
 
 describe('rewardCouponValidity', () => {
   const reward = { startsAt: '2026-11-14T04:20:00Z', expiresAt: '2026-12-13T04:20:00Z' };
-  it('shows the window in India time', () => {
-    expect(rewardCouponValidity(reward, new Date('2026-11-13T04:20:00Z'))).toBe('Valid from 14 Nov, 9:50 am till 13 Dec, 9:50 am');
+  it('shows the end in India time and the days left', () => {
+    expect(rewardCouponValidity(reward, new Date('2026-11-13T04:20:00Z'))).toBe('Valid till 13 Dec, 9:50 am · 30 days left');
+    expect(rewardCouponValidity(reward, new Date('2026-12-12T04:20:00Z'))).toBe('Valid till 13 Dec, 9:50 am · 1 day left');
+    expect(rewardCouponValidity(reward, new Date('2026-12-13T00:00:00Z'))).toBe('Valid till 13 Dec, 9:50 am · Last day');
+  });
+  it('has a promo line while it can still be used', () => {
+    const r = { ...reward, label: '₹100' };
+    expect(rewardCouponPromo(r, new Date('2026-12-08T04:20:00Z'))).toBe('Your thank-you gift of ₹100 off stays with you for 5 more days, whenever you need it.');
+    expect(rewardCouponPromo(r, new Date('2026-12-12T04:20:00Z'))).toBe('Your thank-you gift of ₹100 off stays with you for 1 more day, whenever you need it.');
+    expect(rewardCouponPromo(r, new Date('2026-12-13T00:00:00Z'))).toBe('Your thank-you gift of ₹100 off stays with you until today, whenever you need it.');
+    expect(rewardCouponPromo(r, new Date('2026-12-14T00:00:00Z'))).toBeNull();
   });
   it('says when it has expired', () => {
     expect(rewardCouponValidity(reward, new Date('2026-12-14T00:00:00Z'))).toBe('Expired on 13 Dec, 9:50 am');

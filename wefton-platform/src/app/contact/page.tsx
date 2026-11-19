@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Mail, Phone, MapPin } from '@/components/ui/SocialIcons';
+import { Mail, MapPin } from '@/components/ui/SocialIcons';
 import { MessageCircle } from 'lucide-react';
 import { BRAND } from '@/config/brand';
 import ContactForm from '@/components/contact/ContactForm';
@@ -10,7 +10,7 @@ import { withCanonical } from '@/lib/seo';
 export const metadata: Metadata = withCanonical('/contact', {
   title: 'Contact Us',
   description:
-    'Contact Wefton Copper for help with orders, deliveries, returns, sizing or anything else, by WhatsApp, phone, email or the contact form.',
+    'Contact Wefton Copper for help with orders, deliveries, returns, sizing or anything else, by WhatsApp chat, email or the contact form.',
 });
 
 const CHANNELS = [
@@ -20,7 +20,7 @@ const CHANNELS = [
     value: BRAND.phone,
     href: `https://wa.me/${BRAND.whatsapp}`,
     external: true,
-    hint: 'Fastest for order and return queries. You can send photos here.',
+    hint: 'Chat with us on WhatsApp (messages only, no calls). Fastest for order and return queries, and you can send photos here.',
   },
   {
     icon: Mail,
@@ -31,20 +31,12 @@ const CHANNELS = [
     hint: 'We reply within 1–2 business days.',
   },
   {
-    icon: Phone,
-    label: 'Phone',
-    value: BRAND.phone,
-    href: `tel:${BRAND.phone.replace(/\s/g, '')}`,
-    external: false,
-    hint: 'Call us for help with an order or a product.',
-  },
-  {
     icon: MapPin,
     label: 'Location',
     value: BRAND.address,
     href: '',
     external: false,
-    hint: 'We are an online store. Orders are shipped across India.',
+    hint: 'We sell only online and have no retail store or showroom. Orders are shipped across India.',
   },
 ];
 
