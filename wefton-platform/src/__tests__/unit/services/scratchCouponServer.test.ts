@@ -7,7 +7,7 @@ vi.mock('firebase-admin/firestore', () => ({
   FieldValue: { serverTimestamp: () => 'SERVER_TS' },
 }));
 
-import { invalidateRewardCoupon, issueRewardCoupon, redeemScratchCoupon } from '@/services/scratchCouponServer';
+import { invalidateRewardCoupon, issueRewardCoupon, redeemScratchCoupon, sendCouponExpiryReminders } from '@/services/scratchCouponServer';
 import { checkCouponCode } from '@/services/couponServer';
 import {
   couponUseError,
@@ -44,7 +44,7 @@ const db = {
         const docs = [...store.entries()]
           .filter(([p]) => p.startsWith(`${name}/`))
           .filter(([, d]) => filters.every(([f, v]) => d[f] === v))
-          .map(([, d]) => ({ data: () => d }));
+          .map(([p, d]) => ({ data: () => d, ref: docRef(p) }));
         return { empty: docs.length === 0, docs };
       },
     };
@@ -78,9 +78,9 @@ describe('scratch code and dates', () => {
     expect(code).toMatch(/^[A-Z0-9]{16}$/);
   });
 
-  it('starts 24 hours after issue and ends 30 days after issue', () => {
+  it('starts as soon as it is issued and ends 30 days after issue', () => {
     const { startsAt, expiresAt } = scratchCouponDates(NOW);
-    expect(new Date(startsAt).getTime() - NOW.getTime()).toBe(24 * HOUR);
+    expect(startsAt).toBe(NOW.toISOString());
     expect(new Date(expiresAt).getTime() - NOW.getTime()).toBe(30 * 24 * HOUR);
   });
 });
@@ -109,11 +109,11 @@ describe('issueRewardCoupon', () => {
 });
 
 describe('using a scratch coupon', () => {
-  it('works only after 24 hours, only once, and not after 30 days', async () => {
+  it('works straight away, only once, and not after 30 days', async () => {
     const reward = (await issueRewardCoupon(db, docRef('orders/A') as never, NOW, random))!;
     const coupon = () => store.get(`coupons/${reward.code}`) as never;
 
-    expect(couponUseError(coupon(), new Date(NOW.getTime() + 23 * HOUR))).toBe('This coupon is not active yet');
+    expect(couponUseError(coupon(), new Date(NOW.getTime() + 1000))).toBeNull();
     expect(couponUseError(coupon(), new Date(NOW.getTime() + 25 * HOUR))).toBeNull();
     expect(couponUseError(coupon(), new Date(NOW.getTime() + 31 * 24 * HOUR))).toBe('Coupon has expired');
 
@@ -137,5 +137,48 @@ describe('using a scratch coupon', () => {
     store.set('coupons/xyz', { code: 'SUMMER25', discount: 25, active: true, expiresAt: null });
     await redeemScratchCoupon(db, { orderId: 'WC-NEXT', couponCode: 'xyz' });
     expect(store.get('coupons/xyz')).not.toHaveProperty('usedAt');
+  });
+});
+
+describe('older scratch coupons', () => {
+  it('work at once even if they were issued with a 24 hour wait', () => {
+    const old = { source: 'scratch' as const, startsAt: new Date(NOW.getTime() + 20 * HOUR).toISOString(), expiresAt: new Date(NOW.getTime() + 29 * 24 * HOUR).toISOString() };
+    expect(couponUseError(old, NOW)).toBeNull();
+    // Offers coupons still wait for their start date.
+    expect(couponUseError({ ...old, source: undefined }, NOW)).toBe('This coupon is not active yet');
+  });
+});
+
+describe('sendCouponExpiryReminders', () => {
+  const DAY = 24 * HOUR;
+  beforeEach(() => {
+    store.set('orders/A', { orderId: 'WC-A', orderStatus: 'placed', placedAt: NOW.toISOString(), customerEmail: 'a@example.com', customerName: 'Asha' });
+  });
+
+  it('emails once when 5 days or less are left, and never for used or far-off coupons', async () => {
+    const reward = (await issueRewardCoupon(db, docRef('orders/A') as never, NOW, random))!;
+    store.set('coupons/USED', { code: 'USED', source: 'scratch', active: true, usedAt: 'x', expiresAt: reward.expiresAt, sourceOrderId: 'WC-A', discountFlat: 100 });
+    const send = vi.fn(async () => ({ sent: true }));
+
+    expect(await sendCouponExpiryReminders(db, new Date(NOW.getTime() + 20 * DAY), send)).toEqual({ due: 0, sent: 0 });
+    expect(send).not.toHaveBeenCalled();
+
+    const day26 = new Date(NOW.getTime() + 26 * DAY);
+    expect(await sendCouponExpiryReminders(db, day26, send)).toEqual({ due: 1, sent: 1 });
+    const email = (send.mock.calls[0] as unknown as [{ to: string; subject: string; html: string }])[0];
+    expect(email.to).toBe('a@example.com');
+    expect(email.subject).toBe('A gentle reminder: your ₹100 off ends in 4 days');
+    expect(email.html).toContain(reward.code);
+    expect(store.get(`coupons/${reward.code}`)).toMatchObject({ expiryReminderSentAt: day26.toISOString() });
+
+    // Already reminded: no second email.
+    await sendCouponExpiryReminders(db, new Date(NOW.getTime() + 27 * DAY), send);
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it('tries again tomorrow when the email could not be sent', async () => {
+    const reward = (await issueRewardCoupon(db, docRef('orders/A') as never, NOW, random))!;
+    await sendCouponExpiryReminders(db, new Date(NOW.getTime() + 26 * DAY), async () => ({ sent: false }));
+    expect(store.get(`coupons/${reward.code}`)).not.toHaveProperty('expiryReminderSentAt');
   });
 });

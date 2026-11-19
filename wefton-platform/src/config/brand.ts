@@ -8,6 +8,7 @@ export const BRAND = {
   description:
     'Redefining the standard for essential wear, starting from the fabric.',
   email: 'sales@weftoncopper.com',
+  /** WhatsApp only: no calls (WC-Issue-18). Show it as WhatsApp, never as a tel: link. */
   phone: '+91 80561 89511',
   /** Customer support on WhatsApp (digits only, with country code, for wa.me links). */
   whatsapp: '918056189511',

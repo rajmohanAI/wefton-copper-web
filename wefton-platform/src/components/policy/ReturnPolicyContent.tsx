@@ -63,7 +63,11 @@ export default function ReturnPolicyContent() {
 
       <section>
         <h2 className="text-lg font-medium text-[var(--text-light)] mb-3">How to Raise a Request</h2>
-        <p className="mb-3">Contact our support team through any of these channels, with your order number:</p>
+        <p className="mb-3">
+          Wefton Copper sells only online and has no retail store, so returns and replacements are
+          arranged online. Contact our support team through any of these channels, with your order
+          number:
+        </p>
         <ul className="list-disc list-inside space-y-2">
           <li>
             WhatsApp:{' '}
@@ -74,7 +78,8 @@ export default function ReturnPolicyContent() {
               className={linkClass}
             >
               {BRAND.phone}
-            </a>
+            </a>{' '}
+            (chat only, no calls)
           </li>
           <li>
             Website: the{' '}

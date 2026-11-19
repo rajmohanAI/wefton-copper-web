@@ -12,8 +12,8 @@ export interface EmailContent {
   html: string;
 }
 
-const COPPER = '#8c4a22';
-const SITE = 'https://www.weftoncopper.com';
+export const COPPER = '#8c4a22';
+export const SITE = 'https://www.weftoncopper.com';
 const SUPPORT = 'sales@weftoncopper.com';
 /** Refund window promised when an order is cancelled. */
 export const REFUND_WINDOW = '5–10 business days';
@@ -36,7 +36,8 @@ export function formatOrderDate(value: unknown): string {
     : '—';
 }
 
-function layout(body: string): string {
+/** The branded email frame shared by every customer email. */
+export function layout(body: string, footerExtra = ''): string {
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8" /></head>
 <body style="margin:0;padding:0;background:#f7f5f2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Arial,sans-serif;color:#1a1a1a;line-height:1.6;">
@@ -49,6 +50,7 @@ function layout(body: string): string {
       <p style="margin:0;">Questions? Write to <a href="mailto:${SUPPORT}" style="color:${COPPER};">${SUPPORT}</a></p>
       <p style="margin:6px 0 0;">© ${new Date().getFullYear()} Wefton Copper ·
         <a href="${SITE}/refund-policy" style="color:${COPPER};text-decoration:none;">Refund Policy</a></p>
+      ${footerExtra}
     </div>
   </div>
 </body></html>`;
@@ -206,6 +208,36 @@ export function customerCancelledEmail(order: Order): EmailContent {
       ${paid ? `<p style="color:#444;"><strong>Your payment of ${inr(order.total)} will be refunded to your original payment method within ${REFUND_WINDOW}.</strong></p>` : ''}
       ${itemsTable(order)}
       <p style="color:#444;margin-top:20px;">We apologise for the inconvenience. If you have any questions, just reply to this email.</p>
+    `),
+  };
+}
+
+export interface CouponReminder {
+  code: string;
+  /** "₹100". */
+  label: string;
+  expiresAt: string;
+  daysLeft: number;
+  customerName?: string;
+}
+
+/** Sent a few days before a scratch card coupon ends, to bring the customer back. */
+export function customerCouponExpiryEmail(reminder: CouponReminder): EmailContent {
+  const name = reminder.customerName || 'there';
+  const days = reminder.daysLeft <= 1 ? 'today' : `in ${reminder.daysLeft} days`;
+  return {
+    subject: `A gentle reminder: your ${reminder.label} off ends ${days}`,
+    html: layout(`
+      <h2 style="margin:0 0 6px;font-size:20px;">A small reminder, ${escapeHtml(name)}</h2>
+      <p style="color:#444;">The <strong>${escapeHtml(reminder.label)} off</strong> coupon you earned with your last order ends <strong>${days}</strong>, on ${formatOrderDate(reminder.expiresAt)}. If there's something you've been considering, we thought you'd like to know it's still there for you. No pressure at all.</p>
+      <div style="margin:22px 0;padding:18px;border:2px dashed ${COPPER};border-radius:8px;text-align:center;">
+        <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#6b6661;">Your coupon code</div>
+        <div style="font-family:Menlo,Consolas,monospace;font-size:22px;font-weight:700;letter-spacing:3px;color:${COPPER};margin-top:6px;">${escapeHtml(reminder.code)}</div>
+      </div>
+      <p style="text-align:center;margin:0 0 22px;">
+        <a href="${SITE}/new-arrivals" style="display:inline-block;background:${COPPER};color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:4px;font-weight:600;">Browse new arrivals</a>
+      </p>
+      <p style="color:#6b6661;font-size:13px;">Enter the code at checkout. It works once, on one order.</p>
     `),
   };
 }
