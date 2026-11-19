@@ -167,7 +167,7 @@ describe('sendCouponExpiryReminders', () => {
     expect(await sendCouponExpiryReminders(db, day26, send)).toEqual({ due: 1, sent: 1 });
     const email = (send.mock.calls[0] as unknown as [{ to: string; subject: string; html: string }])[0];
     expect(email.to).toBe('a@example.com');
-    expect(email.subject).toContain('₹100 off ends in 4 days');
+    expect(email.subject).toBe('A gentle reminder: your ₹100 off ends in 4 days');
     expect(email.html).toContain(reward.code);
     expect(store.get(`coupons/${reward.code}`)).toMatchObject({ expiryReminderSentAt: day26.toISOString() });
 

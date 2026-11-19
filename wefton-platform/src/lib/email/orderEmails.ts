@@ -226,16 +226,16 @@ export function customerCouponExpiryEmail(reminder: CouponReminder): EmailConten
   const name = reminder.customerName || 'there';
   const days = reminder.daysLeft <= 1 ? 'today' : `in ${reminder.daysLeft} days`;
   return {
-    subject: `Your ${reminder.label} off ends ${days}. Treat yourself before it's gone!`,
+    subject: `A gentle reminder: your ${reminder.label} off ends ${days}`,
     html: layout(`
-      <h2 style="margin:0 0 6px;font-size:20px;">Your thank-you gift is waiting, ${escapeHtml(name)}</h2>
-      <p style="color:#444;">The <strong>${escapeHtml(reminder.label)} off</strong> coupon you earned with your last order ends <strong>${days}</strong>, on ${formatOrderDate(reminder.expiresAt)}. It's the perfect excuse to pick up that tee you've had your eye on.</p>
+      <h2 style="margin:0 0 6px;font-size:20px;">A small reminder, ${escapeHtml(name)}</h2>
+      <p style="color:#444;">The <strong>${escapeHtml(reminder.label)} off</strong> coupon you earned with your last order ends <strong>${days}</strong>, on ${formatOrderDate(reminder.expiresAt)}. If there's something you've been considering, we thought you'd like to know it's still there for you. No pressure at all.</p>
       <div style="margin:22px 0;padding:18px;border:2px dashed ${COPPER};border-radius:8px;text-align:center;">
         <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#6b6661;">Your coupon code</div>
         <div style="font-family:Menlo,Consolas,monospace;font-size:22px;font-weight:700;letter-spacing:3px;color:${COPPER};margin-top:6px;">${escapeHtml(reminder.code)}</div>
       </div>
       <p style="text-align:center;margin:0 0 22px;">
-        <a href="${SITE}/new-arrivals" style="display:inline-block;background:${COPPER};color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:4px;font-weight:600;">Shop now</a>
+        <a href="${SITE}/new-arrivals" style="display:inline-block;background:${COPPER};color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:4px;font-weight:600;">Browse new arrivals</a>
       </p>
       <p style="color:#6b6661;font-size:13px;">Enter the code at checkout. It works once, on one order.</p>
     `),
