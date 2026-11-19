@@ -125,13 +125,15 @@ export function formatCouponEnd(raw: unknown): string | null {
 // Scratch card coupons
 // ============================================================
 // Every placed order earns one: a 16-character code, private (flag 'A'),
-// not tied to any customer, usable once, from 24 hours after it is issued
-// until 30 days after it is issued. Cancelling the order that earned it
-// switches it off.
+// not tied to any customer, usable once, from the moment it is issued
+// (on a later order: the order that earned it is already paid) until 30
+// days after it is issued. Cancelling the order that earned it switches
+// it off. Five days before it ends the customer gets a reminder email.
 
 export const SCRATCH_CODE_LENGTH = 16;
-export const SCRATCH_STARTS_AFTER_HOURS = 24;
 export const SCRATCH_VALID_DAYS = 30;
+/** The expiry reminder email goes out this many days before a scratch coupon ends. */
+export const SCRATCH_REMINDER_DAYS_BEFORE = 5;
 /** What every scratch card coupon takes off: a fixed ₹100. */
 export const SCRATCH_DISCOUNT_FLAT = 100;
 
@@ -145,12 +147,13 @@ export function generateScratchCode(randomInt: (n: number) => number): string {
   return code;
 }
 
-/** When a scratch coupon issued at `issuedAt` starts and stops working. */
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** When a scratch coupon issued at `issuedAt` starts (straight away) and stops working. */
 export function scratchCouponDates(issuedAt: Date): { startsAt: string; expiresAt: string } {
-  const hour = 60 * 60 * 1000;
   return {
-    startsAt: new Date(issuedAt.getTime() + SCRATCH_STARTS_AFTER_HOURS * hour).toISOString(),
-    expiresAt: new Date(issuedAt.getTime() + SCRATCH_VALID_DAYS * 24 * hour).toISOString(),
+    startsAt: issuedAt.toISOString(),
+    expiresAt: new Date(issuedAt.getTime() + SCRATCH_VALID_DAYS * DAY_MS).toISOString(),
   };
 }
 
@@ -162,7 +165,12 @@ export function couponUseError(
   coupon: Pick<Coupon, 'startsAt' | 'expiresAt' | 'source' | 'usedAt'>,
   now = new Date()
 ): string | null {
-  if (coupon.source === 'scratch' && coupon.usedAt) return 'This coupon has already been used';
+  if (coupon.source === 'scratch') {
+    if (coupon.usedAt) return 'This coupon has already been used';
+    // Scratch coupons work as soon as they are issued, including ones issued
+    // while they still waited 24 hours to start.
+    return couponWindowError({ startsAt: null, expiresAt: coupon.expiresAt }, now);
+  }
   return couponWindowError(coupon, now);
 }
 
@@ -181,8 +189,31 @@ export function formatIstDateTime(iso: string): string {
   }).format(new Date(iso));
 }
 
-/** When a reward coupon works, for the customer: "Valid from … till …", or that it has expired. */
-export function rewardCouponValidity(reward: { startsAt: string; expiresAt: string }, now = new Date()): string {
-  if (new Date(reward.expiresAt).getTime() < now.getTime()) return `Expired on ${formatIstDateTime(reward.expiresAt)}`;
-  return `Valid from ${formatIstDateTime(reward.startsAt)} till ${formatIstDateTime(reward.expiresAt)}`;
+/** Whole days, rounded up, until `expiresAt`: 1 on the last day, 0 once it has ended. */
+export function couponDaysLeft(expiresAt: string, now = new Date()): number {
+  const ms = new Date(expiresAt).getTime() - now.getTime();
+  return ms <= 0 ? 0 : Math.ceil(ms / DAY_MS);
+}
+
+/** "12 days left", "1 day left", or "Last day" when under a day remains. */
+export function formatDaysLeft(expiresAt: string, now = new Date()): string {
+  const ms = new Date(expiresAt).getTime() - now.getTime();
+  if (ms < DAY_MS) return 'Last day';
+  const days = couponDaysLeft(expiresAt, now);
+  return `${days} ${days === 1 ? 'day' : 'days'} left`;
+}
+
+/** A gentle note under a reward coupon on how long it stays valid (no pressure, WC-Issue-16 feedback). */
+export function rewardCouponPromo(reward: { label: string; expiresAt: string }, now = new Date()): string | null {
+  if (couponDaysLeft(reward.expiresAt, now) === 0) return null;
+  const left = formatDaysLeft(reward.expiresAt, now);
+  if (left === 'Last day') return `Your thank-you gift of ${reward.label} off stays with you until today, whenever you need it.`;
+  const days = couponDaysLeft(reward.expiresAt, now);
+  return `Your thank-you gift of ${reward.label} off stays with you for ${days} more ${days === 1 ? 'day' : 'days'}, whenever you need it.`;
+}
+
+/** When a reward coupon works, for the customer: "Valid till … · N days left", or that it has expired. */
+export function rewardCouponValidity(reward: { expiresAt: string }, now = new Date()): string {
+  if (couponDaysLeft(reward.expiresAt, now) === 0) return `Expired on ${formatIstDateTime(reward.expiresAt)}`;
+  return `Valid till ${formatIstDateTime(reward.expiresAt)} · ${formatDaysLeft(reward.expiresAt, now)}`;
 }

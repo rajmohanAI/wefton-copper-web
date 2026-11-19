@@ -13,6 +13,8 @@ export interface OutgoingEmail {
   /** Marks the message high priority in mail clients (X-Priority / Importance). */
   highPriority?: boolean;
   replyTo?: string;
+  /** Extra mail headers, such as List-Unsubscribe. */
+  headers?: Record<string, string>;
 }
 
 export type SendResult = { sent: true } | { sent: false; reason: 'not-configured' | 'failed'; error?: string };
@@ -55,9 +57,13 @@ export async function sendEmail(email: OutgoingEmail): Promise<SendResult> {
       subject: email.subject,
       html: email.html,
       replyTo: email.replyTo ?? 'sales@weftoncopper.com',
-      headers: email.highPriority
-        ? { 'X-Priority': '1 (Highest)', 'X-MSMail-Priority': 'High', Importance: 'high' }
-        : undefined,
+      headers:
+        email.highPriority || email.headers
+          ? {
+              ...(email.highPriority ? { 'X-Priority': '1 (Highest)', 'X-MSMail-Priority': 'High', Importance: 'high' } : {}),
+              ...email.headers,
+            }
+          : undefined,
     });
     if (error) {
       console.error(`[Email] Resend rejected "${email.subject}":`, error);
