@@ -1,79 +1,33 @@
 // ============================================================
-// Wefton Copper — Newsletter Service Unit Tests
+// Wefton Copper — "Join our family" sign-up from the browser
 // ============================================================
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { subscribeNewsletter } from '@/services/newsletterService';
 
-// Mock firebase/firestore
-vi.mock('firebase/firestore', () => {
-  class FirestoreError extends Error {
-    constructor(public code: string, message: string) {
-      super(message);
-    }
-  }
-  return {
-    doc: vi.fn((_db: unknown, col: string, id: string) => `${col}/${id}`),
-    setDoc: vi.fn(() => Promise.resolve()),
-    serverTimestamp: vi.fn(() => 'mock-server-timestamp'),
-    FirestoreError,
-  };
-});
+function respond(status: number, body: unknown) {
+  const fetchMock = vi.fn(async () => new Response(JSON.stringify(body), { status }));
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
 
-// Mock firebase lazy getter
-vi.mock('@/lib/firebase', () => ({
-  getFirebaseDb: vi.fn(() => 'mock-db'),
-}));
+afterEach(() => vi.unstubAllGlobals());
 
-import { setDoc, FirestoreError } from 'firebase/firestore';
-
-const mockSetDoc = vi.mocked(setDoc);
-
-describe('newsletterService', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+describe('subscribeNewsletter', () => {
+  it('posts the trimmed email and reports a new member', async () => {
+    const fetchMock = respond(200, { result: 'subscribed', message: 'Welcome to the family!' });
+    expect(await subscribeNewsletter('  New@Example.com ')).toEqual({ success: true, message: 'Welcome to the family!' });
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe('/api/newsletter/subscribe');
+    expect(JSON.parse(init.body as string)).toEqual({ email: 'New@Example.com' });
   });
 
-  describe('subscribeNewsletter', () => {
-    it('should return already subscribed message when email exists', async () => {
-      // Rules deny overwriting an existing subscriber doc
-      mockSetDoc.mockRejectedValueOnce(
-        new (FirestoreError as any)('permission-denied', 'Missing or insufficient permissions.')
-      );
+  it('says so when the email is already on the list', async () => {
+    respond(200, { result: 'already', message: "You're already part of the family" });
+    expect(await subscribeNewsletter('a@example.com')).toEqual({ success: false, message: "You're already part of the family" });
+  });
 
-      const result = await subscribeNewsletter('test@example.com');
-
-      expect(result).toEqual({
-        success: false,
-        message: 'You are already subscribed',
-      });
-    });
-
-    it('should subscribe new email keyed by the normalised address', async () => {
-      const result = await subscribeNewsletter('  New@Example.com ');
-
-      expect(mockSetDoc).toHaveBeenCalledWith('newsletter_subscribers/new@example.com', {
-        email: 'new@example.com',
-        subscribedAt: 'mock-server-timestamp',
-      });
-      expect(result).toEqual({
-        success: true,
-        message: 'Successfully subscribed!',
-      });
-    });
-
-    it('should rethrow other Firestore errors', async () => {
-      mockSetDoc.mockRejectedValueOnce(new (FirestoreError as any)('unavailable', 'offline'));
-
-      await expect(subscribeNewsletter('test@example.com')).rejects.toThrow('offline');
-    });
-
-    it('should throw when Firebase is not configured', async () => {
-      const { getFirebaseDb } = await import('@/lib/firebase');
-      vi.mocked(getFirebaseDb).mockReturnValueOnce(null);
-
-      await expect(subscribeNewsletter('test@example.com')).rejects.toThrow(
-        'Firebase not configured'
-      );
-    });
+  it('throws when the server fails', async () => {
+    respond(500, { error: 'Something went wrong' });
+    await expect(subscribeNewsletter('a@example.com')).rejects.toThrow('Something went wrong');
   });
 });

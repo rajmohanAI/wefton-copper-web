@@ -1,0 +1,42 @@
+name: Monthly newsletter
+
+# On the 1st of every month at 11:00 IST: emails everyone who joined the
+# "Join our family" list a random pick of our latest Instagram / X posts
+# (see wefton-platform/src/services/newsletterServer.ts). Safe to re-run:
+# each member gets one email a month.
+# Needs the repository secret CRON_SECRET, with the same value as the
+# CRON_SECRET secret on the App Hosting backend.
+
+on:
+  schedule:
+    - cron: '30 5 1 * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: monthly-newsletter
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: Send the monthly newsletter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call the newsletter endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://www.weftoncopper.com' }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::warning::CRON_SECRET is not set; skipping."
+            exit 0
+          fi
+          status=$(curl -sS -o response.json -w '%{http_code}' --max-time 300 \
+            -X POST -H "Authorization: Bearer $CRON_SECRET" \
+            "$SITE_URL/api/cron/newsletter")
+          cat response.json; echo
+          if [ "$status" != "200" ]; then
+            echo "::error::Newsletter returned HTTP $status"
+            exit 1
+          fi
