@@ -207,9 +207,9 @@ export function formatDaysLeft(expiresAt: string, now = new Date()): string {
 export function rewardCouponPromo(reward: { label: string; expiresAt: string }, now = new Date()): string | null {
   if (couponDaysLeft(reward.expiresAt, now) === 0) return null;
   const left = formatDaysLeft(reward.expiresAt, now);
-  if (left === 'Last day') return `Your ${reward.label} off is valid until today, whenever you're ready.`;
+  if (left === 'Last day') return `Your thank-you gift of ${reward.label} off stays with you until today, whenever you need it.`;
   const days = couponDaysLeft(reward.expiresAt, now);
-  return `Your ${reward.label} off is here for you for ${days} more ${days === 1 ? 'day' : 'days'}, whenever you're ready.`;
+  return `Your thank-you gift of ${reward.label} off stays with you for ${days} more ${days === 1 ? 'day' : 'days'}, whenever you need it.`;
 }
 
 /** When a reward coupon works, for the customer: "Valid till … · N days left", or that it has expired. */
