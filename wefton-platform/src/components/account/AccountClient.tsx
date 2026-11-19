@@ -32,7 +32,7 @@ import { getReviewedProductIds } from '@/services/reviewService';
 import OrderReviewDialog, { type ReviewTarget } from './OrderReviewDialog';
 import { setupRecaptcha, sendOTP, verifyOTP } from '@/services/authService';
 import { formatPrice, toDate } from '@/lib/utils';
-import { rewardCouponValidity } from '@/lib/coupons';
+import { rewardCouponPromo, rewardCouponValidity } from '@/lib/coupons';
 import { addressSchema, type AddressFormData } from '@/lib/schemas';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -957,7 +957,12 @@ export default function AccountClient() {
                                   {order.rewardCoupon.code}
                                 </p>
                                 {order.orderStatus !== 'cancelled' && (
-                                  <p className="text-[var(--text-muted)] mt-1">{rewardCouponValidity(order.rewardCoupon)}</p>
+                                  <>
+                                    <p className="text-[var(--text-muted)] mt-1">{rewardCouponValidity(order.rewardCoupon)}</p>
+                                    {rewardCouponPromo(order.rewardCoupon) && (
+                                      <p className="text-[var(--copper-light)] font-medium mt-1">{rewardCouponPromo(order.rewardCoupon)}</p>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             )}

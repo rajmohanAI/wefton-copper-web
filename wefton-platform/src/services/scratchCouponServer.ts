@@ -6,17 +6,23 @@
 // 2. redeemScratchCoupon: an order placed with a scratch coupon uses it up.
 // 3. invalidateRewardCoupon: cancelling the order that earned a coupon
 //    switches the coupon off.
+// 4. sendCouponExpiryReminders: once a day, a coupon with 5 days or less
+//    left gets one reminder email to the customer whose order earned it.
 // The coupon itself is not tied to a customer: anyone with the code can
 // use it, once.
 // ============================================================
 import { randomInt } from 'crypto';
 import { FieldValue, type DocumentReference, type Firestore } from 'firebase-admin/firestore';
 import {
+  couponDaysLeft,
   formatCouponDiscount,
   generateScratchCode,
   SCRATCH_DISCOUNT_FLAT,
+  SCRATCH_REMINDER_DAYS_BEFORE,
   scratchCouponDates,
 } from '@/lib/coupons';
+import { customerCouponExpiryEmail } from '@/lib/email/orderEmails';
+import { sendEmail, type OutgoingEmail } from '@/lib/email/sender';
 import type { Coupon, Order, RewardCoupon } from '@/types';
 
 /**
@@ -96,4 +102,51 @@ export async function invalidateRewardCoupon(db: Firestore, order: Pick<Order, '
   if (!snap.exists || snap.get('invalidatedAt')) return;
   const at = now.toISOString();
   await ref.update({ active: false, invalidatedAt: at, updatedAt: at });
+}
+
+type Send = (email: OutgoingEmail) => Promise<{ sent: boolean }>;
+
+export interface CouponReminderResult {
+  /** Unused scratch coupons ending within the reminder window. */
+  due: number;
+  sent: number;
+}
+
+/**
+ * Emails the customer behind every unused scratch coupon that ends within
+ * SCRATCH_REMINDER_DAYS_BEFORE days, once per coupon. Safe to run more than
+ * once a day: a sent reminder is recorded on the coupon.
+ */
+export async function sendCouponExpiryReminders(db: Firestore, now = new Date(), send: Send = sendEmail): Promise<CouponReminderResult> {
+  const result: CouponReminderResult = { due: 0, sent: 0 };
+  const snap = await db.collection('coupons').where('source', '==', 'scratch').get();
+  for (const docSnap of snap.docs) {
+    const coupon = docSnap.data() as Coupon;
+    if (!coupon.active || coupon.usedAt || coupon.invalidatedAt || coupon.expiryReminderSentAt) continue;
+    if (!coupon.expiresAt || !coupon.sourceOrderId) continue;
+    const daysLeft = couponDaysLeft(coupon.expiresAt, now);
+    if (daysLeft === 0 || daysLeft > SCRATCH_REMINDER_DAYS_BEFORE) continue;
+
+    const orders = await db.collection('orders').where('orderId', '==', coupon.sourceOrderId).limit(1).get();
+    const order = orders.docs[0]?.data() as Order | undefined;
+    if (!order?.customerEmail || order.orderStatus === 'cancelled') continue;
+    result.due++;
+
+    const { sent } = await send({
+      to: order.customerEmail,
+      ...customerCouponExpiryEmail({
+        code: coupon.code,
+        label: formatCouponDiscount(coupon),
+        expiresAt: coupon.expiresAt,
+        daysLeft,
+        customerName: order.customerName || order.shippingAddress?.name,
+      }),
+    });
+    if (sent) {
+      const at = now.toISOString();
+      await docSnap.ref.update({ expiryReminderSentAt: at, updatedAt: at });
+      result.sent++;
+    }
+  }
+  return result;
 }
