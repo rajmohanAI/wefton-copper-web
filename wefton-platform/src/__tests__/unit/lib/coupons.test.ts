@@ -156,8 +156,9 @@ describe('rewardCouponValidity', () => {
   });
   it('has a promo line while it can still be used', () => {
     const r = { ...reward, label: '₹100' };
-    expect(rewardCouponPromo(r, new Date('2026-12-08T04:20:00Z'))).toBe('Hurry, only 5 days left to use your ₹100 off!');
-    expect(rewardCouponPromo(r, new Date('2026-12-13T00:00:00Z'))).toBe("Last day to use your ₹100 off. Don't miss it!");
+    expect(rewardCouponPromo(r, new Date('2026-12-08T04:20:00Z'))).toBe('Your thank-you gift of ₹100 off stays with you for 5 more days, whenever you need it.');
+    expect(rewardCouponPromo(r, new Date('2026-12-12T04:20:00Z'))).toBe('Your thank-you gift of ₹100 off stays with you for 1 more day, whenever you need it.');
+    expect(rewardCouponPromo(r, new Date('2026-12-13T00:00:00Z'))).toBe('Your thank-you gift of ₹100 off stays with you until today, whenever you need it.');
     expect(rewardCouponPromo(r, new Date('2026-12-14T00:00:00Z'))).toBeNull();
   });
   it('says when it has expired', () => {

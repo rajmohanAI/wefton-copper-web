@@ -203,13 +203,13 @@ export function formatDaysLeft(expiresAt: string, now = new Date()): string {
   return `${days} ${days === 1 ? 'day' : 'days'} left`;
 }
 
-/** The promotional line under a reward coupon: how long the customer has to use it. */
+/** A gentle note under a reward coupon on how long it stays valid (no pressure, WC-Issue-16 feedback). */
 export function rewardCouponPromo(reward: { label: string; expiresAt: string }, now = new Date()): string | null {
   if (couponDaysLeft(reward.expiresAt, now) === 0) return null;
   const left = formatDaysLeft(reward.expiresAt, now);
-  return left === 'Last day'
-    ? `Last day to use your ${reward.label} off. Don't miss it!`
-    : `Hurry, only ${left} to use your ${reward.label} off!`;
+  if (left === 'Last day') return `Your thank-you gift of ${reward.label} off stays with you until today, whenever you need it.`;
+  const days = couponDaysLeft(reward.expiresAt, now);
+  return `Your thank-you gift of ${reward.label} off stays with you for ${days} more ${days === 1 ? 'day' : 'days'}, whenever you need it.`;
 }
 
 /** When a reward coupon works, for the customer: "Valid till … · N days left", or that it has expired. */
