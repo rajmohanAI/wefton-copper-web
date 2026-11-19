@@ -15,7 +15,7 @@ export const metadata: Metadata = withCanonical('/terms', {
 export default function TermsPage() {
   return (
     <div className="max-w-3xl mx-auto py-16 px-4">
-      <p className="text-sm text-[var(--color-muted)] mb-2">Last Updated: January 2025</p>
+      <p className="text-sm text-[var(--color-muted)] mb-2">Last Updated: November 2026</p>
       <h1 className="text-3xl md:text-4xl font-bold text-[var(--color-foreground)] mb-8">
         Terms of Service
       </h1>
@@ -28,6 +28,11 @@ export default function TermsPage() {
           By accessing or using the Wefton Copper platform, you agree to be bound by these Terms of
           Service. If you do not agree to all the terms and conditions, you must not access or use
           our services.
+        </p>
+        <p className="text-base text-[var(--color-muted-foreground)] leading-relaxed mb-4">
+          <strong className="text-[var(--color-foreground)]">Online only.</strong> Wefton Copper sells its products only online, through our website www.weftoncopper.com. We do not have any retail outlet, store or showroom, and our products are not sold in any physical shop.
+          Every order, payment, return and support request is handled online or through our
+          WhatsApp and email support channels.
         </p>
         <p className="text-base text-[var(--color-muted-foreground)] leading-relaxed">
           These terms apply to all visitors, users, and customers of the platform. We reserve the
