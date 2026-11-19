@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Instagram, Facebook, Twitter, Mail, Phone, MapPin } from '@/components/ui/SocialIcons';
+import { Instagram, Facebook, Twitter, Mail, MapPin } from '@/components/ui/SocialIcons';
+import { MessageCircle } from 'lucide-react';
 import { BRAND } from '@/config/brand';
 import { FEATURES } from '@/config/features';
 import NewsletterForm from './NewsletterForm';
@@ -117,11 +118,13 @@ export default function Footer() {
                 {BRAND.email}
               </a>
               <a
-                href={`tel:${BRAND.phone}`}
+                href={`https://wa.me/${BRAND.whatsapp}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2 py-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--copper-light)] transition-colors"
               >
-                <Phone size={13} />
-                {BRAND.phone}
+                <MessageCircle size={13} />
+                WhatsApp {BRAND.phone} (chat only)
               </a>
               <span className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
                 <MapPin size={13} />
