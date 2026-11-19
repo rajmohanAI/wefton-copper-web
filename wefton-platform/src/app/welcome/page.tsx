@@ -112,7 +112,7 @@ export default function WelcomePage() {
         </div>
         <div className="space-y-1 text-xs text-neutral-500">
           <p>{BRAND.email}</p>
-          <p>{BRAND.phone}</p>
+          <p>WhatsApp {BRAND.phone} (chat only)</p>
           <p>{BRAND.address}</p>
         </div>
       </section>
