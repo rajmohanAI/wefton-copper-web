@@ -20,8 +20,8 @@ export default function ShippingPolicyPage() {
           <section>
             <h2 className="text-lg font-medium text-[var(--text-light)] mb-3">How We Ship</h2>
             <p>
-              Wefton Copper delivers online orders through third-party courier and delivery
-              services. We do not currently have an exclusive partnership or contract with any
+              Wefton Copper sells its products only online, through our website www.weftoncopper.com. We do not have any retail outlet, store or showroom, and our products are not sold in any physical shop. Every order is delivered to the address you give at checkout,
+              through third-party courier and delivery services, and there is no store pick-up. We do not currently have an exclusive partnership or contract with any
               single courier or logistics provider; each shipment is booked with an available
               service that serves your delivery address.
             </p>
