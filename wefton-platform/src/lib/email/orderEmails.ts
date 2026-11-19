@@ -12,8 +12,8 @@ export interface EmailContent {
   html: string;
 }
 
-const COPPER = '#8c4a22';
-const SITE = 'https://www.weftoncopper.com';
+export const COPPER = '#8c4a22';
+export const SITE = 'https://www.weftoncopper.com';
 const SUPPORT = 'sales@weftoncopper.com';
 /** Refund window promised when an order is cancelled. */
 export const REFUND_WINDOW = '5–10 business days';
@@ -36,7 +36,8 @@ export function formatOrderDate(value: unknown): string {
     : '—';
 }
 
-function layout(body: string): string {
+/** The branded email frame shared by every customer email. */
+export function layout(body: string, footerExtra = ''): string {
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8" /></head>
 <body style="margin:0;padding:0;background:#f7f5f2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Arial,sans-serif;color:#1a1a1a;line-height:1.6;">
@@ -49,6 +50,7 @@ function layout(body: string): string {
       <p style="margin:0;">Questions? Write to <a href="mailto:${SUPPORT}" style="color:${COPPER};">${SUPPORT}</a></p>
       <p style="margin:6px 0 0;">© ${new Date().getFullYear()} Wefton Copper ·
         <a href="${SITE}/refund-policy" style="color:${COPPER};text-decoration:none;">Refund Policy</a></p>
+      ${footerExtra}
     </div>
   </div>
 </body></html>`;

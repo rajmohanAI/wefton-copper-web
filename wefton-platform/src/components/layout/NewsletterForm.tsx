@@ -79,10 +79,10 @@ export default function NewsletterForm() {
           {submitStatus === 'loading' ? (
             <>
               <Loader2 size={14} className="animate-spin" />
-              <span>Subscribing</span>
+              <span>Joining</span>
             </>
           ) : (
-            'Subscribe'
+            'Join'
           )}
         </button>
       </div>
