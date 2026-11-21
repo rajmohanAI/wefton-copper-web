@@ -1,7 +1,7 @@
 name: Daily order checks
 
 # Once a day at 10:00 IST: reminds the shop about orders still open after
-# 5 days and cancels orders with no status update for 10 days (see
+# 5 days and, from day 10, asks the customer to wait or cancel (see
 # wefton-platform/src/services/orderLifecycleServer.ts).
 # Needs the repository secret CRON_SECRET, with the same value as the
 # CRON_SECRET secret on the App Hosting backend.
