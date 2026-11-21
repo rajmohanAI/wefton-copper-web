@@ -126,7 +126,7 @@ export function adminNewOrderEmail(order: Order): EmailContent {
       <h3 style="font-size:15px;margin:22px 0 8px;">Ship to</h3>
       ${addressBlock(order)}
       <p style="margin:24px 0 0;font-size:13px;color:#6b6661;">Update the order to Closed in the admin panel once it is delivered.
-        Open orders get a daily reminder from day 5 and are cancelled automatically after 10 days without a status update.</p>
+        Open orders get a daily reminder from day 5. After 10 days the customer is asked whether they'd like to wait or cancel for a refund.</p>
       <p style="margin:16px 0 0;"><a href="${SITE}/admin" style="display:inline-block;padding:10px 24px;background:${COPPER};color:#fff;text-decoration:none;border-radius:6px;">Open admin panel</a></p>
     `),
   };
@@ -137,33 +137,54 @@ export interface OverdueOrder {
   ageDays: number;
 }
 
+/** What the customer said about a delayed order, for the shop's digest. */
+export function customerChoiceNote(order: Order): string {
+  if (order.customerChoice === 'wait' && order.customerChoiceAt) {
+    return `Customer is happy to wait (said so on ${formatOrderDate(order.customerChoiceAt)})`;
+  }
+  if (order.notifications?.choiceSentAt) {
+    return `Asked on ${formatOrderDate(order.notifications.choiceSentAt)} to wait or cancel, no reply yet`;
+  }
+  return '';
+}
+
 /** Daily high-priority digest of orders still open after 5 days. */
-export function adminReminderEmail(overdue: OverdueOrder[], cancelledToday: Order[]): EmailContent {
-  const row = ({ order, ageDays }: OverdueOrder) => `<tr>
+export function adminReminderEmail(overdue: OverdueOrder[]): EmailContent {
+  const row = ({ order, ageDays }: OverdueOrder) => {
+    const note = customerChoiceNote(order);
+    return `<tr>
       <td style="padding:8px 6px;border-bottom:1px solid #eee;"><strong>#${escapeHtml(order.orderId)}</strong><br/>
         <span style="color:#6b6661;font-size:12px;">${formatOrderDate(order.placedAt || order.createdAt)}</span></td>
       <td style="padding:8px 6px;border-bottom:1px solid #eee;">${escapeHtml(customerName(order))}<br/>
         <span style="color:#6b6661;font-size:12px;">${escapeHtml(order.customerEmail || '')}</span></td>
       <td style="padding:8px 6px;border-bottom:1px solid #eee;">${escapeHtml(itemsSummary(order))}</td>
-      <td style="padding:8px 6px;border-bottom:1px solid #eee;">${escapeHtml(order.orderStatus)}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid #eee;">${escapeHtml(order.orderStatus)}${note ? `<br/><span style="color:#6b6661;font-size:12px;">${escapeHtml(note)}</span>` : ''}</td>
       <td style="padding:8px 6px;border-bottom:1px solid #eee;text-align:right;color:${ageDays >= 8 ? '#b42318' : '#b54708'};font-weight:600;">${ageDays} days</td>
     </tr>`;
-  const cancelled = cancelledToday.length
-    ? `<h3 style="font-size:15px;margin:24px 0 8px;color:#b42318;">Cancelled automatically today (refund due)</h3>
-       <ul style="font-size:14px;padding-left:18px;">${cancelledToday
-         .map((o) => `<li>#${escapeHtml(o.orderId)} · ${escapeHtml(customerName(o))} · ${inr(o.total)}</li>`)
-         .join('')}</ul>
-       <p style="font-size:13px;color:#6b6661;">The customers were told the amount will be refunded within ${REFUND_WINDOW}. Please issue the refunds.</p>`
-    : '';
+  };
   return {
-    subject: `[Action needed] ${overdue.length} order(s) not closed after 5 days${cancelledToday.length ? `, ${cancelledToday.length} auto-cancelled` : ''}`,
+    subject: `[Action needed] ${overdue.length} order(s) not closed after 5 days`,
     html: layout(`
       <h2 style="margin:0 0 6px;font-size:20px;color:#b42318;">Orders waiting to be closed</h2>
-      <p style="margin:0 0 16px;color:#444;">These orders were placed more than 5 days ago and are still open. Orders with no status update for 10 days are cancelled automatically and the customer is told a refund is on its way.</p>
-      ${overdue.length ? `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <p style="margin:0 0 16px;color:#444;">These orders were placed more than 5 days ago and are still open. After 10 days the customer gets an apology and can choose to wait or cancel for a full refund. If they cancel, you get a separate email straight away.</p>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead><tr style="text-align:left;color:#6b6661;"><th style="padding:6px;">Order</th><th style="padding:6px;">Customer</th><th style="padding:6px;">Items</th><th style="padding:6px;">Status</th><th style="padding:6px;text-align:right;">Open for</th></tr></thead>
-        <tbody>${overdue.map(row).join('')}</tbody></table>` : ''}
-      ${cancelled}
+        <tbody>${overdue.map(row).join('')}</tbody></table>
+      <p style="margin:20px 0 0;"><a href="${SITE}/admin" style="display:inline-block;padding:10px 24px;background:${COPPER};color:#fff;text-decoration:none;border-radius:6px;">Open admin panel</a></p>
+    `),
+  };
+}
+
+/** Sent to the shop the moment a customer cancels a delayed order from the email link. */
+export function adminCustomerCancelledEmail(order: Order): EmailContent {
+  const refund = order.paymentStatus === 'refund_due';
+  return {
+    subject: `[Refund due] Customer cancelled delayed order #${order.orderId} · ${inr(order.total)}`,
+    html: layout(`
+      <h2 style="margin:0 0 6px;font-size:20px;color:#b42318;">A customer cancelled a delayed order</h2>
+      <p style="margin:0 0 16px;color:#444;">${escapeHtml(customerName(order))} (${escapeHtml(order.customerEmail || '—')}) cancelled order <strong>#${escapeHtml(order.orderId)}</strong>, placed on ${formatOrderDate(order.placedAt || order.createdAt)}, from the link in our delay email. The items have been put back into stock.</p>
+      ${refund ? `<p style="color:#b42318;font-weight:600;">Please refund ${inr(order.total)}. The customer was told to expect it within ${REFUND_WINDOW}, then mark the payment as refunded in the admin panel.</p>` : ''}
+      ${itemsTable(order)}
       <p style="margin:20px 0 0;"><a href="${SITE}/admin" style="display:inline-block;padding:10px 24px;background:${COPPER};color:#fff;text-decoration:none;border-radius:6px;">Open admin panel</a></p>
     `),
   };
@@ -197,17 +218,55 @@ export function customerDelayEmail(order: Order): EmailContent {
   };
 }
 
-export function customerCancelledEmail(order: Order): EmailContent {
+/** `byCustomer`: the customer cancelled it themselves from the delay email. */
+export function customerCancelledEmail(order: Order, { byCustomer = false } = {}): EmailContent {
   const paid = order.paymentStatus === 'verified' || order.paymentStatus === 'uploaded' || order.paymentStatus === 'refund_due';
+  const placed = formatOrderDate(order.placedAt || order.createdAt);
+  const why = byCustomer
+    ? `As you asked, we've cancelled your order <strong>#${escapeHtml(order.orderId)}</strong>, placed on ${placed}. We're truly sorry we couldn't get it to you in time.`
+    : `We're very sorry. Due to technical issues we were unable to fulfil your order <strong>#${escapeHtml(order.orderId)}</strong>, placed on ${placed}, and it has been cancelled.`;
   return {
     subject: `Your order #${order.orderId} has been cancelled`,
     html: layout(`
       <h2 style="margin:0 0 6px;font-size:20px;">Your order has been cancelled</h2>
       <p style="color:#444;">Hi ${escapeHtml(customerName(order))},</p>
-      <p style="color:#444;">We're very sorry. Due to technical issues we were unable to fulfil your order <strong>#${escapeHtml(order.orderId)}</strong>, placed on ${formatOrderDate(order.placedAt || order.createdAt)}, and it has been cancelled.</p>
+      <p style="color:#444;">${why}</p>
       ${paid ? `<p style="color:#444;"><strong>Your payment of ${inr(order.total)} will be refunded to your original payment method within ${REFUND_WINDOW}.</strong></p>` : ''}
       ${itemsTable(order)}
       <p style="color:#444;margin-top:20px;">We apologise for the inconvenience. If you have any questions, just reply to this email.</p>
+    `),
+  };
+}
+
+export interface OrderChoiceLinks {
+  wait: string;
+  cancel: string;
+}
+
+/**
+ * Sent once an order is still not on its way 10 days after it was placed
+ * (WC-Issue-20): an apology, and a choice to wait or cancel for a refund.
+ */
+export function customerOrderChoiceEmail(order: Order, links: OrderChoiceLinks): EmailContent {
+  const paid = order.paymentStatus === 'verified' || order.paymentStatus === 'uploaded';
+  const button = (href: string, label: string, primary: boolean) =>
+    `<a href="${escapeHtml(href)}" style="display:inline-block;margin:6px;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:600;${
+      primary ? `background:${COPPER};color:#ffffff;` : `background:#ffffff;color:${COPPER};border:2px solid ${COPPER};`
+    }">${label}</a>`;
+  return {
+    subject: `An update on your order #${order.orderId}`,
+    html: layout(`
+      <h2 style="margin:0 0 6px;font-size:20px;">We're truly sorry for the wait</h2>
+      <p style="color:#444;">Hi ${escapeHtml(customerName(order))},</p>
+      <p style="color:#444;">Your order <strong>#${escapeHtml(order.orderId)}</strong>, placed on ${formatOrderDate(order.placedAt || order.createdAt)}, hasn't reached you yet because of a technical or logistical issue on our side.</p>
+      <p style="color:#444;">You're welcome to give us a little more time to sort it out. Or, if you'd rather not wait, you can cancel the order${paid ? ` for a full refund of <strong>${inr(order.total)}</strong>` : ''}. Just choose below.</p>
+      <p style="text-align:center;margin:22px 0;">
+        ${button(links.wait, 'I&#39;ll wait a little longer', true)}
+        ${button(links.cancel, paid ? 'Cancel and refund my order' : 'Cancel my order', false)}
+      </p>
+      ${itemsTable(order)}
+      <p style="color:#444;margin-top:20px;">We value your interest in our products and will do our best to stay connected with you. Thank you.</p>
+      <p style="color:#6b6661;font-size:13px;">${paid ? `If you cancel, the refund goes back to your original payment method within ${REFUND_WINDOW}. ` : ''}You can also just reply to this email.</p>
     `),
   };
 }

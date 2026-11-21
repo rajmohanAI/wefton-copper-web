@@ -1,5 +1,5 @@
 // ============================================================
-// Wefton Copper — Order lifecycle: placed emails, reminders, auto-cancel
+// Wefton Copper — Order lifecycle: placed emails, reminders, wait-or-cancel
 // ============================================================
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -13,7 +13,8 @@ vi.mock('@/lib/firebaseAdmin', () => ({
   getAdminAuth: () => ({ getUser: async () => ({ email: 'buyer@example.com' }) }),
 }));
 
-import { runDailyOrderChecks, markOrderPlaced, istDate } from '@/services/orderLifecycleServer';
+import { runDailyOrderChecks, markOrderPlaced, istDate, respondToOrderChoice, shouldAskChoice } from '@/services/orderLifecycleServer';
+import { orderChoiceToken, verifyOrderChoiceToken } from '@/lib/orderResponse';
 import type { Order } from '@/types';
 
 // ── Minimal in-memory Firestore ───────────────────────────────
@@ -38,6 +39,7 @@ function applyUpdate(path: string, updates: Data) {
 function docRef(path: string) {
   return {
     path,
+    id: path.split('/').pop(),
     get: async () => {
       const data = store.get(path);
       return { exists: !!data, data: () => data, get: (k: string) => data?.[k], ref: docRef(path) };
@@ -97,6 +99,7 @@ const send = vi.fn(async () => ({ sent: true }));
 const sentSubjects = () => (send.mock.calls as unknown as [{ subject: string; to: unknown }][]).map(([e]) => e.subject);
 
 beforeEach(() => {
+  process.env.ORDER_LINK_SECRET = 'test-secret';
   store.clear();
   send.mockClear();
   store.set('products/p1', {
@@ -159,7 +162,7 @@ describe('runDailyOrderChecks', () => {
   it('reminds the shop daily from day 5 and apologises to the customer once', async () => {
     order('A', { placedAt: daysAgo(6), statusUpdatedAt: daysAgo(6), notifications: sentFlags });
     const first = await runDailyOrderChecks(db, NOW, send);
-    expect(first).toMatchObject({ overdue: 1, delayEmails: 1, digestSent: true, cancelled: 0 });
+    expect(first).toMatchObject({ overdue: 1, delayEmails: 1, digestSent: true, choiceEmails: 0 });
     expect(sentSubjects()).toHaveLength(2);
 
     // Same day again: no repeat digest, no second apology.
@@ -172,34 +175,43 @@ describe('runDailyOrderChecks', () => {
     expect(sentSubjects()).toEqual([expect.stringContaining('[Action needed]')]);
   });
 
-  it('cancels after 10 days without a status update and promises a refund', async () => {
-    order('A', { placedAt: daysAgo(11), statusUpdatedAt: daysAgo(10), notifications: sentFlags });
+  it('asks the customer to wait or cancel on day 10, once, and never cancels by itself', async () => {
+    order('A', { placedAt: daysAgo(10), statusUpdatedAt: daysAgo(10), notifications: { ...sentFlags, delaySentAt: 'x' } });
     const result = await runDailyOrderChecks(db, NOW, send);
-    expect(result.cancelled).toBe(1);
+    expect(result.choiceEmails).toBe(1);
+    const choice = (send.mock.calls as unknown as [{ subject: string; html: string; to: string }][]).find(([e]) => e.subject.startsWith('An update on your order'))![0];
+    expect(choice.to).toBe('asha@example.com');
+    expect(choice.html).toContain('/order-response?t=');
+    expect(choice.html).toContain('choice=wait');
+    expect(choice.html).toContain('choice=cancel');
+    expect(choice.html).toContain('₹1,678');
     const stored = store.get('orders/A')!;
-    expect(stored.orderStatus).toBe('cancelled');
-    expect(stored.paymentStatus).toBe('refund_due');
-    const cancelEmail = (send.mock.calls as unknown as [{ subject: string; html: string }][]).find(([e]) => e.subject.includes('cancelled'))![0];
-    expect(cancelEmail.html).toContain('5–10 business days');
-    expect(sentSubjects().some((s) => s.includes('auto-cancelled'))).toBe(true);
+    expect(stored.orderStatus).toBe('confirmed');
+    expect((stored.notifications as { choiceSentAt: string }).choiceSentAt).toBe(NOW.toISOString());
+
+    // Days later, no reply: no second question, still open, still in the digest.
+    send.mockClear();
+    const later = await runDailyOrderChecks(db, new Date(NOW.getTime() + 20 * 86400000), send);
+    expect(later).toMatchObject({ choiceEmails: 0, overdue: 1 });
+    expect(store.get('orders/A')!.orderStatus).toBe('confirmed');
+    expect(sentSubjects()).toEqual([expect.stringContaining('[Action needed]')]);
   });
 
-  it('puts an auto-cancelled order\'s items back into stock once', async () => {
-    store.set('products/p1', { ...store.get('products/p1'), inventory: 78, variants: [{ variantId: 'v1', size: 'M', color: 'Olive Green', inventory: 3 }] });
-    const stockMoves = [{ productId: 'p1', variantId: 'v1', size: 'M', color: 'Olive Green', quantity: 2 }];
-    order('A', { placedAt: daysAgo(11), statusUpdatedAt: daysAgo(10), notifications: sentFlags, stockDeductedAt: daysAgo(11), stockMoves });
-    await runDailyOrderChecks(db, NOW, send);
-    await runDailyOrderChecks(db, NOW, send);
-    expect(store.get('products/p1')).toMatchObject({ inventory: 80, variants: [{ variantId: 'v1', inventory: 5 }] });
-    expect(store.get('orders/A')!.stockRestoredAt).toBe(NOW.toISOString());
+  it('does not ask before day 10, once shipped, or without an email address', async () => {
+    order('A', { placedAt: daysAgo(9), notifications: sentFlags });
+    order('B', { placedAt: daysAgo(12), orderStatus: 'shipped', notifications: sentFlags });
+    order('C', { placedAt: daysAgo(12), customerEmail: '', notifications: sentFlags });
+    const result = await runDailyOrderChecks(db, NOW, send);
+    expect(result).toMatchObject({ choiceEmails: 0, overdue: 3 });
+    expect(store.get('orders/C')!.orderStatus).toBe('confirmed');
   });
 
-  it('switches off the scratch card coupon of an auto-cancelled order', async () => {
-    const rewardCoupon = { code: 'ABCDEFGHJKMNPQRS', label: '10%', startsAt: daysAgo(10), expiresAt: daysAgo(-19), issuedAt: daysAgo(11) };
-    order('A', { placedAt: daysAgo(11), statusUpdatedAt: daysAgo(10), notifications: sentFlags, rewardCoupon });
-    store.set('coupons/ABCDEFGHJKMNPQRS', { code: 'ABCDEFGHJKMNPQRS', active: true, source: 'scratch' });
-    await runDailyOrderChecks(db, NOW, send);
-    expect(store.get('coupons/ABCDEFGHJKMNPQRS')).toMatchObject({ active: false, invalidatedAt: NOW.toISOString() });
+  it('asks again 10 days after the customer chose to wait', () => {
+    const base = { orderStatus: 'confirmed', customerEmail: 'a@b.c', placedAt: daysAgo(25) } as Order;
+    const asked = { ...base, notifications: { choiceSentAt: daysAgo(15) } } as Order;
+    expect(shouldAskChoice({ ...asked, customerChoice: 'wait', customerChoiceAt: daysAgo(9) }, NOW)).toBe(false);
+    expect(shouldAskChoice({ ...asked, customerChoice: 'wait', customerChoiceAt: daysAgo(10) }, NOW)).toBe(true);
+    expect(shouldAskChoice(asked, NOW)).toBe(false);
   });
 
   it('marks a scratch card coupon used when the order paying with it is placed', async () => {
@@ -209,14 +221,6 @@ describe('runDailyOrderChecks', () => {
     expect(store.get('coupons/ABCDEFGHJKMNPQRS')).toMatchObject({ usedAt: NOW.toISOString(), usedByOrderId: 'A' });
   });
 
-  it('does not cancel when the admin updated the status recently, or once shipped', async () => {
-    order('A', { placedAt: daysAgo(12), statusUpdatedAt: daysAgo(3), notifications: sentFlags });
-    order('B', { placedAt: daysAgo(12), statusUpdatedAt: daysAgo(11), orderStatus: 'shipped', notifications: sentFlags });
-    const result = await runDailyOrderChecks(db, NOW, send);
-    expect(result.cancelled).toBe(0);
-    expect(result.overdue).toBe(2);
-  });
-
   it('leaves closed, delivered and older orders alone', async () => {
     order('A', { placedAt: daysAgo(20), orderStatus: 'closed' });
     order('B', { placedAt: daysAgo(20), orderStatus: 'delivered' });
@@ -224,6 +228,70 @@ describe('runDailyOrderChecks', () => {
     const result = await runDailyOrderChecks(db, NOW, send);
     expect(result.checked).toBe(0);
     expect(send).not.toHaveBeenCalled();
+  });
+});
+
+describe('respondToOrderChoice', () => {
+  const asked = { placedAt: daysAgo(11), statusUpdatedAt: daysAgo(11), notifications: { placedSentAt: 'x', confirmationSentAt: 'x', choiceSentAt: daysAgo(1) } };
+
+  it('cancels on the customer\'s request: refund due, stock back, coupon off, both emailed, once', async () => {
+    store.set('products/p1', { ...store.get('products/p1'), inventory: 78, variants: [{ variantId: 'v1', size: 'M', color: 'Olive Green', inventory: 3 }] });
+    const stockMoves = [{ productId: 'p1', variantId: 'v1', size: 'M', color: 'Olive Green', quantity: 2 }];
+    const rewardCoupon = { code: 'ABCDEFGHJKMNPQRS', label: '10%', startsAt: daysAgo(10), expiresAt: daysAgo(-19), issuedAt: daysAgo(11) };
+    store.set('coupons/ABCDEFGHJKMNPQRS', { code: 'ABCDEFGHJKMNPQRS', active: true, source: 'scratch' });
+    order('A', { ...asked, stockDeductedAt: daysAgo(11), stockMoves, rewardCoupon });
+
+    const view = await respondToOrderChoice(db, 'A', 'cancel', NOW, send);
+    expect(view).toMatchObject({ state: 'cancelled', cancelledByCustomer: true, paid: true, total: 1678 });
+    const stored = store.get('orders/A')!;
+    expect(stored).toMatchObject({ orderStatus: 'cancelled', paymentStatus: 'refund_due', customerChoice: 'cancel', stockRestoredAt: NOW.toISOString() });
+    expect(store.get('products/p1')).toMatchObject({ inventory: 80, variants: [{ inventory: 5 }] });
+    expect(store.get('coupons/ABCDEFGHJKMNPQRS')).toMatchObject({ active: false });
+    const emails = send.mock.calls as unknown as [{ subject: string; html: string }][];
+    expect(emails.map(([e]) => e.subject)).toEqual([
+      'Your order #A has been cancelled',
+      expect.stringContaining('[Refund due] Customer cancelled delayed order #A'),
+    ]);
+    expect(emails[0][0].html).toContain('As you asked');
+    expect(emails[0][0].html).toContain('5–10 business days');
+
+    send.mockClear();
+    expect(await respondToOrderChoice(db, 'A', 'cancel', NOW, send)).toMatchObject({ state: 'cancelled' });
+    expect(send).not.toHaveBeenCalled();
+    expect(store.get('products/p1')).toMatchObject({ inventory: 80 });
+  });
+
+  it('records "wait" and still lets the customer cancel later', async () => {
+    order('A', asked);
+    expect(await respondToOrderChoice(db, 'A', 'wait', NOW, send)).toMatchObject({ state: 'waiting' });
+    expect(store.get('orders/A')).toMatchObject({ orderStatus: 'confirmed', customerChoice: 'wait', customerChoiceAt: NOW.toISOString() });
+    expect(send).not.toHaveBeenCalled();
+    expect(await respondToOrderChoice(db, 'A', 'cancel', NOW, send)).toMatchObject({ state: 'cancelled' });
+  });
+
+  it('never cancels a shipped or delivered order', async () => {
+    order('A', { ...asked, orderStatus: 'shipped' });
+    order('B', { ...asked, orderStatus: 'delivered' });
+    expect(await respondToOrderChoice(db, 'A', 'cancel', NOW, send)).toMatchObject({ state: 'shipped' });
+    expect(await respondToOrderChoice(db, 'B', 'cancel', NOW, send)).toMatchObject({ state: 'closed' });
+    expect(store.get('orders/A')!.orderStatus).toBe('shipped');
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('reports an unknown order', async () => {
+    expect(await respondToOrderChoice(db, 'nope', 'cancel', NOW, send)).toEqual({ state: 'not_found' });
+  });
+});
+
+describe('order choice tokens', () => {
+  it('round-trips and rejects forged or other-key tokens', () => {
+    const token = orderChoiceToken('order123', 'k1')!;
+    expect(verifyOrderChoiceToken(token, 'k1')).toBe('order123');
+    expect(verifyOrderChoiceToken(token, 'k2')).toBeNull();
+    const forged = `${Buffer.from('other').toString('base64url')}.${token.split('.')[1]}`;
+    expect(verifyOrderChoiceToken(forged, 'k1')).toBeNull();
+    expect(verifyOrderChoiceToken('garbage', 'k1')).toBeNull();
+    expect(orderChoiceToken('order123', null)).toBeNull();
   });
 });
 
