@@ -81,7 +81,7 @@ export async function createOrder(
       isDefault: shippingAddress.isDefault || false,
     },
     paymentMethod: 'qr' as const,
-    // Takes part in the placed / reminder / auto-cancel emails (see orderLifecycleServer).
+    // Takes part in the placed / reminder / wait-or-cancel emails (see orderLifecycleServer).
     lifecycleVersion: 1,
     customerEmail,
     customerName: shippingAddress.name || '',

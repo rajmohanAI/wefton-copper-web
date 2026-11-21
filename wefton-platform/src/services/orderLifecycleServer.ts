@@ -4,8 +4,10 @@
 //    screenshot is uploaded, stamp placedAt, fill in the customer and item
 //    details, and email the shop and the customer.
 // 2. runDailyOrderChecks (daily job): reminds the shop about orders still
-//    open after 5 days, apologises to those customers once, and cancels
-//    orders with no status update for 10 days.
+//    open after 5 days and apologises to those customers once. At 10 days
+//    the customer is asked to wait or cancel for a refund (WC-Issue-20);
+//    nothing is cancelled without the customer asking.
+// 3. respondToOrderChoice: the customer's answer, from /order-response.
 // Only orders with lifecycleVersion 1 (created by the current checkout)
 // take part, so older orders never get surprise emails or cancellations.
 // ============================================================
@@ -18,25 +20,31 @@ import {
   type OutgoingEmail,
 } from '@/lib/email/sender';
 import {
+  SITE,
+  adminCustomerCancelledEmail,
   adminNewOrderEmail,
   adminReminderEmail,
   customerCancelledEmail,
   customerConfirmationEmail,
   customerDelayEmail,
+  customerOrderChoiceEmail,
+  type OrderChoiceLinks,
   type OverdueOrder,
 } from '@/lib/email/orderEmails';
+import { orderChoiceToken, type OrderChoice } from '@/lib/orderResponse';
 import { invalidateRewardCoupon, redeemScratchCoupon } from '@/services/scratchCouponServer';
 import { applyStockMoves, planStockMoves, type StockedProduct, type StockMove } from '@/lib/orderStock';
 import type { Order, OrderItem, OrderStatusEvent, Product } from '@/types';
 
 export const REMINDER_AFTER_DAYS = 5;
-export const CANCEL_AFTER_DAYS = 10;
+/** Days after placing (and after each "I'll wait") before the customer is asked to wait or cancel. */
+export const CHOICE_AFTER_DAYS = 10;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const PAID: Order['paymentStatus'][] = ['uploaded', 'verified'];
 const CLOSED: Order['orderStatus'][] = ['delivered', 'closed', 'cancelled'];
-// Shipped orders are never auto-cancelled: the goods have left.
-const AUTO_CANCELLABLE: Order['orderStatus'][] = ['placed', 'confirmed', 'processing'];
+// Only these can still be cancelled by the customer: once shipped, the goods have left.
+const CANCELLABLE: Order['orderStatus'][] = ['placed', 'confirmed', 'processing'];
 
 const JOB_DOC = 'jobs/orderReminders';
 
@@ -217,15 +225,40 @@ export interface DailyCheckResult {
   placed: number;
   overdue: number;
   delayEmails: number;
-  cancelled: number;
+  /** "Wait or cancel?" emails sent this run. */
+  choiceEmails: number;
   digestSent: boolean;
+}
+
+function siteUrl(): string {
+  return (process.env.NEXT_PUBLIC_APP_URL || SITE).replace(/\/$/, '');
+}
+
+/** The two buttons in the wait-or-cancel email. Null without a signing secret. */
+export function orderChoiceLinks(orderDocId: string): OrderChoiceLinks | null {
+  const token = orderChoiceToken(orderDocId);
+  if (!token) return null;
+  const base = `${siteUrl()}/order-response?t=${encodeURIComponent(token)}`;
+  return { wait: `${base}&choice=wait`, cancel: `${base}&choice=cancel` };
+}
+
+/**
+ * Ask on day 10 after placing, and again 10 days after each "I'll wait".
+ * Never while the last question is unanswered, and never once shipped.
+ */
+export function shouldAskChoice(order: Order, now: Date): boolean {
+  if (!CANCELLABLE.includes(order.orderStatus) || !order.customerEmail) return false;
+  if (daysBetween(order.placedAt, now) < CHOICE_AFTER_DAYS) return false;
+  const asked = order.notifications?.choiceSentAt;
+  if (!asked) return true;
+  if (order.customerChoice !== 'wait' || !order.customerChoiceAt) return false;
+  return order.customerChoiceAt >= asked && daysBetween(order.customerChoiceAt, now) >= CHOICE_AFTER_DAYS;
 }
 
 export async function runDailyOrderChecks(db: Firestore, now = new Date(), send: Send = sendEmail): Promise<DailyCheckResult> {
   const snap = await db.collection('orders').where('lifecycleVersion', '==', 1).get();
-  const result: DailyCheckResult = { checked: 0, placed: 0, overdue: 0, delayEmails: 0, cancelled: 0, digestSent: false };
+  const result: DailyCheckResult = { checked: 0, placed: 0, overdue: 0, delayEmails: 0, choiceEmails: 0, digestSent: false };
   const overdue: OverdueOrder[] = [];
-  const cancelledToday: Order[] = [];
   const at = now.toISOString();
 
   for (const docSnap of snap.docs) {
@@ -247,36 +280,19 @@ export async function runDailyOrderChecks(db: Firestore, now = new Date(), send:
     }
 
     const age = daysBetween(order.placedAt, now);
-    const idle = daysBetween(order.statusUpdatedAt || order.placedAt, now);
 
-    if (AUTO_CANCELLABLE.includes(order.orderStatus) && idle >= CANCEL_AFTER_DAYS) {
-      const event: OrderStatusEvent = { status: 'cancelled', at, by: 'system', note: `No status update for ${idle} days` };
-      const paymentStatus = PAID.includes(order.paymentStatus) ? 'refund_due' : order.paymentStatus;
-      // The cancelled order's items go back into stock in the same write.
-      await db.runTransaction(async (tx) => {
-        const fresh = (await tx.get(ref)).data() as Order;
-        const stockFields = await restoreStockInTx(db, tx, fresh, at);
-        tx.update(ref, {
-          orderStatus: 'cancelled',
-          paymentStatus,
-          autoCancelledAt: at,
-          statusUpdatedAt: at,
-          ...stockFields,
-          statusHistory: FieldValue.arrayUnion(event),
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-      });
-      await invalidateRewardCoupon(db, order, now).catch((error) =>
-        console.error(`[Coupons] Switching off the reward coupon of ${order.orderId} failed:`, error)
-      );
-      const cancelled: Order = { ...order, orderStatus: 'cancelled', paymentStatus };
-      cancelledToday.push(cancelled);
-      result.cancelled++;
-      if (order.customerEmail && !order.notifications?.cancelSentAt) {
-        const { sent } = await send({ to: order.customerEmail, ...customerCancelledEmail(cancelled) });
-        if (sent) await ref.update({ 'notifications.cancelSentAt': at });
+    if (shouldAskChoice(order, now)) {
+      const links = orderChoiceLinks(ref.id);
+      if (links) {
+        const { sent } = await send({ to: order.customerEmail!, ...customerOrderChoiceEmail(order, links) });
+        if (sent) {
+          await ref.update({ 'notifications.choiceSentAt': at });
+          order = { ...order, notifications: { ...order.notifications, choiceSentAt: at } };
+          result.choiceEmails++;
+        }
+      } else {
+        console.error('[Orders] No ORDER_LINK_SECRET or CRON_SECRET: cannot send the wait-or-cancel email');
       }
-      continue;
     }
 
     if (age >= REMINDER_AFTER_DAYS) {
@@ -293,13 +309,13 @@ export async function runDailyOrderChecks(db: Firestore, now = new Date(), send:
   }
 
   // One digest per India day, even if the job runs twice.
-  if (overdue.length || cancelledToday.length) {
+  if (overdue.length) {
     const jobRef = db.doc(JOB_DOC);
     const today = istDate(now);
     const job = await jobRef.get();
     if (job.get('lastDigestDate') !== today) {
       overdue.sort((a, b) => b.ageDays - a.ageDays);
-      const { sent } = await send({ to: adminEmails(), ...adminReminderEmail(overdue, cancelledToday), highPriority: true });
+      const { sent } = await send({ to: adminEmails(), ...adminReminderEmail(overdue), highPriority: true });
       if (sent) {
         await jobRef.set({ lastDigestDate: today, lastDigestAt: at }, { merge: true });
         result.digestSent = true;
@@ -309,4 +325,111 @@ export async function runDailyOrderChecks(db: Firestore, now = new Date(), send:
 
   await db.doc(JOB_DOC).set({ lastRunAt: at, lastResult: result }, { merge: true });
   return result;
+}
+
+
+/** What the /order-response page shows, and what an answer did. */
+export type OrderChoiceState =
+  | 'open' // can still wait or cancel
+  | 'waiting' // the customer said they'll wait
+  | 'cancelled' // cancelled (by the customer or otherwise)
+  | 'shipped' // on its way: too late to cancel
+  | 'closed' // delivered or closed
+  | 'not_found';
+
+export interface OrderChoiceView {
+  state: OrderChoiceState;
+  orderId?: string;
+  placedAt?: string;
+  total?: number;
+  paid?: boolean;
+  /** The customer cancelled it themselves. */
+  cancelledByCustomer?: boolean;
+}
+
+function viewOf(order: Order | undefined): OrderChoiceView {
+  if (!order) return { state: 'not_found' };
+  const base = {
+    orderId: order.orderId,
+    placedAt: order.placedAt || order.createdAt,
+    total: order.total,
+    paid: PAID.includes(order.paymentStatus) || order.paymentStatus === 'refund_due',
+    cancelledByCustomer: order.customerChoice === 'cancel',
+  };
+  if (order.orderStatus === 'cancelled') return { ...base, state: 'cancelled' };
+  if (order.orderStatus === 'shipped') return { ...base, state: 'shipped' };
+  if (CLOSED.includes(order.orderStatus)) return { ...base, state: 'closed' };
+  if (order.customerChoice === 'wait' && order.customerChoiceAt && order.customerChoiceAt >= (order.notifications?.choiceSentAt || '')) {
+    return { ...base, state: 'waiting' };
+  }
+  return { ...base, state: 'open' };
+}
+
+export async function getOrderChoiceView(db: Firestore, orderDocId: string): Promise<OrderChoiceView> {
+  const snap = await db.collection('orders').doc(orderDocId).get();
+  return viewOf(snap.exists ? (snap.data() as Order) : undefined);
+}
+
+/**
+ * The customer's answer to the wait-or-cancel email. Safe to call twice:
+ * a second "cancel" does nothing, and a shipped or closed order is never
+ * cancelled. Cancelling puts the stock back, switches off the order's
+ * scratch card coupon, and emails the customer and the shop.
+ */
+export async function respondToOrderChoice(
+  db: Firestore,
+  orderDocId: string,
+  choice: OrderChoice,
+  now = new Date(),
+  send: Send = sendEmail
+): Promise<OrderChoiceView> {
+  const ref = db.collection('orders').doc(orderDocId);
+  const at = now.toISOString();
+
+  const outcome = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return { view: viewOf(undefined), changed: false };
+    const order = snap.data() as Order;
+    const view = viewOf(order);
+    if (view.state !== 'open' && view.state !== 'waiting') return { view, changed: false };
+
+    if (choice === 'wait') {
+      if (view.state === 'waiting') return { view, changed: false };
+      const event: OrderStatusEvent = { status: order.orderStatus, at, by: 'customer', note: 'Happy to wait longer for the delayed order' };
+      tx.update(ref, { customerChoice: 'wait', customerChoiceAt: at, statusHistory: FieldValue.arrayUnion(event), updatedAt: FieldValue.serverTimestamp() });
+      const updated: Order = { ...order, customerChoice: 'wait', customerChoiceAt: at };
+      return { view: viewOf(updated), changed: false };
+    }
+
+    const paymentStatus: Order['paymentStatus'] = PAID.includes(order.paymentStatus) ? 'refund_due' : order.paymentStatus;
+    const event: OrderStatusEvent = { status: 'cancelled', at, by: 'customer', note: 'Cancelled by the customer from the delay email' };
+    // Reads come before writes: restoreStockInTx reads the products first.
+    const stockFields = await restoreStockInTx(db, tx, order, at);
+    tx.update(ref, {
+      orderStatus: 'cancelled',
+      paymentStatus,
+      customerChoice: 'cancel',
+      customerChoiceAt: at,
+      statusUpdatedAt: at,
+      ...stockFields,
+      statusHistory: FieldValue.arrayUnion(event),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    const cancelled: Order = { ...order, orderStatus: 'cancelled', paymentStatus, customerChoice: 'cancel', customerChoiceAt: at };
+    return { view: viewOf(cancelled), changed: true, order: cancelled };
+  });
+
+  if (outcome.changed && outcome.order) {
+    const order = outcome.order;
+    await invalidateRewardCoupon(db, order, now).catch((error) =>
+      console.error(`[Coupons] Switching off the reward coupon of ${order.orderId} failed:`, error)
+    );
+    if (order.customerEmail && !order.notifications?.cancelSentAt) {
+      const { sent } = await send({ to: order.customerEmail, ...customerCancelledEmail(order, { byCustomer: true }) });
+      if (sent) await ref.update({ 'notifications.cancelSentAt': at });
+    }
+    const { sent } = await send({ to: adminEmails(), ...adminCustomerCancelledEmail(order), highPriority: true });
+    if (sent) await ref.update({ 'notifications.customerCancelSentAt': at });
+  }
+  return outcome.view;
 }
