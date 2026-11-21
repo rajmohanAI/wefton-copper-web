@@ -18,13 +18,13 @@ function authorised(request: NextRequest): boolean {
 
 /**
  * Daily order checks (run by the "Daily order checks" GitHub Actions
- * schedule): reminders after 5 days, auto-cancel after 10 days without a
- * status update, and coupon expiry reminders 5 days before a scratch card
- * coupon ends. Needs `Authorization: Bearer $CRON_SECRET`.
+ * schedule): reminders after 5 days, a "wait or cancel?" email to the
+ * customer from day 10, and coupon expiry reminders 5 days before a
+ * scratch card coupon ends. Needs `Authorization: Bearer $CRON_SECRET`.
  */
 export async function POST(request: NextRequest) {
   if (!authorised(request)) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
-  // Cancelling without telling anyone would be worse than waiting a day.
+  // The checks are all emails: without email there is nothing to do.
   if (!isEmailConfigured()) return NextResponse.json({ error: 'Email is not configured' }, { status: 503 });
   try {
     const db = getAdminDb();

@@ -144,7 +144,7 @@ export interface Order {
   updatedAt?: string;
 
   // ── Order lifecycle (orders created from v2 of checkout on) ──
-  /** 1 on orders that take part in the placed / reminder / auto-cancel emails. */
+  /** 1 on orders that take part in the placed / reminder / wait-or-cancel emails. */
   lifecycleVersion?: number;
   customerEmail?: string;
   customerName?: string;
@@ -156,7 +156,11 @@ export interface Order {
   /** Last time the order status changed. */
   statusUpdatedAt?: string;
   closedAt?: string;
+  /** Set on orders the old 10-day auto-cancel cancelled (before WC-Issue-20). */
   autoCancelledAt?: string;
+  /** The customer's answer to the 10-day "wait or cancel?" email (WC-Issue-20). */
+  customerChoice?: 'wait' | 'cancel';
+  customerChoiceAt?: string;
   statusHistory?: OrderStatusEvent[];
   notifications?: OrderNotifications;
   /** The scratch card coupon this order earned (coupon doc id is the code). */
@@ -193,6 +197,10 @@ export interface OrderNotifications {
   confirmationSentAt?: string; // customer confirmation
   delaySentAt?: string;
   cancelSentAt?: string;
+  /** Last time the customer was asked to wait or cancel (day 10, then 10 days after each "wait"). */
+  choiceSentAt?: string;
+  /** Shop told that the customer cancelled. */
+  customerCancelSentAt?: string;
 }
 
 export interface OrderItem {
