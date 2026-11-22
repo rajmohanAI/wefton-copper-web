@@ -20,7 +20,7 @@ const MILESTONES = [
     year: '2025',
     title: 'First Thread',
     description:
-      'Sourced the finest Cotton Fabric fabric from ethical mills. Months of R&D perfecting the ideal weight, drape, and softness.',
+      'Sourced the finest fabrics from ethical mills. Months of R&D perfecting the ideal weight, drape, and softness.',
   },
   {
     year: '2025',
@@ -211,7 +211,7 @@ export default function AboutClient() {
             </blockquote>
             <p className="text-sm text-[var(--text-muted)] text-center mt-6 leading-relaxed max-w-2xl mx-auto">
               At Wefton Copper, we exist to bridge the gap between luxury and everyday wear. Our
-              Cotton Fabric fabric is engineered for comfort, durability, and a premium hand-feel
+              fabrics are chosen for comfort, durability, and a premium hand-feel
               that lasts. Every decision — from sourcing to stitching — is guided by our commitment to
               quality without compromise.
             </p>
@@ -266,7 +266,7 @@ export default function AboutClient() {
                 Ethical Sourcing
               </h3>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                Our Cotton Fabric fabric is sourced from certified ethical mills that ensure
+                Our fabrics are sourced from certified ethical mills that ensure
                 fair wages, safe working conditions, and environmentally responsible production
                 processes at every stage.
               </p>
@@ -301,7 +301,7 @@ export default function AboutClient() {
                 Built to Last
               </h3>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                Sustainability starts with durability. Our high quality cotton fabric and careful
+                Sustainability starts with durability. Our high quality fabrics and careful
                 construction are made to last for a longer period, reducing the need for frequent
                 replacements and minimising textile waste.
               </p>

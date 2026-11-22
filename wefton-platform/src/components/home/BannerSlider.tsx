@@ -46,7 +46,7 @@ export default function BannerSlider({ slides }: BannerSliderProps) {
             Wefton Copper
           </h2>
           <p className="text-base md:text-lg text-[var(--color-muted,#737373)] mt-2">
-            Premium Cotton Fabric Essentials
+            Premium Essential Wear
           </p>
         </div>
       </section>

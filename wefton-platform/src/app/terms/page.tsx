@@ -76,7 +76,23 @@ export default function TermsPage() {
 
       <section className="mb-8">
         <h2 className="text-xl md:text-2xl font-semibold text-[var(--color-foreground)] mb-4">
-          4. Shipping
+          4. Products and Fabric Specifications
+        </h2>
+        <p className="text-base text-[var(--color-muted-foreground)] leading-relaxed mb-4">
+          Each product page states the fabric composition of that product, for example
+          &ldquo;100% cotton&rdquo; or a cotton and polyester blend. This composition is taken from the
+          specification provided by our fabric supplier for that product.
+        </p>
+        <ol className="list-decimal list-inside space-y-2 text-base text-[var(--color-muted-foreground)] leading-relaxed">
+          <li>A composition such as &ldquo;100% cotton&rdquo; applies only to the product it is listed on.</li>
+          <li>Wefton Copper products are not all made from cotton. Our range may include products made from polyester or from cotton and polyester blends.</li>
+          <li>Please check the fabric details on each product page before placing your order.</li>
+        </ol>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-xl md:text-2xl font-semibold text-[var(--color-foreground)] mb-4">
+          5. Shipping
         </h2>
         <p className="text-base text-[var(--color-muted-foreground)] leading-relaxed mb-4">
           Orders are dispatched within 2–3 business days and delivered through third-party courier
@@ -91,7 +107,7 @@ export default function TermsPage() {
 
       <section className="mb-8">
         <h2 className="text-xl md:text-2xl font-semibold text-[var(--color-foreground)] mb-4">
-          5. Returns
+          6. Returns
         </h2>
         <p className="text-base text-[var(--color-muted-foreground)] leading-relaxed mb-4">
           Return, replacement and refund requests can be raised within 7 days of receiving your
@@ -106,7 +122,7 @@ export default function TermsPage() {
 
       <section className="mb-8">
         <h2 className="text-xl md:text-2xl font-semibold text-[var(--color-foreground)] mb-4">
-          6. Intellectual Property
+          7. Intellectual Property
         </h2>
         <p className="text-base text-[var(--color-muted-foreground)] leading-relaxed mb-4">
           All content on this platform, including text, graphics, logos, images, and software, is the
@@ -121,7 +137,7 @@ export default function TermsPage() {
 
       <section className="mb-8">
         <h2 className="text-xl md:text-2xl font-semibold text-[var(--color-foreground)] mb-4">
-          7. Limitation of Liability
+          8. Limitation of Liability
         </h2>
         <p className="text-base text-[var(--color-muted-foreground)] leading-relaxed mb-4">
           To the fullest extent permitted by law, Wefton Copper shall not be liable for any
@@ -136,7 +152,7 @@ export default function TermsPage() {
 
       <section className="mb-8">
         <h2 className="text-xl md:text-2xl font-semibold text-[var(--color-foreground)] mb-4">
-          8. Governing Law
+          9. Governing Law
         </h2>
         <p className="text-base text-[var(--color-muted-foreground)] leading-relaxed">
           These Terms of Service are governed by and construed in accordance with the laws of India.
@@ -147,7 +163,7 @@ export default function TermsPage() {
 
       <section className="mb-8">
         <h2 className="text-xl md:text-2xl font-semibold text-[var(--color-foreground)] mb-4">
-          9. Contact
+          10. Contact
         </h2>
         <p className="text-base text-[var(--color-muted-foreground)] leading-relaxed">
           If you have any questions about these Terms of Service, please contact us at{' '}

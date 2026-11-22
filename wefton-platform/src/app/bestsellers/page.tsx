@@ -7,7 +7,7 @@ import { withCanonical } from '@/lib/seo';
 export const metadata: Metadata = withCanonical('/bestsellers', {
   title: 'Bestsellers',
   description:
-    'Shop the most loved pieces from Wefton Copper. Our community favourites in premium Cotton Fabric.',
+    'Shop the most loved pieces from Wefton Copper. Our community favourites in premium fabrics.',
   openGraph: {
     title: 'Bestsellers | Wefton Copper',
     description: 'Shop the most loved pieces from Wefton Copper. Our community favourites.',
