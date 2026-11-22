@@ -7,10 +7,10 @@ import { withCanonical } from '@/lib/seo';
 export const metadata: Metadata = withCanonical('/new-arrivals', {
   title: 'New Arrivals',
   description:
-    'Shop the latest drops from Wefton Copper. Fresh styles in premium Cotton Fabric for men and women.',
+    'Shop the latest drops from Wefton Copper. Fresh styles in premium fabrics for men and women.',
   openGraph: {
     title: 'New Arrivals | Wefton Copper',
-    description: 'Shop the latest drops from Wefton Copper. Fresh styles in premium Cotton Fabric.',
+    description: 'Shop the latest drops from Wefton Copper. Fresh styles in premium fabrics.',
     images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Wefton Copper New Arrivals' }],
   },
   twitter: {

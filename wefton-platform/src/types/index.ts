@@ -22,6 +22,13 @@ export interface Product {
   sku: string;
   /** HSN code printed on GST invoices; DEFAULT_HSN when unset. */
   hsnCode?: string;
+  /**
+   * Fabric composition exactly as the fabric supplier specifies it, e.g.
+   * "100% cotton, 210 GSM single jersey" or "60% cotton, 40% polyester".
+   * Shown on the product page; unset falls back to the product's uploaded
+   * wash care guide, never to a brand-wide default.
+   */
+  fabric?: string;
   images: ProductImage[];
   variants: ProductVariant[];
   ratings: number;

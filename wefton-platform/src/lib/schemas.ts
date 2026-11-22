@@ -125,6 +125,8 @@ export const productFormSchema = z.object({
   sku: z.string(),
   /** HSN code printed on GST invoices: 4, 6 or 8 digits. */
   hsnCode: z.string().regex(/^(\d{4}|\d{6}|\d{8})$/, 'HSN code must be 4, 6 or 8 digits').optional(),
+  /** Fabric composition as the supplier specifies it; empty means not stated. */
+  fabric: z.string().max(200, 'Fabric must be 200 characters or fewer').optional(),
   featured: z.boolean(),
   bestseller: z.boolean(),
   newArrival: z.boolean(),
