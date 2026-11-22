@@ -4,7 +4,7 @@
 
 export const BRAND = {
   name: 'Wefton Copper',
-  tagline: 'Premium Lightweight Cotton Fabric',
+  tagline: 'Premium Essential Wear',
   description:
     'Redefining the standard for essential wear, starting from the fabric.',
   email: 'sales@weftoncopper.com',

@@ -8,7 +8,7 @@ import { withCanonical } from '@/lib/seo';
 export const metadata: Metadata = withCanonical('/wash-care', {
   title: 'Wash Care Instructions',
   description:
-    'How to wash, dry, iron and store your Wefton Copper cotton garments so they keep their shape, colour and softness.',
+    'How to wash, dry, iron and store your Wefton Copper garments so they keep their shape, colour and softness.',
 });
 
 export default function WashCarePage() {

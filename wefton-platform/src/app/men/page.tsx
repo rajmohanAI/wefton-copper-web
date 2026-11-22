@@ -7,7 +7,7 @@ import { withCanonical } from '@/lib/seo';
 export const metadata: Metadata = withCanonical('/men', {
   title: "Men's Collection",
   description:
-    "Shop Wefton Copper Men's Collection — Premium Tees, Polos, Oversized, Active Wear, Hoodies, and more. Crafted from Cotton Fabric.",
+    "Shop Wefton Copper Men's Collection — Premium Tees, Polos, Oversized, Active Wear, Hoodies, and more. Crafted from premium fabrics.",
   openGraph: {
     title: "Men's Collection | Wefton Copper",
     description:
@@ -17,7 +17,7 @@ export const metadata: Metadata = withCanonical('/men', {
   twitter: {
     card: 'summary_large_image',
     title: "Men's Collection | Wefton Copper",
-    description: "Shop Wefton Copper Men's Collection — Premium Cotton Fabric essentials.",
+    description: "Shop Wefton Copper Men's Collection — Premium essentials.",
     images: ['/og-image.jpg'],
   },
 });
@@ -49,7 +49,7 @@ export default function MenPage() {
         </div>
       </div>
     }>
-      <CollectionPage gender="men" title="Men's Collection" subtitle="Engineered for precision. Crafted from lightweight Cotton Fabric." />
+      <CollectionPage gender="men" title="Men's Collection" subtitle="Engineered for precision. Crafted from premium fabrics." />
     </Suspense>
   );
 }

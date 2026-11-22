@@ -39,7 +39,7 @@ const STATIC_TESTIMONIALS: Testimonial[] = [
     name: 'Priya Raj',
     location: 'Chennai',
     rating: 5,
-    text: 'The Cotton Fabric fabric is unlike anything I\'ve worn before. Incredibly lightweight yet structured. The copper-stitched seams are a beautiful detail.',
+    text: 'The fabric is unlike anything I\'ve worn before. Incredibly lightweight yet structured. The copper-stitched seams are a beautiful detail.',
     product: 'Premium Tee',
     verified: true,
     avatar: 'PR',

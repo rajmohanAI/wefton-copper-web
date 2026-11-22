@@ -15,7 +15,7 @@ const DIFFERENTIATORS = [
 
 export const metadata: Metadata = withCanonical('/welcome', {
   title: 'Welcome to Wefton Copper',
-  description: 'Premium Cotton Fabric essentials for men and women. Discover our collection.',
+  description: 'Premium essentials for men and women. Discover our collection.',
 });
 
 const PRODUCTS = [
