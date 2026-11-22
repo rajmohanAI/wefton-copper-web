@@ -24,9 +24,9 @@ const DIFFERENTIATORS = [
   },
   {
     icon: Shirt,
-    title: '100% Premium Cotton',
+    title: 'Honest Fabric Specs',
     description:
-      'Every Wefton garment is crafted from 100% premium cotton fabric — soft, breathable, and built to last. No blends, no compromises — pure comfort against your skin.',
+      'Every product page lists the exact fabric composition, such as 100% cotton or a blend, just as our fabric supplier specifies it. You always know what you are wearing.',
   },
   {
     icon: Sparkles,

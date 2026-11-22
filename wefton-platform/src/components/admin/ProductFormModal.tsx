@@ -65,6 +65,7 @@ export default function ProductFormModal({
   const [comparePrice, setComparePrice] = useState('');
   const [inventory, setInventory] = useState('');
   const [hsnCode, setHsnCode] = useState(DEFAULT_HSN);
+  const [fabric, setFabric] = useState('');
   const [featured, setFeatured] = useState(false);
   const [bestseller, setBestseller] = useState(false);
   const [sizeChart, setSizeChart] = useState<SizeChart | null>(null);
@@ -109,6 +110,7 @@ export default function ProductFormModal({
     setComparePrice('');
     setInventory('');
     setHsnCode(DEFAULT_HSN);
+    setFabric('');
     setFeatured(false);
     setBestseller(false);
     setSizeChart(null);
@@ -140,6 +142,7 @@ export default function ProductFormModal({
         setComparePrice(product.comparePrice?.toString() || '');
         setInventory(product.inventory.toString());
         setHsnCode(product.hsnCode || DEFAULT_HSN);
+        setFabric(product.fabric || '');
         setFeatured(product.featured);
         setBestseller(product.bestseller);
         setSizeChart(product.sizeChart ?? null);
@@ -369,6 +372,7 @@ export default function ProductFormModal({
       inventory: hasVariants ? gridTotal + otherTotal : parseInt(inventory) || 0,
       sku: product?.sku || '',
       hsnCode: hsnCode.trim() || DEFAULT_HSN,
+      fabric: fabric.trim(),
       featured,
       bestseller,
       // The New Arrival badge is retired; saving a product clears it.
@@ -651,7 +655,21 @@ export default function ProductFormModal({
                   inputMode="numeric"
                   className={ADMIN_FIELD}
                 />
+                <div className="sm:col-span-2">
+                  <Input
+                    label="Fabric composition (as per supplier spec)"
+                    value={fabric}
+                    onChange={(e) => setFabric(e.target.value.slice(0, 200))}
+                    error={errors.fabric}
+                    placeholder="100% cotton, 210 GSM single jersey"
+                    className={ADMIN_FIELD}
+                  />
+                </div>
               </div>
+              <p className="text-xs text-[var(--text-muted)]">
+                Enter the composition exactly as the fabric supplier states it (for example 100% polyester, or 60% cotton / 40% polyester).
+                It is shown on the product page. Leave it empty if the supplier spec is not confirmed.
+              </p>
               <p className="text-xs text-[var(--text-muted)]">
                 SKU: <span className="font-mono">{productCode ? skuBase(productCode) : 'generated from the Product ID'}</span>
                 {' '}· each variant gets its own SKU (model no + gender + colour no + size no).

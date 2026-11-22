@@ -17,11 +17,11 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.weftoncopper.com
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Wefton Copper | Premium Cotton Fabric',
+    default: 'Wefton Copper | Premium Essential Wear',
     template: '%s | Wefton Copper',
   },
   description:
-    'Wefton Copper — Premium Cotton Fabric essentials. Redefining the standard for essential wear, starting from the fabric.',
+    'Wefton Copper — Premium essentials. Redefining the standard for essential wear, starting from the fabric.',
   keywords: [
     'Wefton Copper',
     'premium t-shirts',
@@ -37,9 +37,9 @@ export const metadata: Metadata = {
     locale: 'en_IN',
     url: siteUrl,
     siteName: 'Wefton Copper',
-    title: 'Wefton Copper | Premium Cotton Fabric',
+    title: 'Wefton Copper | Premium Essential Wear',
     description:
-      'High quality Cotton Fabric essentials. Crafted for the discerning individual.',
+      'High quality essentials. Crafted for the discerning individual.',
     images: [
       {
         url: '/og-image.jpg',
@@ -51,8 +51,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Wefton Copper | Premium Cotton Fabric',
-    description: 'Premium Cotton Fabric essentials.',
+    title: 'Wefton Copper | Premium Essential Wear',
+    description: 'Premium essentials.',
     images: ['/og-image.jpg'],
   },
   robots: {
