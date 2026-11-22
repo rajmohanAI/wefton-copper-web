@@ -33,6 +33,7 @@ import OrderReviewDialog, { type ReviewTarget } from './OrderReviewDialog';
 import { setupRecaptcha, sendOTP, verifyOTP } from '@/services/authService';
 import { formatPrice, toDate } from '@/lib/utils';
 import { rewardCouponPromo, rewardCouponValidity } from '@/lib/coupons';
+import { orderDelayNote } from '@/lib/orderDelayNote';
 import { addressSchema, type AddressFormData } from '@/lib/schemas';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -843,6 +844,30 @@ export default function AccountClient() {
                                 </button>
                               </div>
                             )}
+
+                            {/* Delay note: what we told the customer and what they chose (WC-Issue-24) */}
+                            {(() => {
+                              const note = orderDelayNote(order);
+                              if (!note) return null;
+                              const tone =
+                                note.tone === 'cancelled'
+                                  ? 'bg-red-500/5 border-red-500/20'
+                                  : 'bg-[var(--copper-main)]/5 border-[var(--copper-main)]/25';
+                              return (
+                                <div className={`mt-4 p-3 rounded border ${tone}`} role="status" data-testid="order-delay-note">
+                                  <p className="text-sm font-medium text-[var(--text-light)]">{note.title}</p>
+                                  <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">
+                                    {note.text}
+                                    {note.tone !== 'cancelled' && (
+                                      <>
+                                        {' '}
+                                        <a href="/contact" className="text-[var(--copper-light)] hover:underline">Contact us</a>
+                                      </>
+                                    )}
+                                  </p>
+                                </div>
+                              );
+                            })()}
                           </div>
 
                           {/* Order Items */}

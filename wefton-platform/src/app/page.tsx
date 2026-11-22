@@ -18,19 +18,19 @@ import { FEATURES } from '@/config/features';
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.weftoncopper.com';
 
 export const metadata: Metadata = withCanonical('/', {
-  title: 'Wefton Copper | Premium Cotton Fabric',
+  title: 'Wefton Copper | Premium Essential Wear',
   description:
-    'Wefton Copper — Premium Cotton Fabric essentials for men and women. Redefining the standard for essential wear, starting from the fabric.',
+    'Wefton Copper — Premium essentials for men and women. Redefining the standard for essential wear, starting from the fabric.',
   openGraph: {
-    title: 'Wefton Copper | Premium Cotton Fabric',
+    title: 'Wefton Copper | Premium Essential Wear',
     description:
-      'High quality Cotton Fabric essentials. Crafted for the discerning individual.',
+      'High quality essentials. Crafted for the discerning individual.',
     images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Wefton Copper' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Wefton Copper | Premium Cotton Fabric',
-    description: 'Premium Cotton Fabric essentials.',
+    title: 'Wefton Copper | Premium Essential Wear',
+    description: 'Premium essentials.',
     images: ['/og-image.jpg'],
   },
 });
@@ -78,7 +78,7 @@ export default function HomePage() {
     url: siteUrl,
     logo: `${siteUrl}/logo.png`,
     description:
-      'Premium Cotton Fabric essentials. Redefining the standard for essential wear, starting from the fabric.',
+      'Premium essentials. Redefining the standard for essential wear, starting from the fabric.',
     sameAs: [
       'https://www.instagram.com/weftoncopper',
       'https://www.facebook.com/profile.php?id=61596562648320',

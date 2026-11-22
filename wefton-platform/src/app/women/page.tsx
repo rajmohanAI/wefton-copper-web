@@ -11,13 +11,13 @@ export const metadata: Metadata = withCanonical('/women', {
   openGraph: {
     title: "Women's Collection | Wefton Copper",
     description:
-      "Shop Wefton Copper Women's Collection — Elevated silhouettes crafted from premium Cotton Fabric.",
+      "Shop Wefton Copper Women's Collection — Elevated silhouettes crafted from premium fabrics.",
     images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: "Wefton Copper Women's Collection" }],
   },
   twitter: {
     card: 'summary_large_image',
     title: "Women's Collection | Wefton Copper",
-    description: "Shop Wefton Copper Women's Collection — Premium Cotton Fabric essentials.",
+    description: "Shop Wefton Copper Women's Collection — Premium essentials.",
     images: ['/og-image.jpg'],
   },
 });

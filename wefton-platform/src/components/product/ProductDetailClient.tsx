@@ -34,6 +34,7 @@ import Button from '@/components/ui/Button';
 import SimilarProducts from '@/components/product/SimilarProducts';
 import ReviewSection from '@/components/product/ReviewSection';
 import type { Product } from '@/types';
+import { productFabric } from '@/lib/productFabric';
 import { SIZES } from '@/config/brand';
 import { cn } from '@/lib/utils';
 import { findVariant, imagesForColor, initialColor, primaryImage, variantColors } from '@/lib/productImages';
@@ -62,6 +63,7 @@ function getProductJsonLd(product: Product) {
       .filter(Boolean)
       .map((img) => img!.url),
     description: product.description,
+    ...(productFabric(product) ? { material: productFabric(product) } : {}),
     offers: {
       '@type': 'Offer',
       price: product.price,
@@ -643,6 +645,21 @@ export default function ProductDetailClient({ product, similar }: ProductDetailC
                 {product.description}
               </p>
             </div>
+
+            {/* Fabric — as the supplier specifies it, per product */}
+            {productFabric(product) && (
+              <div className="pt-2 border-t border-[var(--border-subtle)]">
+                <h3 className="text-xs font-semibold tracking-widest uppercase text-[var(--text-muted)] mb-3">
+                  Fabric
+                </h3>
+                <p className="text-sm text-[var(--text-light)]" data-testid="product-fabric">
+                  {productFabric(product)}
+                </p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  Composition as specified by our fabric supplier.
+                </p>
+              </div>
+            )}
 
             {/* Tags */}
             {product.tags?.length > 0 && (
