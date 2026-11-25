@@ -218,6 +218,7 @@ Changes are promoted one environment at a time:
 | `feature/qa` | QA / testing | qa.weftoncopper.com |
 | `feature/pp` | Pre-production | pp.weftoncopper.com |
 | `main` | Production | www.weftoncopper.com |
+| `feature/marketing` | Marketing R&D series (MRD-01), branched from `feature/dev`; can be linked to the QA backend for testing | qa.weftoncopper.com (when linked) |
 
 Work happens on short-lived branches merged into `feature/dev` by pull request.
 `main` only accepts pull requests from `feature/pp` (enforced by the
