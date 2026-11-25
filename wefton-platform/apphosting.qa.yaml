@@ -1,4 +1,4 @@
-# Overrides for the QA backend (qa.weftoncopper.com). App Hosting merges this
+# Overrides for the QA backend (www.qa.weftoncopper.com). App Hosting merges this
 # over apphosting.yaml when the backend's environment name is "qa"
 # (Firebase console → App Hosting → backend → Settings → Environment).
 #
@@ -11,7 +11,7 @@
 
 env:
   - variable: NEXT_PUBLIC_APP_URL
-    value: https://qa.weftoncopper.com
+    value: https://www.qa.weftoncopper.com
     availability:
       - BUILD
       - RUNTIME
