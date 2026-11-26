@@ -10,7 +10,7 @@ import path from 'node:path';
 import sharp from 'sharp';
 
 const DIR = path.join(import.meta.dirname, '..', 'public', 'banners');
-const SOURCES = ['hero-men-collection.jpg', 'hero-women-collection2.png', 'hero-new-arrivals.jpg'];
+const SOURCES = ['hero-men-collection.jpg', 'hero-women-collection2.jpg', 'hero-men-collection2.jpg'];
 const WIDTHS = [480, 960, 1600];
 
 for (const file of SOURCES) {
