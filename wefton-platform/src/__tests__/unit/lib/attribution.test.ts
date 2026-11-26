@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import { ATTRIBUTION_KEY, attributionForSave, captureLanding, parseLanding, sanitizeAttribution } from '@/lib/attribution';
-import { writeConsent } from '@/lib/consent';
+import { ALL_OFF, ALL_ON, writeConsent } from '@/lib/consent';
 import { fakeBrowser } from '../helpers/fakeBrowser';
 
 const NOW = new Date('2026-11-25T10:00:00Z');
@@ -97,20 +97,20 @@ describe('attributionForSave', () => {
     fakeBrowser('https://www.weftoncopper.com/?utm_source=instagram');
     captureLanding();
     expect(attributionForSave()).toBeNull();
-    writeConsent('denied');
+    writeConsent(ALL_OFF);
     expect(attributionForSave()).toBeNull();
   });
 
   it('returns the cleaned record once the visitor allows analytics', () => {
     fakeBrowser('https://www.weftoncopper.com/men?utm_source=instagram&fbclid=abc');
     captureLanding();
-    writeConsent('granted');
+    writeConsent(ALL_ON);
     expect(attributionForSave()).toMatchObject({ utm_source: 'instagram', fbclid: 'abc', landingPage: '/men' });
   });
 
   it('returns null for nothing stored or a broken record', () => {
     const b = fakeBrowser();
-    writeConsent('granted');
+    writeConsent(ALL_ON);
     expect(attributionForSave()).toBeNull();
     b.window.sessionStorage.setItem(ATTRIBUTION_KEY, '{not json');
     expect(attributionForSave()).toBeNull();

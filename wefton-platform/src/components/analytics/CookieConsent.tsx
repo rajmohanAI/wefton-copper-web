@@ -1,20 +1,27 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { writeConsent } from '@/lib/consent';
+import { ALL_OFF, ALL_ON, writeConsent } from '@/lib/consent';
 import { useConsent } from '@/hooks/useConsent';
+import ConsentPreferences from './ConsentPreferences';
 
-/** Staff tools, and the Cookie Policy page, which has its own choice buttons. */
+/** Staff tools, and the Cookie Policy page, which has its own choice controls. */
 const HIDDEN_ON = ['/admin', '/serialgen', '/seed', '/cookies'];
 
+const CHOICE_BTN =
+  'h-9 px-4 rounded text-xs tracking-widest uppercase transition-colors';
+
 /**
- * Small cookie question shown until the visitor answers (MRD-01).
- * Analytics stays off until they choose "Allow".
+ * Cookie question shown until the visitor answers (MRD-01, WC-Issue-34).
+ * "Allow all" and "Reject all" carry equal weight; "Preferences" opens
+ * one switch per optional purpose. Nothing optional runs before a choice.
  */
 export default function CookieConsent() {
   const consent = useConsent();
   const pathname = usePathname() || '';
+  const [showPrefs, setShowPrefs] = useState(false);
 
   if (consent !== null) return null; // answered, or not known yet (server render)
   if (HIDDEN_ON.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return null;
@@ -32,22 +39,37 @@ export default function CookieConsent() {
           Cookie Policy
         </Link>
       </p>
-      <div className="mt-3 flex gap-2">
-        <button
-          type="button"
-          onClick={() => writeConsent('granted')}
-          className="h-9 px-4 rounded bg-[var(--copper-main)] text-white text-xs tracking-widest uppercase hover:bg-[var(--copper-light)] transition-colors"
-        >
-          Allow
-        </button>
-        <button
-          type="button"
-          onClick={() => writeConsent('denied')}
-          className="h-9 px-4 rounded border border-[var(--border-subtle)] text-[var(--text-light)] text-xs tracking-widest uppercase hover:border-[var(--copper-main)] transition-colors"
-        >
-          No thanks
-        </button>
-      </div>
+
+      {showPrefs ? (
+        <div className="mt-4 border-t border-[var(--border-subtle)] pt-4">
+          <ConsentPreferences initial={null} onSaved={() => setShowPrefs(false)} />
+        </div>
+      ) : (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => writeConsent(ALL_ON)}
+            className={`${CHOICE_BTN} bg-[var(--copper-main)] text-white hover:bg-[var(--copper-light)]`}
+          >
+            Allow all
+          </button>
+          <button
+            type="button"
+            onClick={() => writeConsent(ALL_OFF)}
+            className={`${CHOICE_BTN} bg-[var(--copper-main)] text-white hover:bg-[var(--copper-light)]`}
+          >
+            Reject all
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowPrefs(true)}
+            aria-expanded={showPrefs}
+            className={`${CHOICE_BTN} border border-[var(--border-subtle)] text-[var(--text-light)] hover:border-[var(--copper-main)]`}
+          >
+            Preferences
+          </button>
+        </div>
+      )}
     </div>
   );
 }

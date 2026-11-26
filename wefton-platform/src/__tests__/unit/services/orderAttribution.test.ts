@@ -29,7 +29,7 @@ vi.mock('firebase/firestore', () => ({
 
 import { createOrder } from '@/services/orderService';
 import { captureLanding } from '@/lib/attribution';
-import { writeConsent } from '@/lib/consent';
+import { ALL_OFF, ALL_ON, writeConsent } from '@/lib/consent';
 import { fakeBrowser } from '../helpers/fakeBrowser';
 
 const items = [{ productId: 'p1', title: 'Tee', price: 1299, quantity: 1, size: 'M', color: 'Olive', variantId: 'v1' }] as unknown as CartItem[];
@@ -44,21 +44,21 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('createOrder attribution', () => {
   it('saves the source when the buyer allowed analytics', async () => {
-    writeConsent('granted');
+    writeConsent(ALL_ON);
     await createOrder('u1', items, address);
     expect(added[0].attribution).toMatchObject({ utm_source: 'instagram', utm_campaign: 'launch', landingPage: '/men', referrer: 'l.instagram.com' });
   });
 
   it('saves nothing extra when the buyer said no or has not chosen', async () => {
     await createOrder('u1', items, address);
-    writeConsent('denied');
+    writeConsent(ALL_OFF);
     await createOrder('u1', items, address);
     expect(added[0]).not.toHaveProperty('attribution');
     expect(added[1]).not.toHaveProperty('attribution');
   });
 
   it('keeps the rules-required fields as before', async () => {
-    writeConsent('granted');
+    writeConsent(ALL_ON);
     await createOrder('u1', items, address);
     expect(added[0]).toMatchObject({ userId: 'u1', paymentStatus: 'pending', orderStatus: 'placed' });
     expect(added[0]).not.toHaveProperty('razorpayOrderId');

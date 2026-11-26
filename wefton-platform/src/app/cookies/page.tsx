@@ -12,7 +12,7 @@ export default function CookiePolicyPage() {
     <div className="min-h-screen pt-[var(--nav-height)] bg-[var(--bg-dark)]">
       <div className="max-w-4xl mx-auto px-4 md:px-8 py-16">
         <h1 className="text-4xl font-light text-[var(--copper-light)] mb-4">Cookie Policy</h1>
-        <p className="text-xs text-[var(--text-faint)] mb-12">Last updated: November 2026</p>
+        <p className="text-xs text-[var(--text-faint)] mb-12">Last updated: 26 November 2026</p>
 
         <div className="space-y-8 text-sm text-[var(--text-muted)] leading-relaxed">
           <section>
@@ -25,14 +25,15 @@ export default function CookiePolicyPage() {
             <ul className="list-disc list-inside space-y-2">
               <li><strong>Essential Cookies:</strong> Required for the site to function — authentication, cart, and checkout.</li>
               <li><strong>Preference Cookies:</strong> Remember your theme choice (dark/light) and language settings.</li>
-              <li><strong>Analytics Cookies:</strong> Google Analytics 4 and Microsoft Clarity — help us understand how the site is used and where it can be better. Only loaded if you choose &ldquo;Allow&rdquo;. With your OK we also note which link brought you to us (for example an Instagram post) on your sign-up or order.</li>
+              <li><strong>Analytics Cookies:</strong> Google Analytics 4 — helps us understand how the site is used and where it can be better. Only loaded if you allow &ldquo;Analytics&rdquo;. With your OK we also note which link brought you to us (for example an Instagram post) on your sign-up or order.</li>
+              <li><strong>Session Recording Cookies:</strong> Microsoft Clarity — anonymous heatmaps and page recordings. Only loaded if you allow &ldquo;Session recordings&rdquo;.</li>
               <li><strong>Marketing Cookies:</strong> Currently not used. We do not serve targeted ads.</li>
             </ul>
           </section>
 
           <section>
             <h2 className="text-lg font-medium text-[var(--text-light)] mb-3">Managing Cookies</h2>
-            <p>When you first visit, we ask whether we may use analytics cookies. You can change your answer here at any time. You can also control cookies through your browser settings. Disabling essential cookies may affect site functionality (e.g., cart won&apos;t persist).</p>
+            <p>When you first visit, we ask which optional cookies we may use: you can allow all, reject all, or choose each purpose under Preferences. Rejecting is as easy as allowing, and you can change your answer here at any time. You can also control cookies through your browser settings. Disabling essential cookies may affect site functionality (e.g., cart won&apos;t persist).</p>
             <CookieChoiceButton />
           </section>
 
