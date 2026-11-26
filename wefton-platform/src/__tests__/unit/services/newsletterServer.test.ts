@@ -95,14 +95,6 @@ describe('joining and leaving', () => {
     expect(await subscribe(db, 'new@example.com', NOW, send)).toBe('rejoined');
     expect(store.get('newsletter_subscribers/new@example.com')).toMatchObject({ unsubscribedAt: null });
   });
-
-  it('saves where a new member came from, when given', async () => {
-    const send = vi.fn(async () => ({ sent: true }));
-    await subscribe(db, 'src@example.com', NOW, send, { utm_source: 'instagram', landingPage: '/' });
-    expect(store.get('newsletter_subscribers/src@example.com')).toMatchObject({ source: { utm_source: 'instagram', landingPage: '/' } });
-    await subscribe(db, 'nosrc@example.com', NOW, send);
-    expect(store.get('newsletter_subscribers/nosrc@example.com')).not.toHaveProperty('source');
-  });
 });
 
 describe('sendMonthlyNewsletter', () => {

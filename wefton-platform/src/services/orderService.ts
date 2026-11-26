@@ -17,7 +17,6 @@ import {
   runTransaction,
   type Transaction,
 } from 'firebase/firestore';
-import { attributionForSave } from '@/lib/attribution';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirebaseAuth, getFirebaseDb, getFirebaseStorage } from '@/lib/firebase';
 import type { Order, CartItem, Address, OrderStatusEvent, RewardCoupon } from '@/types';
@@ -90,10 +89,6 @@ export async function createOrder(
     itemCount: items.reduce((n, i) => n + i.quantity, 0),
     createdAt: serverTimestamp(),
   };
-  // Where the buyer came from (campaign link, referring site), only when
-  // they allowed analytics cookies (MRD-01).
-  const attribution = attributionForSave();
-  if (attribution) Object.assign(orderData, { attribution });
 
   await addDoc(collection(db, ORDERS_COL), orderData);
   return { ...orderData, createdAt: new Date().toISOString() } as unknown as Order;
