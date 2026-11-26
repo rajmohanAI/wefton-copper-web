@@ -2,6 +2,7 @@
 
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
+import { useState } from 'react';
 import Image from 'next/image';
 import bannerLoader from '@/lib/bannerLoader';
 
@@ -34,6 +35,9 @@ const MAX_SLIDES = 6;
  * Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7
  */
 export default function BannerSlider({ slides }: BannerSliderProps) {
+  // The first slide's Shop Now plays a one-time intro animation on landing.
+  const [introDone, setIntroDone] = useState(false);
+
   // Validate slide count — render fallback for invalid count
   if (!slides || slides.length < MIN_SLIDES || slides.length > MAX_SLIDES) {
     return (
@@ -77,27 +81,41 @@ export default function BannerSlider({ slides }: BannerSliderProps) {
                 loading={index === 0 ? 'eager' : 'lazy'}
                 sizes="100vw"
               />
-              <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-center px-4">
-                {/* Only render text that exists: an empty <h2> is flagged by SEO checks. */}
-                {slide.headline && (
-                  <h2 className="text-3xl md:text-5xl font-bold text-white">
-                    {slide.headline}
-                  </h2>
-                )}
-                {slide.subheading && (
-                  <p className="text-base md:text-lg text-white/90 mt-2">
-                    {slide.subheading}
-                  </p>
-                )}
-                {slide.ctaText && (
-                  <a
-                    href={slide.ctaHref}
-                    className="mt-6 px-8 py-3 bg-white text-black font-medium rounded hover:bg-white/90 transition-colors"
-                  >
-                    {slide.ctaText}
-                  </a>
-                )}
-              </div>
+              {/* Text overlay: only rendered when a slide has a headline or
+                  subheading, so photo-only banners are not darkened. */}
+              {(slide.headline || slide.subheading) && (
+                <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-center px-4">
+                  {/* Only render text that exists: an empty <h2> is flagged by SEO checks. */}
+                  {slide.headline && (
+                    <h2 className="text-3xl md:text-5xl font-bold text-white">
+                      {slide.headline}
+                    </h2>
+                  )}
+                  {slide.subheading && (
+                    <p className="text-base md:text-lg text-white/90 mt-2">
+                      {slide.subheading}
+                    </p>
+                  )}
+                </div>
+              )}
+              {/* Shop Now: bottom-left, clear of the models, who stand
+                  centre / centre-right in every banner (WC-Issue-33).
+                  On phones it sits right of the prev arrow. */}
+              {slide.ctaText && (
+                <a
+                  href={slide.ctaHref}
+                  onAnimationEnd={
+                    index === 0 && !introDone
+                      ? (e) => {
+                          if (e.animationName === 'shop-now-pulse') setIntroDone(true);
+                        }
+                      : undefined
+                  }
+                  className={`${index === 0 && !introDone ? 'shop-now-intro ' : ''}absolute left-[14%] bottom-[8%] z-10 inline-flex items-center rounded-sm bg-[#8c4a22] px-2.5 py-1 text-[10px] sm:left-[5%] sm:bottom-[12%] font-semibold uppercase tracking-[0.15em] text-white shadow-lg transition-colors hover:bg-[#7a3d18] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:px-5 sm:py-2.5 sm:text-sm md:px-8 md:py-3 md:text-base`}
+                >
+                  {slide.ctaText}
+                </a>
+              )}
             </div>
           </SwiperSlide>
         ))}

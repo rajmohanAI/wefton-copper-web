@@ -36,38 +36,38 @@ export const metadata: Metadata = withCanonical('/', {
 });
 
 /**
- * Placeholder banner slides for the homepage hero.
- * Each slide uses a placeholder image path with descriptive alt text
- * indicating the intended content and dimensions.
+ * Homepage hero slides. The alt text describes each photo for screen
+ * readers, search engines and AI assistants (MRD-01).
  */
 const BANNER_SLIDES: BannerSlide[] = [
   {
     id: 'slide-1',
     headline: '',
     subheading: '',
-    ctaText: '',
+    ctaText: 'Shop Now',
     ctaHref: '/men',
     imageUrl: '/banners/hero-men-collection.jpg',
-    imageAlt: "Men's Collection Banner — 1920x600",
+    imageAlt:
+      "Men's collection: a man in a blue long-sleeve Wefton Copper top and white cargo trousers by a garden balustrade",
   },
   {
     id: 'slide-2',
     headline: '',
     subheading: '',
-    ctaText: '',
+    ctaText: 'Shop Now',
     ctaHref: '/women',
-    imageUrl: '/banners/hero-women-collection2.png',
-    imageAlt: "Women's Collection Banner — 1920x600",
+    imageUrl: '/banners/hero-women-collection2.jpg',
+    imageAlt: "Women's collection: a woman in a dusty-pink Wefton Copper T-shirt in a modern gym",
   },
   {
     id: 'slide-3',
     headline: '',
     subheading: '',
-    ctaText: '',
-    ctaHref: '/men?category=new-arrivals',
-    imageUrl: '/banners/hero-new-arrivals.jpg',
-    imageAlt: 'New Arrivals Banner — 1920x600',
-  }
+    ctaText: 'Shop Now',
+    ctaHref: '/men',
+    imageUrl: '/banners/hero-men-collection2.jpg',
+    imageAlt: "Men's collection: a man in a cream Wefton Copper hoodie and dark jeans walking across an office plaza",
+  },
 ];
 
 export default function HomePage() {

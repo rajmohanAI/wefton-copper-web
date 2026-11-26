@@ -5,8 +5,8 @@ import bannerLoader, { BANNER_WIDTHS } from '@/lib/bannerLoader';
 
 const SLIDE_SOURCES = [
   '/banners/hero-men-collection.jpg',
-  '/banners/hero-women-collection2.png',
-  '/banners/hero-new-arrivals.jpg',
+  '/banners/hero-women-collection2.jpg',
+  '/banners/hero-men-collection2.jpg',
 ];
 
 describe('bannerLoader', () => {
@@ -19,8 +19,8 @@ describe('bannerLoader', () => {
   });
 
   it('falls back to the largest variant for wider screens', () => {
-    expect(bannerLoader({ src: '/banners/hero-new-arrivals.jpg', width: 3840 })).toBe(
-      '/banners/hero-new-arrivals-1600.webp'
+    expect(bannerLoader({ src: '/banners/hero-men-collection2.jpg', width: 3840 })).toBe(
+      '/banners/hero-men-collection2-1600.webp'
     );
   });
 
