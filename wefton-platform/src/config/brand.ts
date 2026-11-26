@@ -55,6 +55,10 @@ export const SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'] as const;
 // again, set SHIPPING_COST and the FREE_SHIPPING_THRESHOLD above which it is free.
 export const SHIPPING_COST = 0;
 export const FREE_SHIPPING_THRESHOLD = 0;
+
+// Announcement bar above the menu (WC-Issue-36). One calm line; with two or
+// more, they fade in turn. An empty list hides the bar.
+export const ANNOUNCEMENTS: readonly string[] = ['Complimentary delivery across India'];
 export const TAX_RATE = 0.05; // 5% GST
 /** Product prices already include GST, so it is never added on top at checkout. */
 export const PRICES_INCLUDE_GST = true;
