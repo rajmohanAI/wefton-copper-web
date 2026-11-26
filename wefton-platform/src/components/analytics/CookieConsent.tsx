@@ -30,7 +30,7 @@ export default function CookieConsent() {
     <div
       role="region"
       aria-label="Cookie choice"
-      className="fixed z-50 bottom-4 left-4 right-4 sm:right-auto sm:max-w-sm rounded-xl border border-[var(--glass-border)] bg-[var(--bg-darker)] p-4 shadow-2xl"
+      className="fixed z-50 bottom-3 left-3 right-3 sm:left-auto sm:right-4 sm:bottom-4 sm:max-w-sm rounded-xl border border-[var(--glass-border)] bg-[var(--bg-darker)] p-4 shadow-2xl"
     >
       <p className="text-sm text-[var(--text-light)] leading-relaxed">
         May we use cookies to see how people use our site? It helps us make it better. Nothing is
