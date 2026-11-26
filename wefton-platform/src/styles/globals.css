@@ -242,6 +242,45 @@
   }
 }
 
+/* ── Hero "Shop Now" intro (WC-Issue-33) ───────────────────────
+   Plays once when the homepage loads: a soft pulse with a copper ring,
+   then a light sheen across the button. BannerSlider removes the class
+   when it ends, so it never replays while the slider loops. */
+@layer components {
+  .shop-now-intro {
+    overflow: hidden;
+    animation: shop-now-pulse 1.4s ease-out 0.8s 1 both;
+  }
+
+  .shop-now-intro::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.55) 50%, transparent 70%);
+    transform: translateX(-120%);
+    animation: shop-now-sheen 1.1s ease-in-out 0.9s 1 forwards;
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shop-now-intro,
+    .shop-now-intro::after {
+      animation: none;
+    }
+  }
+}
+
+@keyframes shop-now-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgb(184 94 38 / 0.75); }
+  30% { transform: scale(1.08); }
+  60% { transform: scale(1); }
+  100% { transform: scale(1); box-shadow: 0 0 0 16px rgb(184 94 38 / 0); }
+}
+
+@keyframes shop-now-sheen {
+  to { transform: translateX(120%); }
+}
+
 /* ── Keyframes ────────────────────────────────────────────── */
 
 @keyframes shimmer {
