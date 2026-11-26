@@ -15,9 +15,3 @@ env:
     value: "true"
     availability:
       - RUNTIME
-  # Test visits must not count in the live Google Analytics property (MRD-01).
-  - variable: NEXT_PUBLIC_GA_MEASUREMENT_ID
-    value: "off"
-    availability:
-      - BUILD
-      - RUNTIME

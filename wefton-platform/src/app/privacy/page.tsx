@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { withCanonical } from '@/lib/seo';
 
 export const metadata: Metadata = withCanonical('/privacy', {
@@ -98,7 +97,7 @@ export default function PrivacyPage() {
           <li>Essential cookies: required for platform functionality (authentication, cart).</li>
           <li>Analytics cookies: help us understand how visitors interact with our platform.</li>
           <li>Preference cookies: remember your settings such as theme preference.</li>
-          <li>Analytics cookies (Google Analytics, Microsoft Clarity) are used only if you choose &ldquo;Allow&rdquo; when we ask. You can change that choice on our <Link href="/cookies" className="text-[var(--copper-light)] hover:underline">Cookie Policy</Link> page or through your browser settings.</li>
+          <li>You can manage cookie preferences through your browser settings.</li>
         </ol>
       </section>
 
