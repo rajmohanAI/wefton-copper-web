@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { ThemeProvider } from 'next-themes';
 import { useAuthListener } from '@/hooks/useAuth';
-import GA4Provider from '@/components/analytics/GA4Provider';
+import AnalyticsRoot from '@/components/analytics/AnalyticsRoot';
 
 const CartDrawer = dynamic(() => import('@/components/cart/CartDrawer'), { ssr: false });
 const SearchOverlay = dynamic(() => import('@/components/search/SearchOverlay'), { ssr: false });
@@ -23,7 +23,7 @@ export default function AppProviders({ children }: { children: React.ReactNode }
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
       <AuthListenerWrapper>
-        <GA4Provider consentGranted={true} />
+        <AnalyticsRoot />
         {children}
         <CartDrawer />
         <SearchOverlay />
