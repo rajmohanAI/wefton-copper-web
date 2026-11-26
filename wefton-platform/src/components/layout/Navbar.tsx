@@ -22,6 +22,7 @@ import { useSearchStore } from '@/store/searchStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import { getNavCategories, type NavCategory } from '@/services/categoryService';
 import ThemeSwitcher from './ThemeSwitcher';
+import AnnouncementBar from './AnnouncementBar';
 import { AdminMenuDesktop, AdminMenuMobile } from './AdminMenu';
 
 /**
@@ -150,6 +151,7 @@ export default function Navbar() {
               : 'bg-[var(--bg-dark)]/80 backdrop-blur-sm'
           )}
         />
+        <AnnouncementBar hidden={scrolled} />
         <nav className="w-full min-h-[48px] px-[0.5cm] flex items-center justify-between gap-6">
           {/* Logo */}
           <Link
