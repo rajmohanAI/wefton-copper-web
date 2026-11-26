@@ -105,7 +105,7 @@ export default function HomePage() {
         {/* 1. Banner Slider — full-width hero with promotional slides.
             The homepage header is `fixed` (see Navbar), so pad the hero by its
             un-scrolled height (48px nav + py-7) to keep the banner below it. */}
-        <section aria-label="Hero banner" className="pt-[calc(48px+3.5rem)]">
+        <section aria-label="Hero banner" className="pt-[calc(48px+4.25rem)]">
           <BannerSlider slides={BANNER_SLIDES} />
         </section>
 
