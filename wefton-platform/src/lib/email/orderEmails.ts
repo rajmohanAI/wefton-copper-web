@@ -218,6 +218,25 @@ export function customerDelayEmail(order: Order): EmailContent {
   };
 }
 
+/**
+ * A few days after delivery: a gentle "how does it fit?" with a link to
+ * review it from My Orders (MRD-01). Sent once per order.
+ */
+export function customerReviewRequestEmail(order: Order, siteUrl = SITE): EmailContent {
+  const link = `${siteUrl.replace(/\/$/, '')}/account?tab=orders`;
+  return {
+    subject: `How is your Wefton Copper piece fitting?`,
+    html: layout(`
+      <h2 style="margin:0 0 6px;font-size:20px;">We hope you're enjoying it</h2>
+      <p style="color:#444;">Hi ${escapeHtml(customerName(order))},</p>
+      <p style="color:#444;">Your order <strong>#${escapeHtml(order.orderId)}</strong> reached you a few days ago. If you have a minute, we'd love to hear how it fits and feels. Your review helps other customers choose the right size.</p>
+      ${itemsTable(order)}
+      <p style="margin:24px 0;"><a href="${escapeHtml(link)}" style="background:${COPPER};color:#fff;text-decoration:none;padding:12px 22px;border-radius:4px;display:inline-block;">Write a review</a></p>
+      <p style="color:#444;">If something isn't right, just reply to this email and we'll help. This is the only email we'll send about reviewing this order.</p>
+    `),
+  };
+}
+
 /** `byCustomer`: the customer cancelled it themselves from the delay email. */
 export function customerCancelledEmail(order: Order, { byCustomer = false } = {}): EmailContent {
   const paid = order.paymentStatus === 'verified' || order.paymentStatus === 'uploaded' || order.paymentStatus === 'refund_due';

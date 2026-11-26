@@ -211,6 +211,8 @@ export interface OrderNotifications {
   choiceSentAt?: string;
   /** Shop told that the customer cancelled. */
   customerCancelSentAt?: string;
+  /** "How is it fitting?" review request, a few days after delivery (MRD-01). */
+  reviewRequestSentAt?: string;
 }
 
 export interface OrderItem {

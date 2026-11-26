@@ -28,6 +28,7 @@ import {
   customerConfirmationEmail,
   customerDelayEmail,
   customerOrderChoiceEmail,
+  customerReviewRequestEmail,
   type OrderChoiceLinks,
   type OverdueOrder,
 } from '@/lib/email/orderEmails';
@@ -39,6 +40,10 @@ import type { Order, OrderItem, OrderStatusEvent, Product } from '@/types';
 export const REMINDER_AFTER_DAYS = 5;
 /** Days after placing (and after each "I'll wait") before the customer is asked to wait or cancel. */
 export const CHOICE_AFTER_DAYS = 10;
+/** Review request goes out this many days after delivery (MRD-01)… */
+export const REVIEW_AFTER_DAYS = 4;
+/** …and not at all for orders delivered longer ago than this. */
+export const REVIEW_WITHIN_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const PAID: Order['paymentStatus'][] = ['uploaded', 'verified'];
@@ -227,7 +232,24 @@ export interface DailyCheckResult {
   delayEmails: number;
   /** "Wait or cancel?" emails sent this run. */
   choiceEmails: number;
+  /** "How is it fitting?" review requests sent this run (MRD-01). */
+  reviewEmails?: number;
   digestSent: boolean;
+}
+
+/** When the order was marked delivered: the last "delivered" status event, else the last status change. */
+export function deliveredAt(order: Order): string | undefined {
+  const events = (order.statusHistory ?? []).filter((e) => e.status === 'delivered');
+  return events.length ? events[events.length - 1].at : order.statusUpdatedAt;
+}
+
+/** True when a delivered order is due its one review request. */
+export function shouldAskReview(order: Order, now: Date): boolean {
+  if (order.orderStatus !== 'delivered' || !order.customerEmail || order.notifications?.reviewRequestSentAt) return false;
+  const at = deliveredAt(order);
+  if (!at) return false;
+  const days = daysBetween(at, now);
+  return days >= REVIEW_AFTER_DAYS && days <= REVIEW_WITHIN_DAYS;
 }
 
 function siteUrl(): string {
@@ -264,6 +286,13 @@ export async function runDailyOrderChecks(db: Firestore, now = new Date(), send:
   for (const docSnap of snap.docs) {
     const ref = docSnap.ref;
     let order = docSnap.data() as Order;
+    if (shouldAskReview(order, now)) {
+      const { sent } = await send({ to: order.customerEmail!, ...customerReviewRequestEmail(order, siteUrl()) });
+      if (sent) {
+        await ref.update({ 'notifications.reviewRequestSentAt': at });
+        result.reviewEmails = (result.reviewEmails ?? 0) + 1;
+      }
+    }
     if (CLOSED.includes(order.orderStatus)) continue;
     result.checked++;
 

@@ -52,6 +52,10 @@ export default function PrivacyPage() {
           <li>Personalising your shopping experience and recommendations.</li>
           <li>Analysing usage patterns to improve platform performance and features.</li>
           <li>Sending promotional communications (with your consent).</li>
+          <li>&ldquo;Join our family&rdquo;: if you join, we send one email a month with new arrivals and stories from our social posts. Every email has an unsubscribe link, and you can leave at any time.</li>
+          <li>&ldquo;Register your piece&rdquo;: if you register a garment&apos;s serial number, we keep it with your email so we can help with that piece later. It does not add you to any mailing list unless you tick that box.</li>
+          <li>After delivery, one email asking how your order fits, with a link to review it.</li>
+          <li>With your permission for analytics cookies, which link brought you to our site (for example an Instagram post), saved with your sign-up or order.</li>
         </ol>
       </section>
 

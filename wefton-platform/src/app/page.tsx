@@ -145,30 +145,24 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* 6. Newsletter — temporarily hidden
-        <section
-          aria-label="Newsletter signup"
-          className="py-16 md:py-24 bg-[var(--color-card,#f9f9f9)] dark:bg-[var(--color-card,#171717)]"
-        >
-          <div className="max-w-[1280px] mx-auto px-4 md:px-8 text-center">
-            <div className="w-full max-w-2xl mx-auto mb-10 aspect-[16/5] rounded-lg bg-[var(--color-border,#e5e5e5)] dark:bg-[var(--color-border,#262626)] flex items-center justify-center">
-              <p className="text-sm text-[var(--color-muted,#737373)]">
-                Newsletter Banner — 1280x400
+        {/* 6. "Join our family" — monthly email of our latest posts (WC-Issue-17, MRD-01) */}
+        <Section aria-label="Join our family">
+          <Container>
+            <div className="max-w-2xl mx-auto text-center">
+              <p className="text-xs tracking-[0.3em] uppercase text-[var(--copper-light)] mb-3">Join our family</p>
+              <h2 className="text-3xl md:text-4xl font-light text-[var(--text-light)] mb-4">
+                Be the first to see what&apos;s new
+              </h2>
+              <p className="text-sm md:text-base text-[var(--text-muted)] mb-8">
+                One email a month with new arrivals and stories from our Instagram and X. Nothing
+                more, and you can leave anytime.
               </p>
+              <div className="flex justify-center">
+                <NewsletterForm id="home-newsletter" onPage />
+              </div>
             </div>
-
-            <h2 className="text-3xl md:text-5xl font-bold text-[var(--color-foreground,#0a0a0a)] dark:text-[var(--color-foreground,#fafafa)] mb-4">
-              Join the Copper Community
-            </h2>
-            <p className="text-base md:text-lg text-[var(--color-muted,#737373)] dark:text-[var(--color-muted,#a3a3a3)] mb-8 max-w-xl mx-auto">
-              Get early access to new drops, exclusive offers, and stories from the studio.
-            </p>
-            <div className="flex justify-center">
-              <NewsletterForm />
-            </div>
-          </div>
-        </section>
-        */}
+          </Container>
+        </Section>
 
       </div>
     </>

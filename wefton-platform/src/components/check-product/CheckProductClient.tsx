@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AlertCircle, BadgeCheck, SearchX } from 'lucide-react';
+import RegisterPiece from './RegisterPiece';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 
@@ -108,6 +109,8 @@ export default function CheckProductClient() {
           </dl>
         </div>
       )}
+
+      {result?.found && <RegisterPiece key={result.product.serial} serial={result.product.serial} />}
 
       {result && !result.found && (
         <div className="glass-card p-6 space-y-2">

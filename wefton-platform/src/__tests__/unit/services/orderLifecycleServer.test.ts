@@ -13,7 +13,7 @@ vi.mock('@/lib/firebaseAdmin', () => ({
   getAdminAuth: () => ({ getUser: async () => ({ email: 'buyer@example.com' }) }),
 }));
 
-import { runDailyOrderChecks, markOrderPlaced, istDate, respondToOrderChoice, shouldAskChoice } from '@/services/orderLifecycleServer';
+import { runDailyOrderChecks, markOrderPlaced, istDate, respondToOrderChoice, shouldAskChoice, shouldAskReview, deliveredAt } from '@/services/orderLifecycleServer';
 import { orderChoiceToken, verifyOrderChoiceToken } from '@/lib/orderResponse';
 import type { Order } from '@/types';
 
@@ -298,5 +298,60 @@ describe('order choice tokens', () => {
 describe('istDate', () => {
   it('uses the India calendar day', () => {
     expect(istDate(new Date('2026-11-20T19:00:00Z'))).toBe('2026-11-21');
+  });
+});
+
+describe('review request after delivery (MRD-01)', () => {
+  const delivered = (days: number, extra: Partial<Order> = {}) =>
+    ({
+      orderStatus: 'delivered',
+      placedAt: daysAgo(days + 5),
+      statusHistory: [
+        { status: 'shipped', at: daysAgo(days + 2), by: 'admin' },
+        { status: 'delivered', at: daysAgo(days), by: 'admin' },
+      ],
+      ...extra,
+    }) as Partial<Order>;
+
+  it('finds the delivery time from the status history, else the last status change', () => {
+    expect(deliveredAt(delivered(3) as Order)).toBe(daysAgo(3));
+    expect(deliveredAt({ statusUpdatedAt: daysAgo(6) } as Order)).toBe(daysAgo(6));
+    expect(deliveredAt({} as Order)).toBeUndefined();
+  });
+
+  it('asks only between 4 and 30 days after delivery, once, with an email address', () => {
+    const base = { customerEmail: 'asha@example.com' };
+    expect(shouldAskReview({ ...base, ...delivered(3) } as Order, NOW)).toBe(false);
+    expect(shouldAskReview({ ...base, ...delivered(4) } as Order, NOW)).toBe(true);
+    expect(shouldAskReview({ ...base, ...delivered(30) } as Order, NOW)).toBe(true);
+    expect(shouldAskReview({ ...base, ...delivered(31) } as Order, NOW)).toBe(false);
+    expect(shouldAskReview({ ...delivered(5), customerEmail: '' } as Order, NOW)).toBe(false);
+    expect(shouldAskReview({ ...base, ...delivered(5), notifications: { reviewRequestSentAt: 'x' } } as Order, NOW)).toBe(false);
+    expect(shouldAskReview({ ...base, ...delivered(5), orderStatus: 'shipped' } as Order, NOW)).toBe(false);
+  });
+
+  it('sends one gentle email with a review link, and never again', async () => {
+    order('R', delivered(5));
+    const first = await runDailyOrderChecks(db, NOW, send);
+    expect(first.reviewEmails).toBe(1);
+    expect(first.checked).toBe(0); // delivered orders are still skipped by the other checks
+    const [email] = send.mock.calls[0] as unknown as [{ to: string; subject: string; html: string }];
+    expect(email.to).toBe('asha@example.com');
+    expect(email.subject).toBe('How is your Wefton Copper piece fitting?');
+    expect(email.html).toContain('/account?tab=orders');
+    expect(email.html).toContain('only email');
+    expect(store.get('orders/R')).toMatchObject({ notifications: { reviewRequestSentAt: NOW.toISOString() } });
+
+    send.mockClear();
+    const second = await runDailyOrderChecks(db, NOW, send);
+    expect(second.reviewEmails).toBeUndefined();
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('tries again next run when the email could not be sent', async () => {
+    order('R', delivered(5));
+    const failing = vi.fn(async () => ({ sent: false }));
+    await runDailyOrderChecks(db, NOW, failing);
+    expect((store.get('orders/R') as { notifications?: unknown }).notifications).toBeUndefined();
   });
 });

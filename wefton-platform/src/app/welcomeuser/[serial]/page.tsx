@@ -6,6 +6,7 @@ import { BadgeCheck, ChevronRight, SearchX, Star, WashingMachine } from 'lucide-
 import { getAdminDb } from '@/lib/firebaseAdmin';
 import { parseSerial } from '@/lib/serialgen';
 import { checkSerial, findSerialProduct, type SerialCheck, type SerialProduct } from '@/services/serialServer';
+import RegisterPiece from '@/components/check-product/RegisterPiece';
 
 // Opened from the QR on a garment tag: one page per piece, never cached.
 export const dynamic = 'force-dynamic';
@@ -51,6 +52,8 @@ export default async function WelcomeUserPage({ params }: Props) {
         </header>
 
         {check ? <ProductCard check={check} product={product} /> : <NotFound serial={serial} failed={failed} />}
+
+        {check && <RegisterPiece serial={check.serial} />}
 
         <nav aria-label="Your product" className="grid grid-cols-2 gap-3">
           <Tile href="/wash-care" icon={<WashingMachine size={26} />} title="Wash Care" text="Keep it looking new" />

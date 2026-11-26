@@ -7,7 +7,8 @@ import { Loader2, CheckCircle } from 'lucide-react';
 import { emailSchema, type EmailFormData } from '@/lib/schemas';
 import { subscribeNewsletter } from '@/services/newsletterService';
 
-export default function NewsletterForm() {
+/** `id` keeps element ids unique when the form appears twice on a page (MRD-01). */
+export default function NewsletterForm({ id = 'newsletter', onPage = false }: { id?: string; onPage?: boolean } = {}) {
   const [submitStatus, setSubmitStatus] = useState<
     'idle' | 'loading' | 'success' | 'duplicate'
   >('idle');
@@ -67,8 +68,9 @@ export default function NewsletterForm() {
             {...register('email')}
             placeholder="Your email address"
             disabled={submitStatus === 'loading'}
-            className="w-full h-10 bg-white/5 border border-white/10 rounded pl-4 pr-4 text-sm text-[var(--text-light)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--copper-main)] transition-colors disabled:opacity-50"
-            aria-describedby="newsletter-error"
+            className={`w-full h-10 ${onPage ? 'bg-[var(--bg-card)] border border-[var(--border-subtle)]' : 'bg-white/5 border border-white/10'} rounded pl-4 pr-4 text-sm text-[var(--text-light)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--copper-main)] transition-colors disabled:opacity-50`}
+            aria-label="Email address"
+            aria-describedby={`${id}-error`}
           />
         </div>
         <button
@@ -89,7 +91,7 @@ export default function NewsletterForm() {
 
       {/* Validation error */}
       {errors.email && (
-        <p id="newsletter-error" className="text-xs text-red-400" role="alert">
+        <p id={`${id}-error`} className="text-xs text-red-400" role="alert">
           {errors.email.message}
         </p>
       )}
