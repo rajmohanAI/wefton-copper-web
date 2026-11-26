@@ -9,6 +9,7 @@ import { monthlyNewsletterEmail, welcomeEmail } from '@/lib/email/newsletterEmai
 import { SITE } from '@/lib/email/orderEmails';
 import { sendEmail, type OutgoingEmail } from '@/lib/email/sender';
 import { fetchLatestSocialPosts } from './socialPostsServer';
+import type { Attribution } from '@/lib/attribution';
 
 const COL = 'newsletter_subscribers';
 const JOB_DOC = 'jobs/newsletter';
@@ -21,6 +22,8 @@ export interface Subscriber {
   unsubscribedAt?: string | null;
   /** Month ("2026-11") of the last monthly email this member got. */
   lastNewsletterMonth?: string;
+  /** Where they came from when they first joined (MRD-01), if they allowed analytics cookies. */
+  source?: Attribution;
 }
 
 function siteUrl(): string {
@@ -48,7 +51,13 @@ function withUnsubscribe(to: string, build: (url: string) => { subject: string; 
 export type SubscribeResult = 'subscribed' | 'already' | 'rejoined';
 
 /** Adds a member (or brings back one who unsubscribed) and sends the welcome email. */
-export async function subscribe(db: Firestore, rawEmail: string, now = new Date(), send: Send = sendEmail): Promise<SubscribeResult> {
+export async function subscribe(
+  db: Firestore,
+  rawEmail: string,
+  now = new Date(),
+  send: Send = sendEmail,
+  source: Attribution | null = null,
+): Promise<SubscribeResult> {
   const email = rawEmail.trim().toLowerCase();
   const ref = db.collection(COL).doc(email);
   const result = await db.runTransaction(async (tx) => {
@@ -58,7 +67,7 @@ export async function subscribe(db: Firestore, rawEmail: string, now = new Date(
       tx.update(ref, { unsubscribedAt: null, rejoinedAt: now.toISOString() });
       return 'rejoined' as const;
     }
-    tx.create(ref, { email, subscribedAt: now });
+    tx.create(ref, { email, subscribedAt: now, ...(source ? { source } : {}) });
     return 'subscribed' as const;
   });
   if (result !== 'already') {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebaseAdmin';
 import { emailSchema } from '@/lib/schemas';
 import { subscribe } from '@/services/newsletterServer';
+import { sanitizeAttribution } from '@/lib/attribution';
 
 const MESSAGES = {
   subscribed: 'Welcome to the family! Check your inbox for a hello from us.',
@@ -17,7 +18,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Please enter a valid email address' }, { status: 400 });
   }
   try {
-    const result = await subscribe(getAdminDb(), parsed.data.email);
+    const source = sanitizeAttribution((body as { attribution?: unknown }).attribution);
+    const result = await subscribe(getAdminDb(), parsed.data.email, new Date(), undefined, source);
     return NextResponse.json({ result, message: MESSAGES[result] });
   } catch (error) {
     console.error('[Newsletter] Subscribing failed:', error);

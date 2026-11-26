@@ -1,0 +1,27 @@
+# Overrides for the QA backend (www.qa.weftoncopper.com). App Hosting merges this
+# over apphosting.yaml when the backend's environment name is "qa"
+# (Firebase console → App Hosting → backend → Settings → Environment).
+#
+# - Uses the QA address, so robots.txt blocks crawlers and email links
+#   point back to QA instead of the live site.
+# - Turns analytics off, so test visits don't count as real traffic in
+#   the live Google Analytics property (MRD-01). Any value that isn't a
+#   "G-…" ID turns it off.
+# Razorpay keys live only in apphosting.production.yaml.
+
+env:
+  - variable: NEXT_PUBLIC_APP_URL
+    value: https://www.qa.weftoncopper.com
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_GA_MEASUREMENT_ID
+    value: "off"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_CLARITY_PROJECT_ID
+    value: "off"
+    availability:
+      - BUILD
+      - RUNTIME

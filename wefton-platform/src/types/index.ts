@@ -3,6 +3,7 @@
 // ============================================================
 import type { WashCareGuide } from '@/config/washCare';
 import type { StockMove } from '@/lib/orderStock';
+import type { Attribution } from '@/lib/attribution';
 
 export interface Product {
   productId: string;
@@ -181,6 +182,8 @@ export interface Order {
   stockMoves?: StockMove[];
   /** When a cancellation put the stock back. */
   stockRestoredAt?: string;
+  /** Campaign link / referring site of the visit, when the buyer allowed analytics cookies (MRD-01). */
+  attribution?: Attribution;
 }
 
 export interface RewardCoupon {

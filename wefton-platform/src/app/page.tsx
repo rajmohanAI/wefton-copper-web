@@ -36,9 +36,8 @@ export const metadata: Metadata = withCanonical('/', {
 });
 
 /**
- * Placeholder banner slides for the homepage hero.
- * Each slide uses a placeholder image path with descriptive alt text
- * indicating the intended content and dimensions.
+ * Homepage hero slides. The alt text describes each photo for screen
+ * readers, search engines and AI assistants (MRD-01).
  */
 const BANNER_SLIDES: BannerSlide[] = [
   {
@@ -48,7 +47,7 @@ const BANNER_SLIDES: BannerSlide[] = [
     ctaText: '',
     ctaHref: '/men',
     imageUrl: '/banners/hero-men-collection.jpg',
-    imageAlt: "Men's Collection Banner — 1920x600",
+    imageAlt: "Men's collection: a man in a blue long-sleeve Wefton Copper top on garden steps",
   },
   {
     id: 'slide-2',
@@ -57,7 +56,7 @@ const BANNER_SLIDES: BannerSlide[] = [
     ctaText: '',
     ctaHref: '/women',
     imageUrl: '/banners/hero-women-collection2.png',
-    imageAlt: "Women's Collection Banner — 1920x600",
+    imageAlt: "Women's collection: a woman in a pink Wefton Copper T-shirt at the gym",
   },
   {
     id: 'slide-3',
@@ -66,7 +65,7 @@ const BANNER_SLIDES: BannerSlide[] = [
     ctaText: '',
     ctaHref: '/men?category=new-arrivals',
     imageUrl: '/banners/hero-new-arrivals.jpg',
-    imageAlt: 'New Arrivals Banner — 1920x600',
+    imageAlt: 'New arrivals: a man in an olive Wefton Copper T-shirt and white trousers on a city street',
   }
 ];
 

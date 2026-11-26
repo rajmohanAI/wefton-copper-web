@@ -3,6 +3,7 @@
 // Goes through /api/newsletter/subscribe, which saves the member and
 // sends the welcome email.
 // ============================================================
+import { attributionForSave } from '@/lib/attribution';
 
 /**
  * Adds an email to the "Join our family" list.
@@ -12,7 +13,7 @@ export async function subscribeNewsletter(email: string): Promise<{ success: boo
   const res = await fetch('/api/newsletter/subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email.trim() }),
+    body: JSON.stringify({ email: email.trim(), attribution: attributionForSave() ?? undefined }),
   });
   const body = (await res.json().catch(() => ({}))) as { result?: string; message?: string; error?: string };
   if (!res.ok) throw new Error(body.error || 'Subscribing failed');
